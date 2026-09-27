@@ -97,8 +97,18 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    font-stretch: 106%;
+    letter-spacing: -0.03em;
     text-wrap: balance;
+  }
+
+  .font-display {
+    font-stretch: 106%;
+  }
+
+  .font-serif {
+    font-variation-settings: "opsz" 72, "SOFT" 30;
+    letter-spacing: -0.01em;
   }
 
   p {

@@ -13,7 +13,7 @@ GLAZY is the personal portfolio and client-facing project showcase of [Krutik Mh
 | 3D | three.js, React Three Fiber, drei (custom GLSL "glaze" surface, iridescent shards, wireframe construction scene) |
 | Motion | Motion (`motion/react`) for reveals, scroll-linked transforms and route transitions; Lenis for smooth scrolling |
 | UI primitives | Radix Dialog (resume viewer, mobile menu); spotlight pattern after 21st.dev |
-| Fonts | Bricolage Grotesque, Instrument Serif, Geist, Geist Mono via `next/font` |
+| Fonts | Archivo (display, expanded), Manrope (body), Fraunces (accent italics), Geist Mono via `next/font` |
 | Hosting | Vercel |
 
 ## Features

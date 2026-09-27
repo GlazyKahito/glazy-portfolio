@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Archivo, Fraunces, Geist_Mono, Manrope } from "next/font/google";
 import { Cursor } from "@/components/ui/Cursor";
 import { Grain } from "@/components/ui/Grain";
 import { Providers } from "@/components/ui/Providers";
@@ -7,22 +7,25 @@ import { Nav } from "@/components/navigation/Nav";
 import { site } from "@/data/site";
 import "./globals.css";
 
-const display = Bricolage_Grotesque({
+/* Display: a variable grotesk with a width axis, set slightly expanded for headlines. */
+const display = Archivo({
   subsets: ["latin"],
   variable: "--font-display",
-  axes: ["opsz", "wdth"],
+  axes: ["wdth"],
   display: "swap",
 });
 
-const serif = Instrument_Serif({
+/* Accent italics with optical sizing, used for the editorial words. */
+const serif = Fraunces({
   subsets: ["latin"],
-  weight: "400",
   style: ["normal", "italic"],
   variable: "--font-serif",
+  axes: ["opsz", "SOFT"],
   display: "swap",
 });
 
-const sans = Geist({
+/* Body: neutral, geometric, very legible at small sizes. */
+const sans = Manrope({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
