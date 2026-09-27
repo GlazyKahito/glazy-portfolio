@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useLenis } from "lenis/react";
+import dynamic from "next/dynamic";
 import {
   createContext,
   useCallback,
@@ -12,11 +13,20 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import type { WarpClock } from "@/components/3d/WarpIntro";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { useDevice } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 
+const WarpIntro = dynamic(() => import("@/components/3d/WarpIntro").then((m) => m.WarpIntro), {
+  ssr: false,
+  loading: () => null,
+});
+
 /** Total time the overlay stays before the curtain lifts (ms). */
-const INTRO_MS = 2400;
+const INTRO_MS = 3400;
+/** Shorter sequence when the warp tunnel cannot run. */
+const INTRO_STATIC_MS = 2200;
 
 interface IntroContextValue {
   /** True once the opening sequence has finished (or was skipped). */
@@ -30,18 +40,25 @@ export function useIntro() {
 }
 
 /**
- * Opening sequence. Plays once per browser session on first load:
- * the wordmark traces itself while a counter runs, then the curtain lifts.
- * Skipped entirely for reduced-motion users and on return visits in-session.
+ * Opening sequence, after the DCN Virtual Lab boot: a warp tunnel of light
+ * streaks accelerates, collapses onto the vanishing point, the wordmark
+ * traces itself, and the curtain lifts into the hero. Plays on every full
+ * load of the home page; skipped for reduced motion.
  */
 export function IntroProvider({ children }: { children: ReactNode }) {
   const reduce = useReducedMotion();
   const lenis = useLenis();
+  const { webgl, tier, pending } = useDevice();
+  const warp = !pending && webgl && tier !== "low";
+  const total = warp ? INTRO_MS : INTRO_STATIC_MS;
+
   // `null` = undecided (server / first client render). Keeps SSR markup stable.
   const [show, setShow] = useState<boolean | null>(null);
   const [done, setDone] = useState(false);
   const [count, setCount] = useState(0);
+  const [flash, setFlash] = useState(false);
   const finishedRef = useRef(false);
+  const clock = useRef<WarpClock>({ t: 0 });
 
   const finish = useCallback(() => {
     if (finishedRef.current) return;
@@ -51,15 +68,13 @@ export function IntroProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.introDone = "true";
   }, []);
 
-  // Decide on mount whether to play. Plays on every full load of the home
-  // page (client-side navigations never remount this provider).
+  // Decide on mount whether to play (client-side navigations never remount this).
   useEffect(() => {
     const isHome = window.location.pathname === "/";
     if (reduce || !isHome) {
       finish();
       return;
     }
-    // Defer one frame: state is set from a callback, not synchronously in the effect.
     const raf = requestAnimationFrame(() => setShow(true));
     return () => cancelAnimationFrame(raf);
   }, [reduce, finish]);
@@ -71,26 +86,31 @@ export function IntroProvider({ children }: { children: ReactNode }) {
     if (show === true && !finishedRef.current) lenis?.stop();
   }, [lenis, show]);
 
-  // Run the sequence.
+  // Run the sequence: drive the warp clock, the counter and the flash.
   useEffect(() => {
     if (show !== true) return;
     lenisRef.current?.stop();
     const start = performance.now();
     let raf = 0;
+    let flashed = false;
     const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / (INTRO_MS - 500));
-      // Ease the counter so it decelerates into 100.
-      const eased = 1 - Math.pow(1 - t, 3);
-      setCount(Math.round(eased * 100));
+      const elapsed = (now - start) / 1000;
+      clock.current.t = elapsed;
+      const t = Math.min(1, elapsed / ((total - 700) / 1000));
+      setCount(Math.round((1 - Math.pow(1 - t, 3)) * 100));
+      if (warp && !flashed && elapsed > 2.05) {
+        flashed = true;
+        setFlash(true);
+      }
       if (t < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    const timer = window.setTimeout(finish, INTRO_MS);
+    const timer = window.setTimeout(finish, total);
     return () => {
       cancelAnimationFrame(raf);
       window.clearTimeout(timer);
     };
-  }, [show, finish]);
+  }, [show, finish, total, warp]);
 
   // Release scroll once the curtain has left.
   useEffect(() => {
@@ -98,6 +118,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
   }, [done, lenis]);
 
   const value = useMemo(() => ({ done }), [done]);
+  const markDelay = warp ? 1.6 : 0.15;
 
   return (
     <IntroContext.Provider value={value}>
@@ -106,16 +127,31 @@ export function IntroProvider({ children }: { children: ReactNode }) {
         {show === true && (
           <motion.div
             key="intro"
-            className="fixed inset-0 z-[110] flex items-center justify-center bg-ink"
+            className="fixed inset-0 z-[110] overflow-hidden bg-ink"
             initial={{ y: 0 }}
             exit={{ y: "-100%" }}
             transition={{ duration: 0.95, ease: ease.inOutQuart }}
             aria-hidden
           >
-            <div className="container-x flex w-full max-w-[1400px] flex-col items-center gap-10">
-              <div className="w-[min(58vw,380px)] text-bone">
-                <Wordmark draw delay={0.15} duration={0.8} strokeWidth={8} />
-              </div>
+            {warp && <WarpIntro clock={clock} />}
+
+            {/* Collapse flash */}
+            <motion.div
+              className="pointer-events-none absolute inset-0 bg-bone"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: flash ? [0, 0.85, 0] : 0 }}
+              transition={{ duration: 0.7, times: [0, 0.15, 1], ease: "easeOut" }}
+            />
+
+            <div className="container-x relative flex h-full w-full flex-col items-center justify-center gap-10">
+              <motion.div
+                className="w-[min(58vw,380px)] text-bone"
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: markDelay, duration: 0.6, ease: ease.outExpo }}
+              >
+                <Wordmark draw delay={markDelay} duration={0.75} strokeWidth={8} />
+              </motion.div>
               <div className="flex w-full max-w-[380px] items-end justify-between">
                 <motion.span
                   className="label-mono"
@@ -125,21 +161,18 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                 >
                   a digital space
                 </motion.span>
-                <span className="font-mono text-sm tabular-nums text-bone-2">
-                  {String(count).padStart(3, "0")}
-                </span>
+                <span className="font-mono text-sm tabular-nums text-bone-2">{String(count).padStart(3, "0")}</span>
               </div>
               <div className="h-px w-full max-w-[380px] overflow-hidden bg-line">
                 <motion.div
                   className="h-full bg-bone"
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
-                  transition={{ duration: (INTRO_MS - 500) / 1000, ease: ease.outQuart }}
+                  transition={{ duration: (total - 700) / 1000, ease: ease.outQuart }}
                   style={{ transformOrigin: "left" }}
                 />
               </div>
             </div>
-            {/* Bottom edge highlight so the curtain reads as a surface when it lifts. */}
             <div className="absolute inset-x-0 bottom-0 h-px bg-line-strong" />
           </motion.div>
         )}

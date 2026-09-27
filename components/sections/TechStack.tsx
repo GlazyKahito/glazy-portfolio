@@ -119,7 +119,7 @@ function OrbitSystem({ selected, onSelect }: { selected: Skill | null; onSelect:
               onClick={() => onSelect(skill)}
               aria-pressed={selected?.name === skill.name}
               className={cn(
-                "absolute left-0 top-0 whitespace-nowrap rounded-full border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-300 will-change-transform",
+                "absolute left-0 top-0 min-h-9 whitespace-nowrap rounded-full border px-3.5 py-2 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors duration-300 will-change-transform",
                 selected?.name === skill.name
                   ? "border-glaze bg-glaze text-ink"
                   : "border-line-strong bg-ink/80 text-bone backdrop-blur hover:border-bone",
