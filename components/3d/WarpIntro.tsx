@@ -25,9 +25,9 @@ const tmpColor = new THREE.Color();
 const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.min(1, Math.max(0, t));
 
 function choreography(t: number) {
-  const speed = t < 0.3 ? 1 : t < 1.5 ? lerp(1, 6.5, (t - 0.3) / 1.2) : t < 2.1 ? 6.5 : lerp(6.5, 0.6, (t - 2.1) / 0.9);
-  const collapse = t < 1.9 ? 0 : lerp(0, 1, (t - 1.9) / 0.7);
-  const intensity = t < 0.5 ? lerp(0, 1, t / 0.5) : t < 2.5 ? 1 : lerp(1, 0, (t - 2.5) / 0.7);
+  const speed = t < 0.25 ? 1 : t < 1.3 ? lerp(1, 6.5, (t - 0.25) / 1.05) : t < 1.8 ? 6.5 : lerp(6.5, 0.6, (t - 1.8) / 0.8);
+  const collapse = t < 1.65 ? 0 : lerp(0, 1, (t - 1.65) / 0.6);
+  const intensity = t < 0.45 ? lerp(0, 1, t / 0.45) : t < 2.2 ? 1 : lerp(1, 0, (t - 2.2) / 0.6);
   return { speed, collapse, intensity };
 }
 

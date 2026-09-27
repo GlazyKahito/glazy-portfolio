@@ -165,9 +165,9 @@ function Wheel() {
         <div className="container-x flex items-center justify-between pt-24">
           <div className="mx-auto flex w-full max-w-[1500px] items-center justify-between">
             <span className="label-mono">
-              Exhibition <span className="mx-1 text-bone-3/60">/</span>{" "}
+              Exhibition <span className="mx-1 text-bone-3">/</span>{" "}
               <span className="text-bone tabular-nums">{String(active + 1).padStart(2, "0")}</span>
-              <span className="text-bone-3/60"> — {String(N).padStart(2, "0")}</span>
+              <span className="text-bone-3"> — {String(N).padStart(2, "0")}</span>
             </span>
             <div className="flex items-center gap-2">
               <button

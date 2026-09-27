@@ -81,8 +81,9 @@ export function Hero() {
       <div className="container-x relative z-10 flex flex-1 flex-col justify-end pb-8 pt-[calc(var(--nav-height)+3vh)] sm:pb-10">
         <div className="mx-auto flex w-full max-w-[1500px] flex-col">
           <motion.div style={{ y: markY }} className="w-full">
+            {/* Fixed aspect box reserves the wordmark's space before it mounts (no layout shift). */}
             <motion.div
-              className="w-full text-bone"
+              className="aspect-[364/80] w-full text-bone"
               initial={{ opacity: 0 }}
               animate={{ opacity: done ? 1 : 0 }}
               transition={{ duration: 0.5 }}
@@ -107,7 +108,7 @@ export function Hero() {
 
           <motion.div
             style={{ y: contentY, opacity: contentOpacity }}
-            className="mt-8 grid grid-cols-1 gap-8 md:mt-12 md:grid-cols-12 md:items-end lg:mt-14"
+            className="mt-8 grid min-h-[17rem] grid-cols-1 gap-8 md:mt-12 md:min-h-[12rem] md:grid-cols-12 md:items-end lg:mt-14"
           >
             <div className="md:col-span-7 lg:col-span-7">
               {done && (

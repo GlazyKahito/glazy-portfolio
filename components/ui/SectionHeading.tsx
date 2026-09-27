@@ -31,7 +31,7 @@ export function SectionHeading({
     <div className={cn("flex flex-col gap-6", align === "center" && "items-center text-center", className)}>
       <div className={cn("flex w-full items-center gap-4", align === "center" && "justify-center")}>
         <span className="label-mono">
-          {index} <span className="mx-1 text-bone-3/60">/</span> {label}
+          {index} <span className="mx-1 text-bone-3">/</span> {label}
         </span>
         <motion.span
           aria-hidden

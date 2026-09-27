@@ -68,7 +68,7 @@ function OrbitSystem({ selected, onSelect }: { selected: Skill | null; onSelect:
             const depth = (Math.sin(a) + 1) / 2; // 0 back … 1 front
             const scale = 0.78 + depth * 0.32;
             chip.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, 0) rotateX(${-TILT}deg) scale(${scale})`;
-            chip.style.opacity = String(0.45 + depth * 0.55);
+            chip.style.opacity = String(0.65 + depth * 0.35);
             chip.style.zIndex = String(Math.round(depth * 100));
           });
         });
