@@ -60,7 +60,24 @@ export function Hero() {
   // paint, behind the intro overlay, and counts as LCP). Once mounted it snaps to hidden
   // and then plays its entrance when the curtain lifts.
   const mounted = useMounted();
-  const play = mounted ? done : true;
+  // With `font-display: block` the headline only paints once Archivo/Fraunces arrive, so
+  // the snap-to-hidden waits for the fonts (plus a frame to paint). Behind the overlay this
+  // is invisible; it just guarantees the first paint happens before the words are masked.
+  const [fontsReady, setFontsReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    document.fonts.ready.then(() => {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (!cancelled) setFontsReady(true);
+        }),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const play = mounted && fontsReady ? done : true;
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const contentY = useTransform(scrollYProgress, [0, 1], [0, -140]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
