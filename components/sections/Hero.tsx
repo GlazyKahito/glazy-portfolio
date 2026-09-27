@@ -154,7 +154,7 @@ export function Hero() {
                 staggerDelay={0.028}
                 text={STATEMENT}
                 accent={["show", "their", "working:"]}
-                className="mt-5 max-w-[42rem] font-display text-[clamp(1.35rem,2.6vw,2.1rem)] font-medium leading-[1.2] tracking-[-0.02em] text-bone"
+                className="mt-5 min-h-[8lh] max-w-[42rem] font-display text-[clamp(1.35rem,2.6vw,2.1rem)] font-medium leading-[1.2] tracking-[-0.02em] text-bone sm:min-h-[6lh]"
               />
             </div>
             <div className="md:col-span-5 md:flex md:justify-end">

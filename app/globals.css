@@ -95,18 +95,15 @@
     border-radius: 2px;
   }
 
+  /* No font-stretch on headings: the fallback font cannot match an expanded width,
+     and the mismatch reflowed the hero on font swap (layout shift). */
   h1,
   h2,
   h3,
   h4 {
     font-family: var(--font-display);
-    font-stretch: 106%;
     letter-spacing: -0.03em;
     text-wrap: balance;
-  }
-
-  .font-display {
-    font-stretch: 106%;
   }
 
   .font-serif {
