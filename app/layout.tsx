@@ -7,21 +7,27 @@ import { Nav } from "@/components/navigation/Nav";
 import { site } from "@/data/site";
 import "./globals.css";
 
-/* Display: a variable grotesk with a width axis, set slightly expanded for headlines. */
+/*
+ * Display: a variable grotesk with a width axis, set slightly expanded for headlines.
+ * `display: "block"` (not swap): the hero headline is server-rendered behind the
+ * intro, and a fallback→Archivo swap would reflow its lines and shift the whole
+ * bottom-anchored hero (measured CLS 0.41). The preloaded file arrives in a few
+ * hundred ms, well inside the opening sequence, so nothing visible is delayed.
+ */
 const display = Archivo({
   subsets: ["latin"],
   variable: "--font-display",
   axes: ["wdth"],
-  display: "swap",
+  display: "block",
 });
 
-/* Accent italics with optical sizing, used for the editorial words. */
+/* Accent italics with optical sizing, used for the editorial words (same reasoning). */
 const serif = Fraunces({
   subsets: ["latin"],
   style: ["normal", "italic"],
   variable: "--font-serif",
   axes: ["opsz", "SOFT"],
-  display: "swap",
+  display: "block",
 });
 
 /* Body: neutral, geometric, very legible at small sizes. */
