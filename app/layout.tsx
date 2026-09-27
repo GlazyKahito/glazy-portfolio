@@ -8,26 +8,24 @@ import { site } from "@/data/site";
 import "./globals.css";
 
 /*
- * Display: a variable grotesk with a width axis, set slightly expanded for headlines.
- * `display: "block"` (not swap): the hero headline is server-rendered behind the
- * intro, and a fallback→Archivo swap would reflow its lines and shift the whole
- * bottom-anchored hero (measured CLS 0.41). The preloaded file arrives in a few
- * hundred ms, well inside the opening sequence, so nothing visible is delayed.
+ * Display: a variable grotesk. next/font ships a size-adjusted fallback so the
+ * swap barely reflows; headline boxes reserve their height (see Hero) so the
+ * swap cannot move the layout. `swap` keeps the first paint (LCP) early.
  */
 const display = Archivo({
   subsets: ["latin"],
   variable: "--font-display",
   axes: ["wdth"],
-  display: "block",
+  display: "swap",
 });
 
-/* Accent italics with optical sizing, used for the editorial words (same reasoning). */
+/* Accent italics with optical sizing, used for the editorial words. */
 const serif = Fraunces({
   subsets: ["latin"],
   style: ["normal", "italic"],
   variable: "--font-serif",
   axes: ["opsz", "SOFT"],
-  display: "block",
+  display: "swap",
 });
 
 /* Body: neutral, geometric, very legible at small sizes. */

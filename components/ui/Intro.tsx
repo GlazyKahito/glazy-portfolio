@@ -204,7 +204,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                 e.stopPropagation();
                 finish();
               }}
-              className="absolute bottom-6 right-[var(--gutter)] rounded-full border border-line-strong px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-bone-2 transition-colors hover:border-bone hover:text-bone"
+              className="absolute bottom-6 right-[var(--gutter)] min-w-[7.5rem] rounded-full border border-line-strong px-4 py-2 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-bone-2 transition-colors hover:border-bone hover:text-bone"
             >
               Skip intro
             </button>
