@@ -24,7 +24,7 @@ const WarpIntro = dynamic(() => import("@/components/3d/WarpIntro").then((m) => 
 });
 
 /** Total time the overlay stays before the curtain lifts (ms). */
-const INTRO_MS = 3400;
+const INTRO_MS = 3000;
 /** Shorter sequence when the warp tunnel cannot run. */
 const INTRO_STATIC_MS = 2200;
 
@@ -98,7 +98,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
       clock.current.t = elapsed;
       const t = Math.min(1, elapsed / ((total - 700) / 1000));
       setCount(Math.round((1 - Math.pow(1 - t, 3)) * 100));
-      if (warp && !flashed && elapsed > 2.05) {
+      if (warp && !flashed && elapsed > 1.8) {
         flashed = true;
         setFlash(true);
       }
@@ -118,7 +118,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
   }, [done, lenis]);
 
   const value = useMemo(() => ({ done }), [done]);
-  const markDelay = warp ? 1.6 : 0.15;
+  const markDelay = warp ? 1.35 : 0.15;
 
   return (
     <IntroContext.Provider value={value}>

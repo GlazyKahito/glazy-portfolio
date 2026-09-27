@@ -67,7 +67,7 @@ export function Contact({ compact = false }: { compact?: boolean }) {
       <div className="relative mx-auto max-w-[1500px]">
         {!compact && (
           <div className="flex items-center gap-4">
-            <span className="label-mono">05 <span className="mx-1 text-bone-3/60">/</span> Contact</span>
+            <span className="label-mono">05 <span className="mx-1 text-bone-3">/</span> Contact</span>
             <span aria-hidden className="h-px flex-1 bg-line" />
           </div>
         )}

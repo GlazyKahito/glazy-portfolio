@@ -47,7 +47,7 @@ function Section({
       viewport={viewportOnce}
     >
       <motion.h2 id={`${id}-title`} className="label-mono" variants={fadeUp}>
-        {index} <span className="mx-1 text-bone-3/60">/</span> {title}
+        {index} <span className="mx-1 text-bone-3">/</span> {title}
       </motion.h2>
       <div className="min-w-0">{children}</div>
     </motion.section>
