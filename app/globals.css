@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                        */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /*
+   * Palette: Apple-grade neutrals (true black, #F5F5F7 white, graphite greys)
+   * with one Ferrari rosso accent. "glaze" is the accent token used everywhere.
+   */
+  --color-ink: #050506;
+  --color-ink-2: #0c0c0e;
+  --color-ink-3: #161618;
+  --color-ink-4: #1d1d1f;
+  --color-bone: #f5f5f7;
+  --color-bone-2: #a1a1a6;
+  --color-bone-3: #6e6e73;
+  --color-line: rgb(245 245 247 / 0.12);
+  --color-line-strong: rgb(245 245 247 / 0.24);
+  --color-glaze: #ff2d1a;
+  --color-glaze-2: #c8102e;
+  --color-glaze-dim: rgb(255 45 26 / 0.14);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  --breakpoint-3xl: 1920px;
+
+  --text-display-xl: clamp(4.5rem, 18vw, 22rem);
+  --text-display-lg: clamp(3rem, 9vw, 9rem);
+  --text-display-md: clamp(2.25rem, 5.5vw, 5.5rem);
+  --text-display-sm: clamp(1.75rem, 3.2vw, 3rem);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                 */
+/* ------------------------------------------------------------------ */
+@layer base {
+  :root {
+    color-scheme: dark;
+    --nav-height: 88px;
+    --gutter: clamp(1rem, 4vw, 4rem);
+  }
+
+  html {
+    background: var(--color-ink);
+    scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
+  body {
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+    overflow-anchor: none;
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: var(--color-glaze);
+    color: var(--color-bone);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-glaze);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  img,
+  video,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  /* When the custom cursor is active, hide the native one on interactive things. */
+  html[data-cursor="custom"] body,
+  html[data-cursor="custom"] a,
+  html[data-cursor="custom"] button,
+  html[data-cursor="custom"] [role="button"] {
+    cursor: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Utilities                                                            */
+/* ------------------------------------------------------------------ */
+@utility container-x {
+  padding-inline: var(--gutter);
+}
+
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-bone-3);
+}
+
+@utility hairline {
+  border-color: var(--color-line);
+}
+
+/* A sheen that moves across the wordmark: thin-film interference colours. */
+@utility glaze-text {
+  background: linear-gradient(
+    100deg,
+    var(--color-bone) 0%,
+    var(--color-bone) 35%,
+    #ff2d1a 47%,
+    #ff7a5c 53%,
+    #ffd9a8 58%,
+    var(--color-bone) 70%,
+    var(--color-bone) 100%
+  );
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility glass {
+  background: rgb(12 12 14 / 0.64);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--color-line);
+}
+
+@utility mask-fade-b {
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+}
+
+@utility mask-fade-x {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion preferences                                                   */
+/* ------------------------------------------------------------------ */
+/*
+ * Reduced motion: stop the decorative loops (grain drift, scan lines, pulses)
+ * and keep hover/opacity transitions short. Content animations driven by
+ * Motion check the preference themselves.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [class*="[animation:"] {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.15s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Keyframes used by CSS-only pieces (grain, sheen, status pulse). */
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -3%); }
+  30% { transform: translate(3%, -1%); }
+  50% { transform: translate(-1%, 3%); }
+  70% { transform: translate(2%, 2%); }
+  90% { transform: translate(-3%, 1%); }
+}
+
+@keyframes sheen {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(255 45 26 / 0.55); }
+  70% { box-shadow: 0 0 0 10px rgb(255 45 26 / 0); }
+}
+
+@keyframes scan {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
