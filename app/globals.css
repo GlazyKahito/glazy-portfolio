@@ -52,6 +52,9 @@
     background: var(--color-ink);
     scroll-behavior: auto;
     -webkit-text-size-adjust: 100%;
+    /* Keep the scrollbar gutter when Lenis (intro, menu, viewer) sets overflow:hidden,
+       otherwise the viewport widens by the scrollbar and the whole page reflows (CLS). */
+    scrollbar-gutter: stable;
   }
 
   html.lenis,
