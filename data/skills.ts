@@ -12,12 +12,12 @@ export const skills: Skill[] = [
     name: "TypeScript",
     category: "Languages",
     usage: "Default language for every recent project, from ScamShield's analysis engine to the DCN lab.",
-    projects: ["scamshield", "dcn-virtual-lab", "grove"],
+    projects: ["scamshield", "dcn-virtual-lab"],
   },
   {
     name: "JavaScript",
     category: "Languages",
-    usage: "Vanilla JS for the GreyAtom dashboard; Node.js across CRM360 and Grove.",
+    usage: "Vanilla JS for the GreyAtom dashboard and Grove; Node.js across CRM360.",
     projects: ["greyatom-dashboard", "crm360", "grove"],
   },
   {
@@ -78,8 +78,8 @@ export const skills: Skill[] = [
   {
     name: "Node.js",
     category: "Backend",
-    usage: "API runtime for CRM360 and Grove; serverless functions on Vercel.",
-    projects: ["crm360", "grove"],
+    usage: "API runtime for CRM360; serverless functions on Vercel.",
+    projects: ["crm360"],
   },
   {
     name: "Express",
@@ -130,8 +130,8 @@ export const skills: Skill[] = [
   {
     name: "Three.js",
     category: "3D & Graphics",
-    usage: "Warp-tunnel opening sequence in the DCN lab and the glazed surface in this portfolio.",
-    projects: ["dcn-virtual-lab"],
+    usage: "Warp-tunnel opening sequence in the DCN lab, the landing scene in Grove, and the glazed surface in this portfolio.",
+    projects: ["dcn-virtual-lab", "grove"],
   },
   {
     name: "React Three Fiber",
