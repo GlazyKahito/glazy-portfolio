@@ -5,7 +5,7 @@ import { useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 
 /**
- * Warp tunnel for the opening sequence, after the DCN Virtual Lab's intro:
+ * GLAZY's warp tunnel for the opening sequence:
  * an instanced field of light streaks rushing past the camera, rings for
  * depth, a barrel roll that tightens with speed, then a collapse onto the
  * vanishing point as the wordmark forms.

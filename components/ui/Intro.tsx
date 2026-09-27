@@ -45,7 +45,7 @@ export function useIntro() {
 }
 
 /**
- * Opening sequence, after the DCN Virtual Lab boot: a warp tunnel of light
+ * GLAZY's opening sequence: a warp tunnel of light
  * streaks accelerates, collapses onto the vanishing point, the wordmark
  * traces itself, and the curtain lifts into the hero.
  *
