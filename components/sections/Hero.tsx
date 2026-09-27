@@ -10,6 +10,7 @@ import { ResumeViewer } from "@/components/ui/ResumeViewer";
 import { ScrambleText } from "@/components/ui/ScrambleText";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { profile } from "@/data/profile";
+import { useMounted } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 
 const STATEMENT =
@@ -54,7 +55,12 @@ function LocalTime() {
 
 export function Hero() {
   const ref = useRef<HTMLElement>(null);
-  const { done } = useIntro();
+  const { done, prime } = useIntro();
+  // Server HTML and the hydration render show the hero content (so it paints at first
+  // paint, behind the intro overlay, and counts as LCP). Once mounted it snaps to hidden
+  // and then plays its entrance when the curtain lifts.
+  const mounted = useMounted();
+  const play = mounted ? done : true;
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const contentY = useTransform(scrollYProgress, [0, 1], [0, -140]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
@@ -67,7 +73,8 @@ export function Hero() {
       className="relative flex min-h-[100svh] flex-col overflow-hidden"
       aria-label="Introduction"
     >
-      <CanvasGate scene="hero" scroll={scrollYProgress} fallback={<HeroFallback />} className="absolute inset-0" />
+      {/* The WebGL surface waits until the intro is about to lift: one GPU context at a time. */}
+      <CanvasGate scene="hero" scroll={scrollYProgress} fallback={<HeroFallback />} className="absolute inset-0" defer={!prime} />
 
       {/* Depth: vertical guide lines that sit between the surface and the type. */}
       <div aria-hidden className="container-x pointer-events-none absolute inset-0 z-[1]">
@@ -111,33 +118,30 @@ export function Hero() {
             className="mt-8 grid min-h-[17rem] grid-cols-1 gap-8 md:mt-12 md:min-h-[12rem] md:grid-cols-12 md:items-end lg:mt-14"
           >
             <div className="md:col-span-7 lg:col-span-7">
-              {done && (
-                <>
-                  <Reveal immediate delay={0.9} variant="fade">
-                    <p className="label-mono flex flex-wrap gap-x-3 gap-y-1">
-                      {profile.roles.map((r, i) => (
-                        <span key={r} className="flex items-center gap-3">
-                          {i > 0 && <span aria-hidden className="h-px w-4 bg-bone-3/50" />}
-                          <ScrambleText text={r} delay={1000 + i * 180} duration={1100} />
-                        </span>
-                      ))}
-                    </p>
-                  </Reveal>
-                  <RevealWords
-                    as="h1"
-                    immediate
-                    delay={1.05}
-                    staggerDelay={0.028}
-                    text={STATEMENT}
-                    accent={["show", "their", "working:"]}
-                    className="mt-5 max-w-[42rem] font-display text-[clamp(1.35rem,2.6vw,2.1rem)] font-medium leading-[1.2] tracking-[-0.02em] text-bone"
-                  />
-                </>
-              )}
+              {/* Rendered visible in the server HTML (paints at first paint, behind the intro),
+                  snapped hidden on hydration, then played once the curtain lifts. */}
+              <Reveal play={play} delay={0.9} variant="fade">
+                <p className="label-mono flex flex-wrap gap-x-3 gap-y-1">
+                  {profile.roles.map((r, i) => (
+                    <span key={r} className="flex items-center gap-3">
+                      {i > 0 && <span aria-hidden className="h-px w-4 bg-bone-3/50" />}
+                      <ScrambleText text={r} play={done} delay={1000 + i * 180} duration={1100} />
+                    </span>
+                  ))}
+                </p>
+              </Reveal>
+              <RevealWords
+                as="h1"
+                play={play}
+                delay={1.05}
+                staggerDelay={0.028}
+                text={STATEMENT}
+                accent={["show", "their", "working:"]}
+                className="mt-5 max-w-[42rem] font-display text-[clamp(1.35rem,2.6vw,2.1rem)] font-medium leading-[1.2] tracking-[-0.02em] text-bone"
+              />
             </div>
             <div className="md:col-span-5 md:flex md:justify-end">
-              {done && (
-                <Reveal immediate delay={1.5} variant="fade">
+              <Reveal play={play} delay={1.5} variant="fade">
                   <div className="flex flex-wrap gap-3">
                     <MagneticButton href="/#projects" icon={<ArrowIcon />} size="lg">
                       View projects
@@ -159,8 +163,7 @@ export function Hero() {
                       </button>
                     </ResumeViewer>
                   </div>
-                </Reveal>
-              )}
+              </Reveal>
             </div>
           </motion.div>
 

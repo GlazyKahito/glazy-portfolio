@@ -34,13 +34,15 @@ interface CanvasGateProps {
   scroll?: MotionValue<number>;
   value?: number;
   className?: string;
+  /** Keep showing the fallback until this turns false (e.g. while the intro plays). */
+  defer?: boolean;
 }
 
 /**
  * Decides whether a WebGL scene is worth rendering on this device and only
  * renders frames while the scene is on screen and the tab is visible.
  */
-export function CanvasGate({ scene, fallback, scroll, value, className }: CanvasGateProps) {
+export function CanvasGate({ scene, fallback, scroll, value, className, defer = false }: CanvasGateProps) {
   const { tier, reducedMotion, webgl, pending } = useDevice();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { margin: "20% 0px 20% 0px" });
@@ -64,7 +66,7 @@ export function CanvasGate({ scene, fallback, scroll, value, className }: Canvas
 
   // Reduced motion keeps the scene (it is the visual identity) but the scenes
   // read `reducedMotion` and slow their idle animation right down.
-  const allowed = !pending && webgl && tier !== "low" && !failed;
+  const allowed = !pending && !defer && webgl && tier !== "low" && !failed;
 
   return (
     <div ref={ref} className={className} aria-hidden>
