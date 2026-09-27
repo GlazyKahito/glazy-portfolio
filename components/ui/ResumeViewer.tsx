@@ -102,11 +102,32 @@ export function ResumeViewer({ children, onOpen }: ResumeViewerProps) {
 
                   <div className="relative flex-1 overflow-auto bg-ink-2">
                     {embed ? (
-                      <iframe
-                        src={`${profile.resume}#toolbar=0&navpanes=0&view=FitH`}
-                        title="Resume PDF"
+                      /* <object> renders the PDF inline where a viewer exists and shows the
+                         fallback (preview + open link) where it does not. */
+                      <object
+                        data={`${profile.resume}#toolbar=0&navpanes=0&view=FitH`}
+                        type="application/pdf"
+                        aria-label="Resume PDF"
                         className="h-full w-full"
-                      />
+                      >
+                        <div className="flex flex-col items-center gap-5 p-6">
+                          <Image
+                            src="/resume/preview.jpg"
+                            alt="First page of Krutik Mhatre's resume"
+                            width={1224}
+                            height={1584}
+                            className="w-full max-w-[820px] rounded-md border border-line"
+                          />
+                          <a
+                            href={profile.resume}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="flex items-center justify-center gap-2 rounded-full border border-line-strong px-6 py-3 font-mono text-[11px] uppercase tracking-[0.18em]"
+                          >
+                            Open full PDF <ArrowUpRight />
+                          </a>
+                        </div>
+                      </object>
                     ) : (
                       <div className="flex flex-col items-center gap-5 p-4">
                         <Image
