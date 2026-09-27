@@ -294,6 +294,7 @@ export const projects: Project[] = [
       height: 900,
     },
     mobileImage: { src: "/projects/grove/mobile.jpg", alt: "Grove on mobile", width: 390, height: 844 },
+    github: "https://github.com/GlazyKahito/grove",
     live: "https://grove-habit-tracker-vert.vercel.app",
     caseStudy: true,
     hue: 120,
