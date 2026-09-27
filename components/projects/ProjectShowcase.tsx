@@ -87,7 +87,7 @@ function WheelCard({
           />
           <BrowserFrame
             image={project.image}
-            url={project.live ?? project.github}
+            url={active ? (project.live ?? project.github) : undefined}
             tint={tint}
             sizes="(min-width: 1024px) 58vw, 100vw"
             className={cn("transition-[border-color] duration-700", active ? "border-bone/30" : "border-line")}
