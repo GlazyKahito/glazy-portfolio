@@ -24,8 +24,9 @@ export function BrowserFrame({ image, url, className, priority, sizes = "60vw", 
           <span className="h-2 w-2 rounded-full bg-bone-3/40" />
           <span className="h-2 w-2 rounded-full bg-bone-3/25" />
         </span>
-        <span className="mx-auto flex h-5 max-w-[60%] items-center truncate rounded-full border border-line bg-ink px-3 font-mono text-[9px] tracking-[0.12em] text-bone-3">
-          {url ? prettyUrl(url) : "localhost"}
+        {/* The address text is only rendered when a URL is given; dimmed (inactive) cards pass none. */}
+        <span className="mx-auto flex h-5 min-w-[40%] max-w-[60%] items-center justify-center truncate rounded-full border border-line bg-ink px-3 font-mono text-[9px] tracking-[0.12em] text-bone-2">
+          {url ? prettyUrl(url) : null}
         </span>
       </div>
       <div className="relative aspect-[16/10] bg-ink-2">
