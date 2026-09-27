@@ -54,7 +54,8 @@ export function ScrambleText({ text, play = true, delay = 0, duration = 900, cla
   }, [play, text]);
 
   return (
-    <span className={className} onPointerEnter={hover ? run : undefined} aria-label={text}>
+    <span className={className} onPointerEnter={hover ? run : undefined}>
+      <span className="sr-only">{text}</span>
       <span aria-hidden>{output}</span>
     </span>
   );

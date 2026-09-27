@@ -90,8 +90,8 @@ export function RevealWords({
       variants={stagger(staggerDelay, delay)}
       initial="hidden"
       {...(immediate ? { animate: "visible" } : { whileInView: "visible", viewport: viewportOnce })}
-      aria-label={text}
     >
+      <span className="sr-only">{text}</span>
       {words.map((word, i) => {
         const clean = word.replace(/[^\w']/g, "").toLowerCase();
         const isAccent = accents.has(clean);

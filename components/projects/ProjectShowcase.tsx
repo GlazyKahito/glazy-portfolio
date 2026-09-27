@@ -65,7 +65,6 @@ function WheelCard({
       >
         <a
           href={`/projects/${project.slug}`}
-          aria-label={active ? `Open ${project.title}` : `Show ${project.title}`}
           aria-current={active ? "true" : undefined}
           data-cursor="view"
           data-cursor-label={active ? "Open" : "View"}
@@ -107,6 +106,9 @@ function WheelCard({
           {/* Number tag */}
           <span className="absolute -left-3 -top-3 flex h-10 w-10 items-center justify-center rounded-full border border-line-strong bg-ink font-mono text-[11px] text-bone">
             {projectNumber(project)}
+          </span>
+          <span className="sr-only">
+            {project.title} — {active ? "open project" : "show project"}
           </span>
         </a>
       </motion.div>
