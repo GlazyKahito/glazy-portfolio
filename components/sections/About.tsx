@@ -80,7 +80,7 @@ export function About() {
               {[
                 ["Based in", profile.location],
                 ["Studying", "B.Tech IT / CS, 2025–2029"],
-                ["Currently", "Web Dev Intern, Ediglobe"],
+                ["Open to", "Paid remote internships & web projects"],
               ].map(([k, v]) => (
                 <motion.div key={k} variants={fadeUp}>
                   <dt className="label-mono">{k}</dt>

@@ -33,7 +33,7 @@ export const profile: Profile = {
     {
       role: "Web Development Intern",
       company: "Ediglobe",
-      period: "July 2026 — Present",
+      period: "July 2026 — September 2026",
       bullets: [
         "Built an internal delivery-exceptions dashboard (HTML, CSS, JavaScript) for a GreyAtom Logistics brief: dynamic filtering, ticket detail views, and a submission workflow to log, filter, and resolve exceptions by priority and status.",
         "Built CRM360, a full-stack MERN CRM (MongoDB, Express.js, React, Node.js) with a sales pipeline board, contact and deal tracking, and a notifications system, deployed to Vercel.",
@@ -41,6 +41,7 @@ export const profile: Profile = {
       links: [
         { label: "Dashboard", href: "https://miniprojectwebdev.vercel.app" },
         { label: "CRM360 source", href: "https://github.com/GlazyKahito/majorprojectwebdev" },
+        { label: "Completion certificate", href: "https://www.ediglobe.com/cert/EGCC2459" },
       ],
     },
   ],
@@ -53,7 +54,7 @@ export const profile: Profile = {
     },
   ],
   about: [
-    "I'm Krutik, a B.Tech student at KJ Somaiya College of Engineering and a web development intern at Ediglobe, building full-stack products under the name GLAZY.",
+    "I'm Krutik, a B.Tech student at KJ Somaiya College of Engineering who recently completed a web development internship at Ediglobe, building full-stack products under the name GLAZY.",
     "My work sits where the web meets AI and security: an AI legal research tool that traces every argument back to its source paragraph, an AI security analyst that explains why a message looks like a scam, and a full networking virtual lab with packet simulation and fault diagnosis.",
     "I build with the MERN stack and Next.js, integrate Google Gemini into production features, and ship to Vercel. I care about products that show their working instead of returning a bare verdict.",
   ],

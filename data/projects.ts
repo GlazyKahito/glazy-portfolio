@@ -277,13 +277,13 @@ export const projects: Project[] = [
     title: "Grove",
     tagline: "You are made of what you repeat.",
     description:
-      "A polished, animation-driven habit-tracking web app built with JavaScript, Node.js and TypeScript across the front end and back end.",
+      "A free, local-first habit tracker: one tap to log a day, a year of habits in one view, and streaks that carry weight.",
     longDescription: [
       "Grove is a habit tracker designed around motion: the interface is animation-driven so that checking in on a habit feels rewarding rather than administrative.",
-      "It is built with JavaScript, Node.js and TypeScript across both the front end and the back end.",
+      "It is built with plain HTML, CSS and JavaScript plus three.js for the landing scene, and keeps every habit in the browser, so there is no account and no server.",
     ],
     category: "Frontend",
-    technologies: ["TypeScript", "JavaScript", "Node.js"],
+    technologies: ["HTML5", "CSS3", "JavaScript", "three.js"],
     year: "2026",
     status: "live",
     featured: false,
@@ -300,7 +300,8 @@ export const projects: Project[] = [
     hue: 120,
     features: [
       "Animation-driven habit check-ins",
-      "TypeScript front end and back end",
+      "Local-first: habits stay in the browser, with JSON export and import",
+      "Keyboard shortcuts and one-tap logging",
     ],
     context: "Personal project.",
   },
