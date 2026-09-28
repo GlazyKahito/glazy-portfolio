@@ -1,13 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { TransitionLink } from "@/components/ui/PageTransition";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Spotlight } from "@/components/ui/Spotlight";
 import { getProject } from "@/data/projects";
 import { skillCategories, skills, skillsByCategory } from "@/data/skills";
-import { useDevice, useMediaQuery } from "@/lib/hooks/use-device";
+import { useDevice } from "@/lib/hooks/use-device";
 import type { Skill } from "@/lib/types";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -72,7 +71,7 @@ function layout(widths: number[], size: number): Point[] {
   return pts;
 }
 
-function OrbitSystem({ selected, onSelect }: { selected: Skill | null; onSelect: (s: Skill | null) => void }) {
+export function OrbitSystem({ selected, onSelect }: { selected: Skill | null; onSelect: (s: Skill | null) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const { reducedMotion } = useDevice();
@@ -122,7 +121,7 @@ function OrbitSystem({ selected, onSelect }: { selected: Skill | null; onSelect:
 
   return (
     <div
-      className="relative mx-auto aspect-square w-full max-w-[720px] [perspective:2000px]"
+      className="relative mx-auto aspect-square w-full max-w-[min(680px,72vh)] [perspective:2000px]"
       onPointerEnter={() => (paused.current = true)}
       onPointerLeave={() => (paused.current = false)}
     >
@@ -177,9 +176,9 @@ function OrbitSystem({ selected, onSelect }: { selected: Skill | null; onSelect:
 /* ------------------------------------------------------------------ */
 /* Detail panel                                                         */
 /* ------------------------------------------------------------------ */
-function SkillDetail({ skill }: { skill: Skill | null }) {
+export function SkillDetail({ skill }: { skill: Skill | null }) {
   return (
-    <Spotlight className="glass min-h-[220px] rounded-2xl p-6 md:p-7">
+    <Spotlight className="min-h-[220px] rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-md md:p-7">
       <div aria-live="polite">
         <AnimatePresence mode="wait">
           {skill ? (
@@ -232,7 +231,7 @@ function SkillDetail({ skill }: { skill: Skill | null }) {
 /* ------------------------------------------------------------------ */
 /* Compact list for small screens                                       */
 /* ------------------------------------------------------------------ */
-function CompactStack({ selected, onSelect }: { selected: Skill | null; onSelect: (s: Skill | null) => void }) {
+export function CompactStack({ selected, onSelect }: { selected: Skill | null; onSelect: (s: Skill | null) => void }) {
   return (
     <div className="flex flex-col gap-6">
       {skillCategories.map((cat) => (
@@ -258,34 +257,5 @@ function CompactStack({ selected, onSelect }: { selected: Skill | null; onSelect
         </div>
       ))}
     </div>
-  );
-}
-
-export function TechStack() {
-  const [selected, setSelected] = useState<Skill | null>(null);
-  const wide = useMediaQuery("(min-width: 768px)", true);
-
-  return (
-    <section id="stack" className="container-x relative scroll-mt-24 overflow-x-clip py-24 md:py-32" aria-labelledby="stack-title">
-      <div className="mx-auto max-w-[1500px]">
-        <SectionHeading
-          index="04"
-          label="Stack"
-          title="The ecosystem I work in."
-          accent={["ecosystem"]}
-          description="Not a list. Hover a technology to see how it is actually used and where."
-        />
-        <div className="mt-12 grid gap-8 lg:grid-cols-12 lg:gap-12">
-          <div className="lg:col-span-8">
-            {wide ? <OrbitSystem selected={selected} onSelect={setSelected} /> : <CompactStack selected={selected} onSelect={setSelected} />}
-          </div>
-          <div className="lg:col-span-4">
-            <div className="lg:sticky lg:top-28">
-              <SkillDetail skill={selected} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }

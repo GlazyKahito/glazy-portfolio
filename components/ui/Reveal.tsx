@@ -71,38 +71,59 @@ export function Reveal({
 
 interface RevealWordsProps {
   text: string;
+  id?: string;
   className?: string;
   wordClassName?: string;
   immediate?: boolean;
   /** Controlled mode; see `Reveal`. */
   play?: boolean;
   delay?: number;
+  /** Delay between letters (or words when `by="word"`). */
   staggerDelay?: number;
   as?: "h1" | "h2" | "h3" | "p" | "span";
   /** Words rendered in the serif italic accent, matched case-insensitively. */
   accent?: string[];
+  /** Words (after cleaning) that also take the accent colour. */
+  highlight?: string[];
+  /** Animate each letter (titles) or each word (paragraphs). */
+  by?: "char" | "word";
 }
 
-const wordVariants: Variants = {
-  hidden: { ...lineReveal.hidden, transition: instant },
-  visible: lineReveal.visible,
+/*
+ * A title-sequence reveal: each letter (or word) rises out of a soft blur,
+ * slightly rotated back in depth, and settles. Opacity, transform and filter
+ * only, so it stays on the compositor.
+ */
+const unitVariants: Variants = {
+  hidden: { opacity: 0, y: "0.55em", rotateX: -55, filter: "blur(10px)", transition: instant },
+  visible: {
+    opacity: 1,
+    y: "0em",
+    rotateX: 0,
+    filter: "blur(0px)",
+    transition: { duration: 1.1, ease: ease.outExpo },
+  },
 };
 
-/** Splits text into words and reveals each with a staggered mask. */
 export function RevealWords({
   text,
+  id,
   className,
   wordClassName,
   immediate = false,
   play,
   delay = 0,
-  staggerDelay = 0.045,
+  staggerDelay,
   as = "p",
   accent = [],
+  highlight = [],
+  by = "char",
 }: RevealWordsProps) {
   const Tag = motion[as];
   const words = text.split(" ");
   const accents = new Set(accent.map((w) => w.toLowerCase()));
+  const highlights = new Set(highlight.map((w) => w.toLowerCase()));
+  const step = staggerDelay ?? (by === "char" ? 0.018 : 0.04);
 
   const control =
     play !== undefined
@@ -112,23 +133,31 @@ export function RevealWords({
         : { initial: "hidden", whileInView: "visible", viewport: viewportOnce };
 
   return (
-    <Tag className={cn("flex flex-wrap", className)} variants={stagger(staggerDelay, delay)} {...control}>
+    <Tag id={id} className={cn("flex flex-wrap [perspective:900px]", className)} variants={stagger(step, delay)} {...control}>
       <span className="sr-only">{text}</span>
       {words.map((word, i) => {
         const clean = word.replace(/[^\w']/g, "").toLowerCase();
-        const isAccent = accents.has(clean);
+        const isAccent = accents.has(clean) || accents.has(word.toLowerCase());
+        const isHighlight = highlights.has(clean);
+        const cls = cn(
+          "inline-block [transform-style:preserve-3d]",
+          isAccent && "font-serif italic text-bone-2",
+          isHighlight && "text-glaze",
+          wordClassName,
+        );
         return (
-          <span key={i} className="mr-[0.28em] inline-block overflow-hidden pb-[0.08em]" aria-hidden>
-            <motion.span
-              className={cn(
-                "inline-block",
-                isAccent && "font-serif italic font-normal text-bone-2",
-                wordClassName,
-              )}
-              variants={wordVariants}
-            >
-              {word}
-            </motion.span>
+          <span key={i} className="mr-[0.26em] inline-block whitespace-nowrap pb-[0.08em]" aria-hidden>
+            {by === "word" ? (
+              <motion.span className={cls} variants={unitVariants}>
+                {word}
+              </motion.span>
+            ) : (
+              Array.from(word).map((ch, j) => (
+                <motion.span key={j} className={cls} variants={unitVariants}>
+                  {ch}
+                </motion.span>
+              ))
+            )}
           </span>
         );
       })}

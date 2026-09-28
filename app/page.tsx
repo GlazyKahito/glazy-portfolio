@@ -1,12 +1,5 @@
-import { Hero } from "@/components/sections/Hero";
-import { Projects } from "@/components/sections/Projects";
-import { InProgress } from "@/components/sections/InProgress";
-import { About } from "@/components/sections/About";
-import { TechStack } from "@/components/sections/TechStack";
-import { Contact } from "@/components/sections/Contact";
-import { Marquee } from "@/components/ui/Marquee";
+import { SceneDeck } from "@/components/scenes/SceneDeck";
 import { profile } from "@/data/profile";
-import { projects } from "@/data/projects";
 import { site } from "@/data/site";
 
 export default function HomePage() {
@@ -25,17 +18,8 @@ export default function HomePage() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <Hero />
-      <Marquee items={[...projects.map((p) => p.title), ...profile.roles]} />
-      <Projects />
-      <InProgress />
-      <About />
-      <TechStack />
-      <Contact />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <SceneDeck />
     </>
   );
 }

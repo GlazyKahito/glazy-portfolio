@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProjectDetail } from "@/components/projects/ProjectDetail";
-import { Contact } from "@/components/sections/Contact";
+import { ContactFooter } from "@/components/scenes/Contact";
 import { getAdjacentProjects, getProject, projects } from "@/data/projects";
 import type { ImageAsset } from "@/lib/types";
 
@@ -61,7 +61,7 @@ export default async function ProjectPage({ params }: PageProps) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <ProjectDetail project={project} gallery={gallery} prev={prev} next={next} />
-      <Contact compact />
+      <ContactFooter />
     </>
   );
 }

@@ -4,9 +4,9 @@
 /* Design tokens                                                        */
 /* ------------------------------------------------------------------ */
 @theme inline {
-  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-serif), Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-display), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /*
@@ -75,7 +75,7 @@
     background: var(--color-ink);
     color: var(--color-bone);
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
+    font-feature-settings: "ss01";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -102,12 +102,22 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     text-wrap: balance;
   }
 
+  /* Instrument Serif ships one weight: never let the browser fake a bold. */
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display,
   .font-serif {
-    font-variation-settings: "opsz" 72, "SOFT" 30;
+    font-weight: 400 !important;
+    font-synthesis: none;
+  }
+
+  .font-serif {
     letter-spacing: -0.01em;
   }
 
@@ -246,4 +256,66 @@
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Scene deck                                                           */
+/* ------------------------------------------------------------------ */
+/* The home page is a deck of full-screen scenes: the page itself never scrolls. */
+html.deck-mode,
+html.deck-mode body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  height: 100%;
+}
+
+@keyframes phone-scroll {
+  0%, 12% { object-position: 50% 0%; }
+  88%, 100% { object-position: 50% 100%; }
+}
+@keyframes nudge {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(2px, 2px); }
+}
+@keyframes draw-line {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.6); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes ripple-out {
+  from { transform: scale(0.2); opacity: 0.9; }
+  to { transform: scale(2.4); opacity: 0; }
+}
+@keyframes wind-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-52px); }
+}
+@keyframes sun-rise {
+  from { transform: translateY(10px); opacity: 0.4; }
+  to { transform: translateY(-4px); opacity: 1; }
+}
+@keyframes wave-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-30px); }
+}
+
+/* Loading screen: the film leader. */
+@keyframes leader-sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes projector-flicker {
+  0% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@keyframes glaze-wave {
+  from { transform: translateX(0); }
+  to { transform: translateX(-40px); }
+}
+@keyframes cat-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
 }

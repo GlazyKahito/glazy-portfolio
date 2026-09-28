@@ -65,6 +65,7 @@ export const projects: Project[] = [
     longDescription: [
       "ScamShield analyses suspicious SMS, WhatsApp messages, emails, DMs and links. Most scam-detection tools answer the wrong question: they say \"this is a scam\" and stop. ScamShield explains why something looks risky, how the attack would work, and what to do next, so people recognise the next one without help.",
       "It runs two independent analyses and shows its working. A deterministic rule engine and URL analyzer run first and always, producing a complete report on their own. Google Gemini adds the reading of intent that pattern matching cannot do. Pull the API key out and ScamShield still works; that is a deliberate, tested architectural property.",
+      "The full product is live: a landing page, an analyzer that takes text, links or a screenshot, shareable threat reports, an attack simulator that walks through how a scam unfolds, a dashboard of past analyses and a library of common scams.",
     ],
     category: "Security",
     technologies: [
@@ -73,6 +74,7 @@ export const projects: Project[] = [
       "Tailwind CSS",
       "Framer Motion",
       "Zod",
+      "Recharts",
       "Google Gemini API",
     ],
     year: "2026",
@@ -99,6 +101,8 @@ export const projects: Project[] = [
       "A documented fusion formula (rules 55%, AI 45%) produces a transparent score; when the AI layer is unavailable the rule score stands alone rather than being scaled down.",
     ],
     features: [
+      "Analyzer for text, links and screenshots, with a full threat report for each",
+      "Shareable report pages, an attack simulator, a dashboard of past analyses and a scam library",
       "Deterministic message rule engine with weighted, de-duplicated signals",
       "URL structural analysis (IP hosts, punycode, shorteners, sensitive paths)",
       "Brand-impersonation heuristic",

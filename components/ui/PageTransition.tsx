@@ -15,6 +15,8 @@ import {
 } from "react";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { ease } from "@/lib/motion";
+import type { ChapterId } from "@/data/scenes";
+import { gotoChapter } from "@/lib/deck";
 
 type Phase = "idle" | "cover" | "reveal";
 
@@ -33,12 +35,13 @@ export function useTransition() {
   return useContext(TransitionContext);
 }
 
-const COVER_MS = 720;
-const REVEAL_MS = 820;
+const COVER_MS = 760;
+const REVEAL_MS = 900;
 
 /**
  * Route transitions: a curtain rises to cover the page, the route changes
- * underneath, then the curtain lifts away. Hash links scroll instead.
+ * underneath, then the curtain lifts away. Hash links on the same page
+ * travel through the scene deck (or scroll, on ordinary pages).
  */
 export function TransitionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -66,7 +69,14 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       const samePage = targetPath === pathname;
 
       if (samePage && hash) {
-        scrollToHash(`#${hash}`);
+        // On the home page the deck owns navigation.
+        const deckChapter: Record<string, ChapterId> = { projects: "work", "in-progress": "building", about: "about", stack: "stack", contact: "contact" };
+        if (pathname === "/" && deckChapter[hash]) gotoChapter(deckChapter[hash]);
+        else scrollToHash(`#${hash}`);
+        return;
+      }
+      if (samePage && !hash && pathname === "/") {
+        gotoChapter("intro");
         return;
       }
       if (reduce) {
@@ -81,22 +91,20 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
     [pathname, phase, reduce, router, scrollToHash],
   );
 
-  // When the route actually changes, jump to top (or the hash) and reveal.
+  // When the route actually changes, jump to top and reveal (the deck handles its own hash).
   useEffect(() => {
     if (lastPathRef.current === pathname) return;
     lastPathRef.current = pathname;
     const href = pendingRef.current;
     pendingRef.current = null;
     const hash = href?.split("#")[1];
-    if (hash) {
-      // Give the new page a frame to lay out before measuring.
+    if (hash && pathname !== "/") {
       requestAnimationFrame(() => scrollToHash(`#${hash}`, true));
     } else {
       lenis?.scrollTo(0, { immediate: true });
       window.scrollTo(0, 0);
     }
-    if (reduce) return;
-    // Phase changes happen in callbacks, never synchronously inside the effect.
+    if (reduce || !href) return;
     const raf = requestAnimationFrame(() => setPhase("reveal"));
     const t = window.setTimeout(() => setPhase("idle"), REVEAL_MS);
     return () => {
@@ -112,7 +120,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
       {children}
       <motion.div
         aria-hidden
-        className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center bg-ink-2"
+        className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center bg-black"
         initial={false}
         animate={
           phase === "cover"
@@ -121,10 +129,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
               ? { clipPath: "inset(0% 0 100% 0)" }
               : { clipPath: "inset(100% 0 0% 0)" }
         }
-        transition={{
-          duration: phase === "cover" ? COVER_MS / 1000 : REVEAL_MS / 1000,
-          ease: ease.inOutQuart,
-        }}
+        transition={{ duration: phase === "cover" ? COVER_MS / 1000 : REVEAL_MS / 1000, ease: ease.inOutQuart }}
         style={{ clipPath: "inset(100% 0 0% 0)" }}
       >
         <motion.div
