@@ -80,17 +80,19 @@ export function LagWatch() {
             role="alertdialog"
             aria-labelledby="lag-title"
             aria-describedby="lag-body"
-            className="fixed bottom-5 left-5 z-[105] w-[min(92vw,360px)] rounded-3xl border border-white/15 bg-[#121214]/90 p-5 text-bone shadow-[0_20px_60px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
+            className="fixed bottom-5 left-5 z-[92] flex max-w-[calc(100vw-7rem)] items-center gap-3 rounded-full border border-white/15 bg-[#121214]/92 py-1.5 pl-4 pr-1.5 text-bone shadow-[0_20px_60px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.6, ease: ease.outExpo }}
           >
-            <p id="lag-title" className="text-[15px] font-medium">Is it lagging?</p>
-            <p id="lag-body" className="mt-1.5 text-sm leading-relaxed text-bone-2">
-              Your device is dropping frames. Lite mode swaps the 4K video for still frames and keeps everything else.
+            <p className="min-w-0 text-[13px] leading-tight">
+              <span id="lag-title" className="font-medium">Lagging?</span>{" "}
+              <span id="lag-body" className="hidden text-bone-2 md:inline">
+                Lite mode swaps 4K video for stills.
+              </span>
             </p>
-            <div className="mt-4 flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 onClick={() => {
@@ -98,7 +100,7 @@ export function LagWatch() {
                   setOffer(false);
                   setToast("Lite mode on · stills instead of 4K video");
                 }}
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-bone px-4 text-sm font-medium text-ink"
+                className="inline-flex h-9 items-center gap-2 rounded-full bg-bone px-3.5 text-[13px] font-medium text-ink"
               >
                 Switch to lite
                 <kbd className="rounded-md border border-ink/20 px-1.5 font-mono text-[11px]">L</kbd>
@@ -109,7 +111,7 @@ export function LagWatch() {
                   dismissed.current = true;
                   setOffer(false);
                 }}
-                className="h-10 rounded-full px-4 text-sm text-bone-2 hover:text-bone"
+                className="h-9 rounded-full px-3 text-[13px] text-bone-2 hover:text-bone"
               >
                 Keep 4K
               </button>

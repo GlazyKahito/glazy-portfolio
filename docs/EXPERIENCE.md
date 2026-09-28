@@ -63,6 +63,10 @@ Higgsfield was not used: its pricing and free tier could not be verified from he
 6. **Work with me.** "Wide shot of a lake between dark mountains at dusk, red sky reflected in still water, gentle ripples, locked-off camera, 16:9, 12 seconds."
 7. **Say hello.** "View from an aircraft window at dusk, wing silhouetted against an orange-violet horizon, slight turbulence, clouds far below, 16:9, 10 seconds."
 
-## Nimbus
+## Mr. Nimbus
 
-Nimbus is Krutik's cat and the site's guide. Today it recognises what visitors ask about (a website, hiring, a project by name, the stack, contact, availability) and answers from `data/`, with buttons that do the thing. Anything else gets an honest "AI is being linked to me soon". To connect a model later, replace `answer()` in `components/ui/Nimbus.tsx` with a call to a server route that holds the API key (never expose it to the client) and keep the guided replies as the fallback.
+Mr. Nimbus is Krutik's cat (a black-and-white tuxedo, and a gentleman) and the site's guide. His portrait (`public/nimbus/`) is his own photo, colour-corrected and cut out onto a studio backdrop.
+
+- **With `GEMINI_API_KEY` set** (the same key ScamShield uses), his replies come from Google Gemini through `app/api/nimbus/route.ts`, grounded only in the site's own data (`lib/server/nimbus-brain.ts`). The key stays on the server; replies are structured JSON (reply plus an intent that picks the follow-up buttons); history is capped at 12 turns, 600 characters a message and 20 requests a minute; nothing is stored.
+- **Without a key, or if Gemini fails,** he falls back to his guided answers, with the same buttons.
+- Jokes are his own and served instantly.

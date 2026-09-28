@@ -364,8 +364,11 @@ export function SceneDeck() {
       if (el.scrollHeight <= el.clientHeight + 2) return false;
       return delta > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 2 : el.scrollTop > 2;
     };
+    // The menu and the resume viewer are modal: nothing moves behind them.
+    const modalOpen = () => !!document.querySelector("[role='dialog'][data-state='open']");
     const onWheel = (e: WheelEvent) => {
       if ((e.target as HTMLElement | null)?.closest("[data-lenis-prevent],[role='dialog']")) return;
+      if (modalOpen()) return;
       const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
       if (!lock.current && Math.abs(e.deltaY) >= Math.abs(e.deltaX) && canScrollInside(e.target, e.deltaY)) return;
       e.preventDefault();
@@ -387,7 +390,7 @@ export function SceneDeck() {
     };
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t?.closest("input,textarea,select,[contenteditable],[role='dialog']")) return;
+      if (t?.closest("input,textarea,select,[contenteditable],[role='dialog']") || modalOpen()) return;
       if (["ArrowDown", "PageDown", "ArrowRight"].includes(e.key) || (e.key === " " && !t?.closest("button,a"))) {
         e.preventDefault();
         go(indexRef.current + 1);
@@ -410,7 +413,8 @@ export function SceneDeck() {
       const dy = e.changedTouches[0].clientY - ty;
       const horizontal = Math.abs(dx) > Math.abs(dy);
       const d = horizontal ? dx : dy;
-      if (Math.abs(d) < 60) return;
+      if (Math.abs(d) < 60 || modalOpen()) return;
+      if ((e.target as HTMLElement | null)?.closest("[role='dialog']")) return;
       if (!horizontal && canScrollInside(e.target, -dy)) return;
       go(indexRef.current + (d < 0 ? 1 : -1));
     };
@@ -631,7 +635,7 @@ export function SceneDeck() {
             key={`prompt-${index}`}
             type="button"
             onClick={() => go(last ? 0 : index + 1)}
-            className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] py-2.5 pl-5 pr-2.5 text-sm text-bone shadow-[0_10px_40px_-10px_rgb(0_0_0/0.6)] backdrop-blur-md transition-colors hover:bg-white/[0.16] md:bottom-8"
+            className="deck-prompt absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] py-2.5 pl-5 pr-2.5 text-sm text-bone shadow-[0_10px_40px_-10px_rgb(0_0_0/0.6)] backdrop-blur-md transition-colors hover:bg-white/[0.16] md:bottom-8"
             initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 8 }}
