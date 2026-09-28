@@ -8,7 +8,7 @@ import { ease } from "@/lib/motion";
  * GLAZY logotype: five monoline geometric letters on a 60×80 grid.
  * Drawn as strokes so the intro can trace it and the hero can light it.
  */
-const LETTERS: { d: string; x: number }[] = [
+export const LETTERS: { d: string; x: number }[] = [
   { d: "M50 23 A26 26 0 1 0 50 57 L50 41 L36 41", x: 0 }, // G
   { d: "M6 8 L6 72 L50 72", x: 76 }, // L
   { d: "M4 72 L30 8 L56 72 M15 48 L45 48", x: 152 }, // A

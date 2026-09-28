@@ -68,6 +68,17 @@ export const skills: Skill[] = [
     projects: ["dcn-virtual-lab", "scamshield"],
   },
   {
+    name: "GSAP",
+    category: "Frontend",
+    usage: "Timeline-driven scene transitions and the film-leader opening of this portfolio.",
+  },
+  {
+    name: "Recharts",
+    category: "Frontend",
+    usage: "Charts on ScamShield's dashboard of past analyses.",
+    projects: ["scamshield"],
+  },
+  {
     name: "Vite",
     category: "Frontend",
     usage: "Build tool for the CRM360 client and the DCN lab.",
@@ -100,6 +111,12 @@ export const skills: Skill[] = [
     projects: ["scamshield", "crm360"],
   },
   {
+    name: "Web security",
+    category: "Backend",
+    usage: "Helmet headers and rate limiting in CRM360; prompt-injection defences, input limits and server-only secrets in ScamShield.",
+    projects: ["crm360", "scamshield"],
+  },
+  {
     name: "JWT / Auth",
     category: "Backend",
     usage: "Token auth with bcrypt hashing, password reset and session invalidation in CRM360.",
@@ -130,7 +147,7 @@ export const skills: Skill[] = [
   {
     name: "Three.js",
     category: "3D & Graphics",
-    usage: "Warp-tunnel opening sequence in the DCN lab, the landing scene in Grove, and the glazed surface in this portfolio.",
+    usage: "Warp-tunnel opening sequence and 3D scenes in the DCN lab, and the landing scene in Grove.",
     projects: ["dcn-virtual-lab", "grove"],
   },
   {

@@ -1,35 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Fraunces, Geist_Mono, Manrope } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Cursor } from "@/components/ui/Cursor";
-import { Grain } from "@/components/ui/Grain";
+import { LagWatch } from "@/components/ui/LagWatch";
+import { Nimbus } from "@/components/ui/Nimbus";
 import { Providers } from "@/components/ui/Providers";
-import { Nav } from "@/components/navigation/Nav";
+import { Header } from "@/components/navigation/Header";
 import { site } from "@/data/site";
 import "./globals.css";
 
 /*
- * Display: a variable grotesk. next/font ships a size-adjusted fallback so the
- * swap barely reflows; headline boxes reserve their height (see Hero) so the
- * swap cannot move the layout. `swap` keeps the first paint (LCP) early.
+ * Display: Instrument Serif — a condensed, high-contrast serif with a true
+ * italic; it reads like a film title at poster sizes. One weight only, so
+ * headings never get a synthesised bold (see globals.css).
+ * Body: Geist. Labels and data: Geist Mono. All SIL Open Font License.
  */
-const display = Archivo({
+const display = Instrument_Serif({
   subsets: ["latin"],
-  variable: "--font-display",
-  axes: ["wdth"],
-  display: "swap",
-});
-
-/* Accent italics with optical sizing, used for the editorial words. */
-const serif = Fraunces({
-  subsets: ["latin"],
+  weight: "400",
   style: ["normal", "italic"],
-  variable: "--font-serif",
-  axes: ["opsz", "SOFT"],
+  variable: "--font-display",
   display: "swap",
 });
 
-/* Body: neutral, geometric, very legible at small sizes. */
-const sans = Manrope({
+const sans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
@@ -89,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${display.variable} ${serif.variable} ${sans.variable} ${mono.variable}`}
+      className={`${display.variable} ${sans.variable} ${mono.variable}`}
     >
       <body>
         <Providers>
@@ -99,10 +92,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           >
             Skip to content
           </a>
-          <Nav />
-          <main id="main">{children}</main>
+          <Header />
+          <main id="main" className="relative z-[1]">
+            {children}
+          </main>
           <Cursor />
-          <Grain />
+          <LagWatch />
+          <Nimbus />
         </Providers>
       </body>
     </html>

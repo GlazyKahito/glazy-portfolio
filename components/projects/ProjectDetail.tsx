@@ -10,6 +10,7 @@ import { projectNumber } from "@/data/projects";
 import type { ImageAsset, Project } from "@/lib/types";
 import { ease, fadeUp, stagger, viewportOnce, wipeUp } from "@/lib/motion";
 import { cn, hsl, prettyUrl } from "@/lib/utils";
+import { SceneVideo } from "@/components/scenes/SceneVideo";
 
 interface ProjectDetailProps {
   project: Project;
@@ -89,12 +90,12 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
 
   return (
     <article className="relative overflow-x-clip">
-      {/* Ambient tint so each project feels like its own room. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[80vh]"
-        style={{ background: `radial-gradient(60% 50% at 50% 0%, ${tint}, transparent 70%)` }}
-      />
+      {/* Real footage behind the header, tinted with the project's colour, fading into the page. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[110svh] overflow-hidden">
+        <SceneVideo name="dusk" load play />
+        <div className="absolute inset-0 mix-blend-soft-light" style={{ background: `radial-gradient(70% 60% at 50% 20%, ${tint}, transparent 70%)` }} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.45),rgb(5_5_6/0.55)_45%,var(--color-ink)_96%)]" />
+      </div>
 
       <header className="container-x pt-[calc(var(--nav-height)+3rem)] md:pt-[calc(var(--nav-height)+5rem)]">
         <div className="mx-auto max-w-[1500px]">

@@ -61,7 +61,7 @@ export function PhoneFrame({ image, className, sizes = "20vw" }: PhoneFrameProps
       )}
     >
       <div className="relative aspect-[390/844] overflow-hidden rounded-[1.6rem] bg-ink-2">
-        <Image src={image.src} alt={image.alt} fill sizes={sizes} quality={78} className="object-cover object-top" />
+        <Image src={image.src} alt={image.alt} fill sizes={sizes} quality={80} className="object-cover object-top" />
         <div aria-hidden className="absolute left-1/2 top-2 h-1.5 w-14 -translate-x-1/2 rounded-full bg-ink-3/90" />
       </div>
     </div>
