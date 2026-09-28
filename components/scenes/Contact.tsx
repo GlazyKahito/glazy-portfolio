@@ -95,7 +95,7 @@ function Footer({ onTop }: { onTop?: () => void }) {
 /** 05 Say hello — the last scene of the home deck. */
 export function ContactScene({ play }: { play: boolean }) {
   return (
-    <div className="container-x relative flex min-h-full flex-col justify-end pb-6 pt-[calc(var(--nav-height)+1.5rem)]">
+    <div className="container-x relative flex min-h-full flex-col justify-end pb-24 pt-[calc(var(--nav-height)+1.5rem)]">
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-10">
         <div>
           <Kicker number="06" label="Say hello" play={play} />

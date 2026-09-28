@@ -261,6 +261,15 @@
 /* ------------------------------------------------------------------ */
 /* Scene deck                                                           */
 /* ------------------------------------------------------------------ */
+/* On phones the Continue prompt steps aside while Mr. Nimbus's chat is open. */
+@media (max-width: 640px) {
+  html[data-nimbus="open"] .deck-prompt {
+    /* !important: the prompt's entrance animation writes inline opacity. */
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+}
+
 /* The home page is a deck of full-screen scenes: the page itself never scrolls. */
 html.deck-mode,
 html.deck-mode body {
