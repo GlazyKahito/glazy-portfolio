@@ -24,7 +24,7 @@ const shade = (i: number) => {
  * at the real loading progress; a sheen crosses it. On `settle` it turns to
  * face the camera, ready for the letterbox to open on the scene.
  */
-export function LoaderType3D({ progress, settle }: { progress: number; settle: boolean }) {
+export function LoaderType3D({ progress, settle, flat = false }: { progress: number; settle: boolean; flat?: boolean }) {
   const rig = useRef<HTMLDivElement>(null);
   const sway = useRef<gsap.core.Tween | null>(null);
   const settled = useRef(false);
@@ -32,7 +32,7 @@ export function LoaderType3D({ progress, settle }: { progress: number; settle: b
 
   useEffect(() => {
     const el = rig.current;
-    if (!el) return;
+    if (!el || flat) return;
     gsap.set(el, { rotationY: -26, rotationX: 10 });
     sway.current = gsap.to(el, { rotationY: 26, duration: 4.2, ease: "sine.inOut", yoyo: true, repeat: -1 });
     const tilt = gsap.quickTo(el, "rotationX", { duration: 1.2, ease: "power3.out" });
@@ -45,7 +45,7 @@ export function LoaderType3D({ progress, settle }: { progress: number; settle: b
       sway.current?.kill();
       window.removeEventListener("pointermove", onMove);
     };
-  }, [touch]);
+  }, [touch, flat]);
 
   useEffect(() => {
     if (!settle || settled.current || !rig.current) return;
@@ -65,8 +65,8 @@ export function LoaderType3D({ progress, settle }: { progress: number; settle: b
   return (
     <div aria-hidden className="flex items-center justify-center [perspective:1300px]">
       <div ref={rig} className="relative [transform-style:preserve-3d]" style={{ fontSize: "min(23vw, 33vh)" }}>
-        {/* The extrusion: slices stepping back into the dark. */}
-        {Array.from({ length: DEPTH }, (_, k) => {
+        {/* The extrusion: slices stepping back into the dark (left out on weak machines). */}
+        {Array.from({ length: flat ? 0 : DEPTH }, (_, k) => {
           const i = DEPTH - k;
           return (
             <p key={i} className={`absolute inset-0 ${type}`} style={{ color: shade(i), transform: `translateZ(${(-i * STEP).toFixed(4)}em)` }}>

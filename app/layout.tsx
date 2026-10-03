@@ -85,8 +85,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       className={`${display.variable} ${sans.variable} ${mono.variable}`}
+      suppressHydrationWarning
     >
       <body>
+        {/* Lite mode is applied before the first paint, so a weak machine never starts on the heavy version. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(localStorage.getItem('glazy:lite')==='1')document.documentElement.dataset.lite='true'}catch(e){}",
+          }}
+        />
         <Providers>
           <a
             href="#main"

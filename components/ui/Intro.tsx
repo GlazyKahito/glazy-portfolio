@@ -261,9 +261,9 @@ export function IntroProvider({ children }: { children: ReactNode }) {
               animate={opening ? { opacity: 0, scale: 1.08, filter: "blur(10px)" } : { opacity: 1, scale: 1, filter: "blur(0px)" }}
               transition={{ duration: 0.8, ease: ease.outQuart }}
             >
-              <LoaderType3D progress={progress} settle={titled} />
+              <LoaderType3D progress={progress} settle={titled} flat={lite || serious} />
             </motion.div>
-            <div aria-hidden className="film-grain pointer-events-none absolute -inset-[10%] opacity-[0.07] mix-blend-overlay [animation:grain_1.2s_steps(6)_infinite]" />
+            <div aria-hidden className="film-grain pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay" />
             <motion.div
               aria-hidden
               className="absolute inset-x-0 top-0 z-[1] bg-black"
@@ -366,10 +366,33 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                       </div>
                     )}
                   </div>
-                ) : (
-                  <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/45">
-                    Best in a desktop browser with hardware acceleration
-                  </p>
+                ) : null}
+                {/* The choice, up front, before anything heavy loads. */}
+                {!serious && (
+                  <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/55">Watch in</span>
+                    <div role="radiogroup" aria-label="Quality" className="flex rounded-full border border-white/15 bg-black/40 p-1">
+                      {[
+                        { on: !lite, label: "4K", pick: () => setLite(false) },
+                        { on: lite, label: "Lite", pick: () => setLite(true) },
+                      ].map((o) => (
+                        <button
+                          key={o.label}
+                          type="button"
+                          role="radio"
+                          aria-checked={o.on}
+                          onClick={o.pick}
+                          className={cn(
+                            "rounded-full px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] transition-colors",
+                            o.on ? "bg-bone text-ink" : "text-bone/70 hover:text-bone",
+                          )}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[12px] text-bone/50">Lite: still frames and simple transitions, for older or slower computers. L switches any time.</span>
+                  </div>
                 )}
               </div>
             )}
