@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRef } from "react";
 import { ArrowUpRight } from "@/components/ui/MagneticButton";
 import { TransitionLink } from "@/components/ui/PageTransition";
+import { PUZZLE_DONE, PuzzleImage } from "@/components/scenes/PuzzleImage";
 import { RevealWords } from "@/components/ui/Reveal";
 import { featuredProjects } from "@/data/projects";
 import { useDevice } from "@/lib/hooks/use-device";
@@ -19,7 +20,7 @@ const STATUS: Record<Project["status"], string> = {
   archived: "Archived",
 };
 
-/** A browser window and a phone, tilting toward the pointer with a moving glare. */
+/** A browser window (its screen assembling like a jigsaw) and a phone, tilting toward the pointer with a moving glare. */
 function Stage({ project, play }: { project: Project; play: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const { touch, reducedMotion } = useDevice();
@@ -59,8 +60,9 @@ function Stage({ project, play }: { project: Project; play: boolean }) {
         <div aria-hidden className="absolute -inset-x-16 -bottom-16 top-10 -z-10 rounded-[50%] opacity-70 blur-3xl" style={{ background: hsl(project.hue, 80, 50, 0.35) }} />
 
         {/* Browser window. */}
-        <div className="overflow-hidden rounded-[18px] border border-white/15 bg-[#0d0d10]/90 shadow-[0_50px_120px_-30px_rgb(0_0_0/0.9)] backdrop-blur-xl">
-          <div className="flex h-9 items-center gap-3 border-b border-white/10 bg-white/[0.04] px-4">
+        {/* No overflow clipping here: the puzzle pieces fly in from outside the window. */}
+        <div className="rounded-[18px] border border-white/15 bg-[#0d0d10]/90 shadow-[0_50px_120px_-30px_rgb(0_0_0/0.9)] backdrop-blur-xl [transform-style:preserve-3d]">
+          <div className="flex h-9 items-center gap-3 rounded-t-[17px] border-b border-white/10 bg-white/[0.04] px-4">
             <span className="flex gap-1.5" aria-hidden>
               <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
               <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
@@ -74,10 +76,9 @@ function Stage({ project, play }: { project: Project; play: boolean }) {
             </span>
             <span className="w-12" />
           </div>
-          <div className="relative aspect-[16/10]">
-            <Image src={project.image.src} alt={project.image.alt} fill sizes="(min-width: 1024px) 55vw, 92vw" quality={85} className="object-cover object-top" />
+          <PuzzleImage src={project.image.src} alt={project.image.alt} seed={project.slug} play={play} sizes="(min-width: 1024px) 55vw, 92vw">
             <motion.div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: glare }} />
-          </div>
+          </PuzzleImage>
         </div>
 
         {/* Phone, its screen slowly scrolling the mobile capture. */}
@@ -87,7 +88,7 @@ function Stage({ project, play }: { project: Project; play: boolean }) {
             style={{ transform: "translateZ(60px)" }}
             initial={false}
             animate={play ? { opacity: 1, y: 0, rotate: -5 } : { opacity: 0, y: 50, rotate: 0 }}
-            transition={{ duration: 1.1, ease: ease.outExpo, delay: play ? 0.45 : 0 }}
+            transition={{ duration: 1.1, ease: ease.outExpo, delay: play ? PUZZLE_DONE - 0.4 : 0 }}
           >
             <div className="overflow-hidden rounded-[26px] border-[5px] border-[#1c1c20] bg-black shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9)] ring-1 ring-white/15">
               <div className="relative aspect-[390/760] overflow-hidden">

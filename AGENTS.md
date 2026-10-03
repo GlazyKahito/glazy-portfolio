@@ -33,7 +33,8 @@ npm run typecheck   # tsc --noEmit
 | Design tokens (colours, fonts, eases, type scale) | `app/globals.css` (`@theme inline`) |
 | Motion vocabulary | `lib/motion.ts` |
 | Device capability / reduced motion | `lib/hooks/use-device.ts` |
-| Loading screen (glaze-filling wordmark, device check, letterbox opening) | `components/ui/Intro.tsx` |
+| Loading screen (the opening as an exploded 3D stage set that assembles; device check; letterbox opening) | `components/ui/Intro.tsx`, `components/ui/LoaderDiorama.tsx` |
+| Project screens assembling like a jigsaw | `components/scenes/PuzzleImage.tsx` |
 | Scene deck (steps, transitions, input lock, progress rail, Continue prompt) | `components/scenes/SceneDeck.tsx` |
 | Chapters, footage, transition styles, hash aliases | `data/scenes.ts` |
 | Services and how a project runs | `data/services.ts` |

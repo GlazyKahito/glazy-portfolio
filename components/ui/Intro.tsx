@@ -13,7 +13,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { LETTERS, Wordmark } from "@/components/ui/Wordmark";
+import { LoaderDiorama } from "@/components/ui/LoaderDiorama";
 import { useDevice, useMounted } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,8 @@ import { getDeck } from "@/lib/deck";
 const MIN_LOAD = 2.4;
 /** Give up waiting for the footage and continue on its poster frame (s). */
 const FOOTAGE_TIMEOUT = 20;
-const TITLE_HOLD = 1.5;
+/** The diorama assembling into the opening frame. */
+const TITLE_HOLD = 2.0;
 const OPENING = 2.6;
 
 interface IntroContextValue {
@@ -58,76 +59,18 @@ function Timecode({ run }: { run: boolean }) {
 }
 
 /**
- * The loader's centrepiece: the GLAZY wordmark filling with liquid glaze.
- * The level is the real loading progress; a slow wave rolls across its
- * surface, and a hot line glows where the glaze meets the empty stroke.
- */
-function GlazeMark({ progress }: { progress: number }) {
-  // viewBox is the wordmark's 364×80 grid plus room for the stroke.
-  const top = -8;
-  const bottom = 88;
-  const level = bottom - (bottom - top) * progress;
-  const p = Math.min(1, Math.max(0, progress));
-  return (
-    <svg viewBox="-8 -8 380 96" className="w-[min(82vw,720px)] overflow-visible" role="img" aria-label={`GLAZY, ${Math.round(progress * 100)} percent loaded`}>
-      <defs>
-        {/* A hard edge at the fill level: glaze below, nothing above. User-space, so thin strokes still fill. */}
-        <linearGradient id="glaze-fill" gradientUnits="userSpaceOnUse" x1="0" y1={bottom} x2="0" y2={top}>
-          <stop offset="0" stopColor="#9e1008" />
-          <stop offset={p * 0.55} stopColor="#ff2d1a" />
-          <stop offset={Math.max(0, p - 0.02)} stopColor="#ff8a3d" />
-          <stop offset={p} stopColor="#ffd9a8" />
-          <stop offset={p} stopColor="#ffd9a8" stopOpacity="0" />
-          <stop offset="1" stopColor="#ffd9a8" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {/* The empty mould. */}
-      {LETTERS.map((l, i) => (
-        <path key={`m${i}`} d={l.d} transform={`translate(${l.x} 0)`} fill="none" stroke="rgb(245 245 247 / 0.14)" strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" />
-      ))}
-      {/* The glaze. */}
-      {LETTERS.map((l, i) => (
-        <path
-          key={`g${i}`}
-          d={l.d}
-          transform={`translate(${l.x} 0)`}
-          fill="none"
-          stroke="url(#glaze-fill)"
-          strokeWidth={8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ filter: "drop-shadow(0 0 10px rgb(255 90 30 / 0.45))" }}
-        />
-      ))}
-      {/* The molten surface. */}
-      {p > 0.01 && p < 0.999 && (
-        <g className="[animation:glaze-wave_2.4s_linear_infinite]">
-          <path
-            d={`M -48 ${level} q 10 -2.4 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0 t 20 0`}
-            fill="none"
-            stroke="#ffb27a"
-            strokeWidth={0.7}
-            opacity={0.55}
-            style={{ filter: "drop-shadow(0 0 4px #ff6a2a)" }}
-          />
-        </g>
-      )}
-    </svg>
-  );
-}
-
-/**
  * GLAZY's opening, as a film would open.
  *
- * 1. A film leader counts down while the site genuinely loads: the fonts,
- *    then the opening scene's 4K planes. The count is tied to real
- *    progress, never faked ahead of it.
+ * 1. The opening scene floats in pieces, an exploded stage set in 3D,
+ *    while the site genuinely loads: the fonts, then the scene's 4K
+ *    planes. The wordmark fills with glaze at the real progress, never
+ *    faked ahead of it.
  * 2. The device check: if graphics run without hardware acceleration, or
  *    the connection is slow or on data saver, it says so plainly and offers
  *    the lite version. Otherwise everyone gets the full 4K experience.
- * 3. A flash, the title card between letterbox bars over the live footage,
- *    then the bars open, and only once they have fully opened do the
- *    headline and buttons rise in.
+ * 3. The pieces lock together into the opening frame, a warm flash, and
+ *    the letterbox bars open onto the live scene as the wordmark rises
+ *    from behind the ridge.
  *
  * The skip button or Escape goes straight in.
  */
@@ -238,10 +181,11 @@ export function IntroProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (phase !== "opening") return;
     // The kingfisher rule: nothing on the page moves until the bars have fully opened.
+    // The scene takes over as the bars open: the wordmark rises while they part.
     const t1 = window.setTimeout(() => {
       setDone(true);
       document.documentElement.dataset.introDone = "true";
-    }, OPENING * 0.85 * 1000);
+    }, OPENING * 0.35 * 1000);
     const t2 = window.setTimeout(() => {
       finishedRef.current = true;
       setShow(false);
@@ -286,48 +230,53 @@ export function IntroProvider({ children }: { children: ReactNode }) {
               aria-hidden
               className="absolute inset-0 bg-black"
               initial={false}
-              animate={{ opacity: titled ? 0 : 1 }}
+              animate={{ opacity: opening ? 0 : 1 }}
               transition={{ duration: 0.9, ease: ease.outQuart }}
             />
+            {/* A warm glow behind the floating set. */}
             <motion.div
               aria-hidden
-              className="absolute inset-x-0 top-0 bg-black"
+              className="absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_48%,rgb(255_138_76/0.16),transparent_70%)]"
+              initial={false}
+              animate={{ opacity: opening ? 0 : 1 }}
+              transition={{ duration: 0.6 }}
+            />
+            {/* The opening scene, in pieces, assembling. */}
+            <motion.div
+              aria-hidden
+              className="absolute inset-0"
+              initial={false}
+              animate={{ opacity: opening ? 0 : 1 }}
+              transition={{ duration: 0.8, ease: ease.outQuart }}
+            >
+              <LoaderDiorama progress={progress} assemble={titled} />
+            </motion.div>
+            <div aria-hidden className="film-grain pointer-events-none absolute -inset-[10%] opacity-[0.07] mix-blend-overlay [animation:grain_1.2s_steps(6)_infinite]" />
+            <motion.div
+              aria-hidden
+              className="absolute inset-x-0 top-0 z-[1] bg-black"
               initial={false}
               animate={{ height: opening ? "0vh" : "13vh" }}
               transition={{ duration: 1.6, ease: ease.inOutQuart }}
             />
             <motion.div
               aria-hidden
-              className="absolute inset-x-0 bottom-0 bg-black"
+              className="absolute inset-x-0 bottom-0 z-[1] bg-black"
               initial={false}
               animate={{ height: opening ? "0vh" : "13vh" }}
               transition={{ duration: 1.6, ease: ease.inOutQuart }}
             />
-            {/* The opening scene develops behind the mark, like a print in the darkroom. */}
-            {!titled && (
-              <div aria-hidden className="absolute inset-0 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element -- decorative, must paint immediately */}
-                <img
-                  src="/scenes/glazy-poster.jpg"
-                  alt=""
-                  className="absolute inset-0 h-full w-full scale-110 object-cover"
-                  style={{ opacity: 0.08 + progress * 0.5, filter: `blur(${36 - progress * 26}px) saturate(${0.3 + progress * 0.9})`, transition: "opacity 0.4s, filter 0.4s" }}
-                />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgb(0_0_0/0.85)_75%)]" />
-              </div>
-            )}
-
-            {/* Flash at the cut from leader to title. */}
+            {/* A warm flash as the pieces lock. */}
             <motion.div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-bone"
+              className="pointer-events-none absolute inset-0 z-[2] bg-peach mix-blend-screen"
               initial={false}
-              animate={{ opacity: phase === "title" ? [0, 0.9, 0] : 0 }}
-              transition={{ duration: 0.7, times: [0, 0.12, 1] }}
+              animate={{ opacity: opening ? [0, 0.32, 0] : 0 }}
+              transition={{ duration: 0.9, times: [0, 0.15, 1] }}
             />
 
             {/* Corner slate. */}
-            <div className="absolute inset-x-0 top-0 flex justify-between px-[var(--gutter)] pt-5 font-mono text-[10px] uppercase tracking-[0.24em] text-bone/60 sm:text-[11px]">
+            <div className="absolute inset-x-0 top-0 z-[3] flex justify-between px-[var(--gutter)] pt-5 font-mono text-[10px] uppercase tracking-[0.24em] text-bone/60 sm:text-[11px]">
               <span>GLAZY · Reel 01</span>
               {!titled && <Timecode run={show} />}
               <span className="hidden sm:inline">Krutik Mhatre</span>
@@ -337,12 +286,11 @@ export function IntroProvider({ children }: { children: ReactNode }) {
               {!titled ? (
                 <motion.div
                   key="leader"
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-10 pb-24"
-                  exit={{ opacity: 0, scale: 1.04, filter: "blur(12px)" }}
+                  className="absolute inset-x-0 bottom-[calc(13vh+1.25rem)] z-[3] flex justify-center px-[var(--gutter)]"
+                  exit={{ opacity: 0, y: 10, filter: "blur(8px)" }}
                   transition={{ duration: 0.5 }}
                 >
-                  <GlazeMark progress={progress} />
-                  <div className="flex w-[min(82vw,720px)] items-end justify-between gap-6">
+                  <div className="flex w-[min(82vw,720px)] items-end justify-between gap-6" role="img" aria-label={`GLAZY, ${Math.round(progress * 100)} percent loaded`}>
                     <span className="max-w-[70%] truncate font-mono text-[11px] uppercase tracking-[0.2em] text-bone-2" aria-live="polite">
                       {label}
                     </span>
@@ -355,22 +303,19 @@ export function IntroProvider({ children }: { children: ReactNode }) {
               ) : (
                 <motion.div
                   key="title"
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-6 text-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: opening ? 0 : 1, y: opening ? -30 : 0, filter: opening ? "blur(10px)" : "blur(0px)" }}
-                  transition={{ duration: opening ? 1.2 : 0.6, ease: ease.outQuart, delay: opening ? 0.4 : 0.15 }}
+                  className="absolute inset-x-0 bottom-[16vh] z-[3] flex justify-center text-center"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: opening ? 0 : 1, y: opening ? -12 : 0, filter: opening ? "blur(8px)" : "blur(0px)" }}
+                  transition={{ duration: opening ? 0.6 : 0.8, ease: ease.outQuart, delay: opening ? 0 : 0.9 }}
                 >
-                  <div className="w-[min(70vw,460px)] text-bone">
-                    <Wordmark draw delay={0.15} duration={0.8} strokeWidth={7} />
-                  </div>
-                  <p className="font-display text-2xl italic text-bone/90 md:text-3xl">A web studio by Krutik Mhatre</p>
+                  <p className="font-display text-2xl italic text-cream/90 md:text-3xl">A web studio by Krutik Mhatre</p>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Device notes. */}
             {!titled && report && (
-              <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-4 px-[var(--gutter)] pb-6">
+              <div className="absolute inset-x-0 bottom-0 z-[3] flex flex-col items-center gap-4 px-[var(--gutter)] pb-6">
                 {report.concerns.length > 0 ? (
                   <div
                     className={cn(
@@ -420,7 +365,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={finish}
-              className="absolute right-[var(--gutter)] top-12 rounded-full border border-line-strong px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-bone-2 transition-colors hover:border-bone hover:text-bone"
+              className="absolute right-[var(--gutter)] top-12 z-[3] rounded-full border border-line-strong px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-bone-2 transition-colors hover:border-bone hover:text-bone"
             >
               Skip intro
             </button>

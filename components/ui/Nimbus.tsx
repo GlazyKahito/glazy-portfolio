@@ -90,7 +90,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
     return {
       text: "A gentleman never guesses at a price. Send the studio a short brief (what the site is for, any site you have now, and your timeline) and you'll get a plan and a proper quote.",
       actions: [
-        { kind: "link", label: "Send a brief", href: mail("New project for GLAZY") },
+        { kind: "chapter", label: "Write a brief", chapter: "contact" },
         { kind: "link", label: "WhatsApp", href: whatsapp },
       ],
     };
@@ -106,7 +106,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
     return {
       text: "Splendid. GLAZY builds websites and web apps as paid projects, entirely online: email, WhatsApp and video calls. Business sites, cinematic sites like this one, web apps like CRM360, AI features as in ScamShield, or rescuing a site that has misbehaved.",
       actions: [
-        { kind: "link", label: "Start a project", href: mail("New project for GLAZY") },
+        { kind: "chapter", label: "Write a brief", chapter: "contact" },
         { kind: "link", label: "WhatsApp", href: whatsapp },
         { kind: "chapter", label: "See how it works", chapter: "contact" },
       ],
@@ -196,16 +196,23 @@ function followUp(intent: Intent): Pick<Message, "actions" | "replies"> {
 }
 
 /** Mr. Nimbus's portrait (his own photo, cleaned up). */
-function Portrait({ size }: { size: number }) {
+function Portrait({ size, tilt = false, twitch = false }: { size: number; tilt?: boolean; twitch?: boolean }) {
   return (
-    <Image
-      src={size > 48 ? "/nimbus/mr-nimbus-512.webp" : "/nimbus/mr-nimbus-160.webp"}
-      alt="Mr. Nimbus, a black-and-white tuxedo cat"
-      width={size}
-      height={size}
-      className="rounded-full object-cover ring-1 ring-white/20"
+    <motion.span
+      className={cn("relative inline-block shrink-0 rounded-full", twitch && "[animation:nimbus-twitch_7s_ease-in-out_infinite]")}
       style={{ width: size, height: size }}
-    />
+      animate={{ rotate: tilt ? -11 : 0, y: tilt ? -1 : 0 }}
+      transition={{ type: "spring", stiffness: 220, damping: 14 }}
+    >
+      <Image
+        src={size > 48 ? "/nimbus/mr-nimbus-512.webp" : "/nimbus/mr-nimbus-160.webp"}
+        alt="Mr. Nimbus, a black-and-white tuxedo cat"
+        width={size}
+        height={size}
+        className="rounded-full object-cover ring-1 ring-white/20"
+        style={{ width: size, height: size }}
+      />
+    </motion.span>
   );
 }
 
@@ -262,6 +269,16 @@ export function Nimbus() {
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
+
+  // Escape closes the chat.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   // Let the page know the chat is open (on phones the Continue prompt steps aside).
   useEffect(() => {
@@ -401,14 +418,22 @@ export function Nimbus() {
           }}
           aria-expanded={open}
           aria-controls="nimbus-panel"
-          className="flex h-12 items-center gap-2 rounded-full border border-white/15 bg-[#121214]/85 px-2 sm:pl-3 sm:pr-4 text-sm text-bone shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-md transition-colors hover:bg-[#1c1c20]/90"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: ease.outExpo, delay: 0.8 }}
+          className="group flex h-12 items-center gap-2 rounded-full border border-white/15 bg-[#121214]/85 px-2 sm:pl-3 sm:pr-4 text-sm text-bone shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-md transition-colors hover:bg-[#1c1c20]/90"
+          initial={{ opacity: 0, scale: 0.6, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.94 }}
+          transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.8 }}
         >
           <span className="relative flex h-8 w-8 items-center justify-center">
-            <Portrait size={32} />
-            <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#121214] bg-[#28c840]" />
+            <span aria-hidden className="absolute -inset-[3px] rounded-full bg-[conic-gradient(from_0deg,var(--color-ember),transparent_30%,var(--color-peach)_55%,transparent_80%,var(--color-ember))] opacity-80 [animation:leader-sweep_5s_linear_infinite] group-hover:opacity-100 group-hover:[animation-duration:1.6s]" />
+            <span className="relative rounded-full bg-[#121214] p-px">
+              <Portrait size={30} twitch={!open} />
+            </span>
+            <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+              <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-[#28c840] opacity-60" />
+              <span className="relative h-2.5 w-2.5 rounded-full border-2 border-[#121214] bg-[#28c840]" />
+            </span>
           </span>
           <span className="hidden sm:inline">{open ? "Close" : "Mr. Nimbus"}</span>
           <span className="sr-only sm:hidden">{open ? "Close chat" : "Talk to Mr. Nimbus"}</span>
@@ -424,17 +449,31 @@ export function Nimbus() {
             aria-label="Mr. Nimbus, site guide"
             data-lenis-prevent
             className="fixed bottom-20 right-5 z-[92] flex h-[min(560px,calc(100svh-7rem))] w-[min(92vw,380px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0f0f11]/95 text-bone shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] backdrop-blur-md"
-            initial={{ opacity: 0, y: 20, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.97 }}
-            transition={{ duration: 0.45, ease: ease.outExpo }}
+            style={{ transformOrigin: "100% 100%" }}
+            initial={{ opacity: 0, y: 30, scale: 0.6, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: 20, scale: 0.7, filter: "blur(6px)" }}
+            transition={{ type: "spring", stiffness: 240, damping: 24 }}
           >
             <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-              <Portrait size={44} />
-              <div className="min-w-0">
+              <Portrait size={44} tilt={typing} twitch={!typing} />
+              <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-medium">Mr. Nimbus</p>
-                <p className="text-xs text-bone-2">Studio cat · gentleman · your guide</p>
+                <p className="text-xs text-bone-2">{typing ? "Thinking it over…" : "Studio cat · gentleman · your guide"}</p>
               </div>
+              <motion.button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close the chat with Mr. Nimbus"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.05] text-bone-2 transition-colors hover:bg-white/[0.12] hover:text-bone"
+                whileHover={{ rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 300, damping: 18 }}
+              >
+                <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden>
+                  <path d="M4 4l8 8M12 4l-8 8" />
+                </svg>
+              </motion.button>
             </div>
             <p className="border-b border-white/10 bg-[#ff8a3d]/10 px-4 py-2.5 text-[12px] leading-snug text-[#ffd9b8]">
               {ai
@@ -444,7 +483,13 @@ export function Nimbus() {
 
             <div ref={list} className="no-scrollbar flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4" aria-live="polite">
               {messages.map((m) => (
-                <div key={m.id} className={cn("flex flex-col gap-2", m.from === "you" ? "items-end" : "items-start")}>
+                <motion.div
+                  key={m.id}
+                  className={cn("flex flex-col gap-2", m.from === "you" ? "items-end" : "items-start")}
+                  initial={{ opacity: 0, x: m.from === "you" ? 14 : -14, y: 8, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
+                  transition={{ type: "spring", stiffness: 300, damping: 26 }}
+                >
                   {m.from === "nimbus" && (
                     <span className="flex items-center gap-2 text-[11px] text-bone-3">
                       <Portrait size={20} /> Mr. Nimbus
@@ -468,12 +513,18 @@ export function Nimbus() {
                       ))}
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
               {typing && (
-                <div className="flex w-14 items-center justify-center gap-1 rounded-2xl rounded-bl-md bg-white/[0.07] py-3" aria-label="Mr. Nimbus is thinking">
+                <div className="flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-white/[0.07] px-3.5 py-2.5" role="status" aria-label="Mr. Nimbus is thinking">
                   {[0, 1, 2].map((i) => (
-                    <span key={i} className="h-1.5 w-1.5 rounded-full bg-bone/70 [animation:twinkle_1s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.15}s` }} />
+                    <svg key={i} viewBox="0 0 20 20" className="h-3.5 w-3.5 text-peach [animation:paw-hop_1.1s_ease-in-out_infinite]" style={{ animationDelay: `${i * 0.18}s` }} aria-hidden>
+                      <ellipse cx="10" cy="13.5" rx="4.6" ry="3.8" fill="currentColor" />
+                      <ellipse cx="4.2" cy="8.4" rx="1.9" ry="2.3" fill="currentColor" />
+                      <ellipse cx="8" cy="5.2" rx="1.9" ry="2.4" fill="currentColor" />
+                      <ellipse cx="12" cy="5.2" rx="1.9" ry="2.4" fill="currentColor" />
+                      <ellipse cx="15.8" cy="8.4" rx="1.9" ry="2.3" fill="currentColor" />
+                    </svg>
                   ))}
                 </div>
               )}
