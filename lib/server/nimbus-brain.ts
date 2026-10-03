@@ -207,8 +207,14 @@ async function viaGateway(token: string, turns: ChatTurn[], signal: AbortSignal)
     // Not every model takes response_format: ask again with the instruction alone.
     if (res.status === 400) res = await send(model, false);
     // Not signed in to the gateway (OIDC off, or no credits set up): no point trying other models.
-    if (res.status === 401 || res.status === 403) return { ok: false, reason: "rejected" };
-    if (!res.ok) continue;
+    if (res.status === 401 || res.status === 403) {
+      console.warn("[nimbus] AI Gateway refused:", res.status, (await res.text()).slice(0, 300));
+      return { ok: false, reason: "rejected" };
+    }
+    if (!res.ok) {
+      console.warn("[nimbus] AI Gateway", model, res.status, (await res.text()).slice(0, 200));
+      continue;
+    }
     const json = (await res.json()) as { choices?: { message?: { content?: string | null } }[] };
     const parsed = parseReply(json.choices?.[0]?.message?.content ?? "");
     if (parsed) return { ok: true, ...parsed };

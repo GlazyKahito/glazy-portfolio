@@ -318,6 +318,9 @@ export function Nimbus() {
         if (res.ok) {
           const data = (await res.json()) as { reply: string; intent: Intent };
           reply = { text: data.reply, ...followUp(data.intent) };
+        } else if (res.status !== 429) {
+          // His AI line is down: say so honestly, and carry on with his own answers.
+          setAi(false);
         }
       } catch {
         /* fall back below */
