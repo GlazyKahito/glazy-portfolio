@@ -170,7 +170,7 @@ export const projects: Project[] = [
     featured: true,
     image: {
       src: "/projects/climatiq/cover.jpg",
-      alt: "CLIMATIQ command centre: India heat situation, district heat-risk map and regional overview",
+      alt: "CLIMATIQ command centre: India heat situation, the 3D heat-risk map and the regional overview",
       width: 1440,
       height: 900,
     },
@@ -178,7 +178,7 @@ export const projects: Project[] = [
     gallery: [
       {
         src: "/projects/climatiq/home.jpg",
-        alt: "The homepage: a 3D globe with real ERA5 heat data over India",
+        alt: "The homepage: a 3D globe tinted with real ERA5 heat data",
         width: 1280,
         height: 800,
       },
@@ -188,7 +188,7 @@ export const projects: Project[] = [
     caseStudy: true,
     hue: 350,
     features: [
-      "Command centre: India map with state and district heat-risk choropleth, a 1° heat layer, stations, drill-down and comparison mode",
+      "Command centre: India map in 2D or 3D (height is the predicted maximum temperature) with a state and district heat-risk choropleth, a 1° heat layer, stations, drill-down and comparison mode",
       "Heatwave prediction: 7-day forecasts for all 36 states and UTs and 230 pilot districts, with uncertainty bands, IMD-criteria severity, confidence and contributing factors",
       "AI advisories and alerts: Gemini, Claude or deterministic templates, validated output for four audiences, draft → approve → publish, deduplicated alerts",
       "Response CRM: incidents, assignments, tasks, an activity timeline and team workload",
@@ -230,7 +230,7 @@ export const projects: Project[] = [
     ],
     year: "2026",
     status: "live",
-    featured: true,
+    featured: false,
     image: {
       src: "/projects/dcn-virtual-lab/cover.jpg",
       alt: "DCN Virtual Lab — network topology designer and simulator",

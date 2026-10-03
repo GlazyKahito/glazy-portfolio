@@ -146,9 +146,12 @@ export function gatewayToken(requestToken?: string | null): string | null {
   return process.env.AI_GATEWAY_API_KEY?.trim() || requestToken?.trim() || process.env.VERCEL_OIDC_TOKEN?.trim() || null;
 }
 
-/** Whether Mr. Nimbus has any AI line at all. */
+/** Set when the gateway refuses us (e.g. the team has not unlocked its credits); retried after a while. */
+let gatewayRefusedUntil = 0;
+
+/** Whether Mr. Nimbus has an AI line he can actually use. */
 export function aiAvailable(requestToken?: string | null) {
-  return !!apiKey() || !!gatewayToken(requestToken);
+  return !!apiKey() || (!!gatewayToken(requestToken) && Date.now() > gatewayRefusedUntil);
 }
 
 const JSON_RULE = `\n\nAnswer with a single JSON object and nothing else: {"reply": "<your reply, at most 90 words>", "intent": "<one of: ${INTENTS.join(", ")}>"}`;
@@ -209,6 +212,7 @@ async function viaGateway(token: string, turns: ChatTurn[], signal: AbortSignal)
     // Not signed in to the gateway (OIDC off, or no credits set up): no point trying other models.
     if (res.status === 401 || res.status === 403) {
       console.warn("[nimbus] AI Gateway refused:", res.status, (await res.text()).slice(0, 300));
+      gatewayRefusedUntil = Date.now() + 10 * 60_000;
       return { ok: false, reason: "rejected" };
     }
     if (!res.ok) {
