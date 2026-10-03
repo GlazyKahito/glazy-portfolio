@@ -4,12 +4,14 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AboutScene, BuildingScene, ExperienceScene, IntroScene, StackScene } from "@/components/scenes/ChapterScenes";
 import { ContactScene } from "@/components/scenes/Contact";
-import { ClientScene, RecruiterScene } from "@/components/scenes/HireScenes";
+import { DepthPoster } from "@/components/scenes/DepthPoster";
+import { RecruiterScene, StartScene } from "@/components/scenes/HireScenes";
 import { ProjectScene } from "@/components/scenes/ProjectScene";
 import { SceneVideo } from "@/components/scenes/SceneVideo";
+import { ServicesScene } from "@/components/scenes/ServicesScene";
 import { useIntro } from "@/components/ui/Intro";
-import { projects } from "@/data/projects";
-import { chapterById, chapters, footage, type ChapterId, type TransitionStyle } from "@/data/scenes";
+import { featuredProjects as work } from "@/data/projects";
+import { chapterById, chapterHash, chapterHashes, chapters, type ChapterId, type TransitionStyle } from "@/data/scenes";
 import { GOTO_EVENT, getDeck, setDeck, type GotoDetail } from "@/lib/deck";
 import { gsap } from "@/lib/gsap";
 import { useDevice } from "@/lib/hooks/use-device";
@@ -31,26 +33,73 @@ interface Step {
 }
 
 const STEPS: Step[] = [
-  { key: "intro", chapter: "intro", axis: "y", label: "Opening", render: (p) => <IntroScene play={p} /> },
-  ...projects.map<Step>((project, i) => ({
+  { key: "intro", chapter: "intro", axis: "y", label: "GLAZY", render: (p) => <IntroScene play={p} /> },
+  { key: "services", chapter: "services", axis: "y", label: "What we make", render: (p) => <ServicesScene play={p} /> },
+  ...work.map<Step>((project, i) => ({
     key: `work-${project.slug}`,
     chapter: "work",
     axis: i === 0 ? "y" : "x",
     label: project.title,
     render: (p) => <ProjectScene project={project} index={i} play={p} />,
   })),
-  { key: "building", chapter: "building", axis: "y", label: "On the bench", render: (p) => <BuildingScene play={p} /> },
-  { key: "about", chapter: "about", axis: "y", label: "The person", render: (p) => <AboutScene play={p} /> },
+  { key: "building", chapter: "building", axis: "y", label: "In the studio", render: (p) => <BuildingScene play={p} /> },
+  { key: "about", chapter: "about", axis: "y", label: "The founder", render: (p) => <AboutScene play={p} /> },
   { key: "experience", chapter: "about", axis: "x", label: "Experience", render: (p) => <ExperienceScene play={p} /> },
-  { key: "stack", chapter: "stack", axis: "y", label: "The ecosystem", render: (p) => <StackScene play={p} /> },
-  { key: "hire-build", chapter: "hire", axis: "x", label: "Need a website?", render: (p) => <ClientScene play={p} /> },
-  { key: "hire-recruit", chapter: "hire", axis: "x", label: "Hiring?", render: (p) => <RecruiterScene play={p} /> },
-  { key: "contact", chapter: "contact", axis: "y", label: "Say hello", render: (p) => <ContactScene play={p} /> },
+  { key: "recruit", chapter: "about", axis: "x", label: "For recruiters", render: (p) => <RecruiterScene play={p} /> },
+  { key: "stack", chapter: "stack", axis: "y", label: "The toolkit", render: (p) => <StackScene play={p} /> },
+  { key: "start", chapter: "contact", axis: "y", label: "Start a project", render: (p) => <StartScene play={p} /> },
+  { key: "contact", chapter: "contact", axis: "x", label: "Say hello", render: (p) => <ContactScene play={p} /> },
 ];
 
 const N = STEPS.length;
 const firstStepOf = (c: ChapterId) => STEPS.findIndex((s) => s.chapter === c);
 const DURATION = 1.7;
+
+/* Transition helpers. Module level, so randomness never runs during render. */
+const rand = (a: number, b: number) => a + Math.random() * (b - a);
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+/** Random horizontal bands covering the frame, and a random order to reveal them in. */
+function glitchPlan(k = 18) {
+  const cuts = Array.from({ length: k - 1 }, () => rand(0, 100)).sort((a, b) => a - b);
+  const edges = [0, ...cuts, 100];
+  const bands = edges.slice(0, -1).map((e, i) => [e, edges[i + 1]] as [number, number]);
+  const order = bands.map((_, i) => i).sort(() => Math.random() - 0.5);
+  return { bands, order };
+}
+
+/** A clip-path showing only some horizontal bands: one comb-shaped polygon, joined along the left edge. */
+function bandsClip(bands: [number, number][]) {
+  if (!bands.length) return "polygon(0% 0%, 0% 0%, 0% 0%)";
+  const pts = [...bands].sort((a, b) => a[0] - b[0]).flatMap(([a, b]) => [`0% ${a}%`, `100% ${a}%`, `100% ${b}%`, `0% ${b}%`]);
+  return `polygon(${pts.join(", ")})`;
+}
+
+/** Vertical blinds opening in a wave from one side: one comb polygon joined along the bottom edge. */
+function blindsClip(n: number, p: number, fromRight = false) {
+  const w = 100 / n;
+  const pts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const order = fromRight ? n - 1 - i : i;
+    const pi = clamp01(p * 1.6 - (order / (n - 1)) * 0.6);
+    const x0 = i * w;
+    const x1 = x0 + w * pi;
+    pts.push(`${x0}% 100%`, `${x0}% 0%`, `${x1}% 0%`, `${x1}% 100%`);
+  }
+  return `polygon(${pts.join(", ")})`;
+}
+
+const MOSAIC = { cols: 16, rows: 9 };
+
+/** Put the transition overlays away once a move has finished. */
+function resetFx(glitch: HTMLElement | null, burn: HTMLElement | null, mosaic: HTMLElement | null) {
+  if (glitch) {
+    gsap.set(glitch, { autoAlpha: 0 });
+    glitch.querySelectorAll<HTMLElement>("[data-tear]").forEach((t) => (t.style.opacity = "0"));
+  }
+  if (burn) gsap.set(burn, { autoAlpha: 0 });
+  if (mosaic) gsap.set([...mosaic.children], { autoAlpha: 0 });
+}
 
 /* ------------------------------------------------------------------ */
 /* Arrival card: each chapter's own transition screen                   */
@@ -127,7 +176,7 @@ export function SceneDeck() {
   const [loader, setLoader] = useState<{ chapter: ChapterId; progress: number } | null>(null);
   const [card, setCard] = useState<ChapterId | null>(null);
   const [ready, setReady] = useState<Partial<Record<ChapterId, boolean>>>({});
-  const [extraLoad, setExtraLoad] = useState<Set<ChapterId>>(() => new Set(["intro", "work"]));
+  const [extraLoad, setExtraLoad] = useState<Set<ChapterId>>(() => new Set(["intro", "services"]));
   const [visitedSteps, setVisitedSteps] = useState<number[]>([0]);
 
   const lock = useRef(false);
@@ -138,6 +187,11 @@ export function SceneDeck() {
   const sceneRefs = useRef<(HTMLElement | null)[]>([]);
   const progressFill = useRef<HTMLDivElement>(null);
   const sweep = useRef<HTMLDivElement>(null);
+  const glitchFx = useRef<HTMLDivElement>(null);
+  const burnFx = useRef<HTMLDivElement>(null);
+  const mosaicFx = useRef<HTMLDivElement>(null);
+  const [railHold, setRailHold] = useState(true);
+  const [railHover, setRailHover] = useState(false);
   const [projectCard, setProjectCard] = useState<{ n: number; title: string; hue: number } | null>(null);
   const loaderProgress = useRef<Partial<Record<ChapterId, number>>>({});
 
@@ -153,7 +207,7 @@ export function SceneDeck() {
 
   const markReady = useCallback((c: ChapterId) => {
     setReady((r) => (r[c] ? r : { ...r, [c]: true }));
-    if (c === "intro") setDeck({ assets: { loaded: 1, total: 1, label: footage.sea.description } });
+    if (c === "intro") setDeck({ assets: { loaded: 1, total: 1, label: "The ridge at dusk" } });
   }, []);
 
   // Footage loads for the current chapter and its neighbours (and stays loaded once fetched).
@@ -206,7 +260,8 @@ export function SceneDeck() {
       const scIn = sceneRefs.current[to]!;
       const axis = dir > 0 ? ts.axis : fs.axis;
       // Chapter changes use the arriving chapter's style (or, going back, the departing one's, reversed).
-      const style: TransitionStyle = same ? "slide" : chapterById(dir > 0 ? ts.chapter : fs.chapter).transition;
+      // Reduced motion: a plain crossfade, with no glitches, flashes or blinds.
+      const style: TransitionStyle | "fade" = same ? "slide" : reducedMotion ? "fade" : chapterById(dir > 0 ? ts.chapter : fs.chapter).transition;
       const d = reducedMotion ? 0.5 : DURATION;
 
       setArrived(false);
@@ -229,6 +284,8 @@ export function SceneDeck() {
             gsap.set(el, { autoAlpha: el === bgIn ? 1 : 0 });
           });
           gsap.set(scOut, { autoAlpha: 0, clearProps: "transform,filter" });
+          resetFx(glitchFx.current, burnFx.current, mosaicFx.current);
+          setRailHold(true);
           indexRef.current = to;
           setIndex(to);
           setArrived(true);
@@ -243,7 +300,7 @@ export function SceneDeck() {
           // Swallow the tail of a trackpad flick: the next move needs a fresh gesture.
           quietUntil.current = performance.now() + 450;
           lock.current = false;
-          window.history.replaceState(null, "", ts.chapter === "intro" ? "/" : `/#${ts.chapter === "work" ? "projects" : ts.chapter}`);
+          window.history.replaceState(null, "", ts.chapter === "intro" ? "/" : `/#${chapterHash(ts.chapter)}`);
           scIn.focus({ preventScroll: true });
         },
       });
@@ -257,7 +314,7 @@ export function SceneDeck() {
       if (same && ts.chapter === "work" && !reducedMotion) {
         // Between projects: the window swings away in depth, a light sweep in the next
         // project's colour crosses the frame, its number flashes up, and it swings in.
-        const next = projects[to - firstStepOf("work")];
+        const next = work[to - firstStepOf("work")];
         const stageOut = scOut.querySelector<HTMLElement>("[data-stage-wrap]");
         const copyOut = scOut.querySelector<HTMLElement>("[data-copy-wrap]");
         const stageIn = scIn.querySelector<HTMLElement>("[data-stage-wrap]");
@@ -282,6 +339,84 @@ export function SceneDeck() {
       } else if (same) {
         // Same footage, not a project: a slow push that reads as the camera re-framing.
         tl.fromTo(bgIn, { scale: 1 }, { scale: 1.06, duration: d * 0.5, ease: "power2.inOut", yoyo: true, repeat: 1 }, 0);
+      } else if (style === "fade") {
+        gsap.set(bgIn, { zIndex: 2 });
+        gsap.set(bgOut, { zIndex: 1 });
+        tl.fromTo(bgIn, { autoAlpha: 0 }, { autoAlpha: 1, ease: "power2.inOut" }, 0);
+      } else if (style === "glitch") {
+        // A bad signal: the next place tears in through random bands that only ever add up (no strobing),
+        // both frames jitter sideways, RGB tear bars and scanlines run over the cut. Same both ways.
+        gsap.set(bgIn, { zIndex: 2, clipPath: bandsClip([]) });
+        gsap.set(bgOut, { zIndex: 1 });
+        const plan = glitchPlan();
+        const fx = glitchFx.current;
+        const tears = fx ? [...fx.querySelectorAll<HTMLElement>("[data-tear]")] : [];
+        const frames = 16;
+        const start = d * 0.12;
+        const span = d * 0.62;
+        if (fx) tl.set(fx, { autoAlpha: 1 }, start);
+        for (let f = 0; f <= frames; f++) {
+          const p = f / frames;
+          const shown = Math.round(plan.bands.length * (p * p * (3 - 2 * p)));
+          const last = f === frames;
+          tl.call(
+            () => {
+              bgIn.style.clipPath = last ? "inset(0% 0% 0% 0%)" : bandsClip(plan.order.slice(0, shown).map((i) => plan.bands[i]));
+              bgIn.style.transform = last ? "" : `translate3d(${rand(-2.5, 2.5)}%, 0, 0) scale(1.02)`;
+              bgOut.style.transform = last ? "" : `translate3d(${rand(-1.5, 1.5)}%, 0, 0)`;
+              // Colour breaks on two frames only.
+              bgIn.style.filter = f === 5 || f === 11 ? `hue-rotate(${rand(-70, 70)}deg) saturate(2) contrast(1.25)` : "";
+              tears.forEach((t) => {
+                const on = !last && Math.random() < 0.7;
+                t.style.opacity = on ? "1" : "0";
+                t.style.top = `${rand(0, 98)}%`;
+                t.style.height = `${rand(0.3, 5)}%`;
+                t.style.transform = `translate3d(${rand(-18, 18)}%, 0, 0)`;
+              });
+            },
+            [],
+            start + span * p,
+          );
+        }
+        if (fx) tl.to(fx, { autoAlpha: 0, duration: 0.25 }, start + span);
+      } else if (style === "shutter") {
+        // Vertical blinds: forward they open on the next place left to right; back, they close right to left.
+        const blinds = { p: 0 };
+        const top = dir > 0 ? bgIn : bgOut;
+        gsap.set(top, { zIndex: 2 });
+        gsap.set(dir > 0 ? bgOut : bgIn, { zIndex: 1 });
+        tl.fromTo(
+          blinds,
+          { p: dir > 0 ? 0 : 1 },
+          { p: dir > 0 ? 1 : 0, onUpdate: () => (top.style.clipPath = blindsClip(9, blinds.p, dir < 0)) },
+          0,
+        );
+        tl.fromTo(top, { scale: dir > 0 ? 1.12 : 1 }, { scale: dir > 0 ? 1 : 1.12 }, 0);
+        tl.fromTo(dir > 0 ? bgOut : bgIn, { scale: dir > 0 ? 1 : 1.06 }, { scale: dir > 0 ? 1.06 : 1 }, 0);
+      } else if (style === "burn") {
+        // Film burn: a light leak blooms over the frame, burns it out, and the next place develops through it.
+        gsap.set(bgIn, { zIndex: 2, autoAlpha: 0 });
+        gsap.set(bgOut, { zIndex: 1 });
+        const burn = burnFx.current;
+        tl.to(bgOut, { filter: "brightness(1.7) saturate(1.35)", duration: d * 0.5, ease: "power2.in" }, 0);
+        if (burn) {
+          tl.fromTo(burn, { autoAlpha: 0, scale: 0.35, xPercent: 18 }, { autoAlpha: 1, scale: 2.4, xPercent: -6, duration: d * 0.5, ease: "power2.in" }, 0);
+          tl.to(burn, { autoAlpha: 0, scale: 3.4, xPercent: -14, duration: d * 0.5, ease: "power2.out" }, d * 0.5);
+        }
+        tl.fromTo(bgIn, { autoAlpha: 0, filter: "brightness(1.8) saturate(1.3)", scale: 1.08 }, { autoAlpha: 1, filter: "brightness(1) saturate(1)", scale: 1, duration: d * 0.55, ease: "power2.out" }, d * 0.42);
+      } else if (style === "mosaic") {
+        // Mosaic: the frame breaks into blocks that go dark in a random order, then the next place
+        // comes back block by block.
+        const cells = mosaicFx.current ? [...mosaicFx.current.children] : [];
+        gsap.set(bgIn, { zIndex: 2, autoAlpha: 0 });
+        gsap.set(bgOut, { zIndex: 1 });
+        if (cells.length) {
+          tl.fromTo(cells, { autoAlpha: 0, scale: 0.4 }, { autoAlpha: 1, scale: 1.02, duration: d * 0.16, ease: "power2.out", stagger: { amount: d * 0.32, from: "random" } }, 0);
+          tl.set(bgIn, { autoAlpha: 1 }, d * 0.5);
+          tl.to(cells, { autoAlpha: 0, scale: 0.4, duration: d * 0.16, ease: "power2.in", stagger: { amount: d * 0.32, from: "random" } }, d * 0.52);
+        } else {
+          tl.to(bgIn, { autoAlpha: 1 }, d * 0.5);
+        }
       } else if (dir > 0) {
         gsap.set(bgIn, { zIndex: 2 });
         gsap.set(bgOut, { zIndex: 1 });
@@ -440,8 +575,7 @@ export function SceneDeck() {
   useEffect(() => {
     if (!done) return;
     const hash = window.location.hash.replace("#", "");
-    const map: Record<string, ChapterId> = { projects: "work", work: "work", "in-progress": "building", building: "building", about: "about", stack: "stack", hire: "hire", "work-with-me": "hire", contact: "contact" };
-    const c = map[hash];
+    const c = chapterHashes[hash];
     if (c) {
       const t = window.setTimeout(() => go(firstStepOf(c)), 300);
       return () => window.clearTimeout(t);
@@ -461,6 +595,14 @@ export function SceneDeck() {
     html.classList.add("deck-mode");
     return () => html.classList.remove("deck-mode");
   }, []);
+
+  // The rail's label shows while moving and for a moment after arriving, then steps aside (hover brings it back).
+  useEffect(() => {
+    if (!railHold || !arrived) return;
+    const t = window.setTimeout(() => setRailHold(false), 2600);
+    return () => window.clearTimeout(t);
+  }, [railHold, arrived, index]);
+  const showRailLabel = !arrived || railHold || railHover;
 
   const last = index === N - 1;
   const nextAxis = last ? "y" : STEPS[index + 1].axis;
@@ -486,17 +628,23 @@ export function SceneDeck() {
           className="absolute inset-0 will-change-transform"
           style={{ visibility: c.id === "intro" ? "visible" : "hidden" }}
         >
-          <SceneVideo
-            name={c.footage}
-            load={loadable.has(c.id)}
-            play={step.chapter === c.id || (card !== null && card === c.id)}
-            onReady={() => markReady(c.id)}
-            onProgress={(p) => {
-              loaderProgress.current[c.id] = p;
-            }}
-          />
-          {/* Legibility: a cinematic grade, darker where text sits. */}
-          <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_15%_60%,rgb(0_0_0/0.62),transparent_60%),linear-gradient(to_top,rgb(0_0_0/0.55),transparent_45%),linear-gradient(to_bottom,rgb(0_0_0/0.35),transparent_25%)]" />
+          {c.depth ? (
+            <DepthPoster active={step.chapter === c.id} reveal={done} onReady={() => markReady(c.id)} />
+          ) : (
+            <>
+              <SceneVideo
+                name={c.footage}
+                load={loadable.has(c.id)}
+                play={step.chapter === c.id || (card !== null && card === c.id)}
+                onReady={() => markReady(c.id)}
+                onProgress={(p) => {
+                  loaderProgress.current[c.id] = p;
+                }}
+              />
+              {/* Legibility: a cinematic grade, darker where text sits. */}
+              <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_15%_60%,rgb(0_0_0/0.62),transparent_60%),linear-gradient(to_top,rgb(0_0_0/0.55),transparent_45%),linear-gradient(to_bottom,rgb(0_0_0/0.35),transparent_25%)]" />
+            </>
+          )}
         </div>
       ))}
 
@@ -509,7 +657,7 @@ export function SceneDeck() {
           }}
           data-scene
           tabIndex={-1}
-          id={i === firstStepOf(s.chapter) ? (s.chapter === "work" ? "projects" : s.chapter) : undefined}
+          id={i === firstStepOf(s.chapter) ? chapterHash(s.chapter) : undefined}
           aria-label={s.chapter === "work" ? `The work: ${s.label}` : s.label}
           aria-hidden={i !== index}
           inert={i !== index}
@@ -519,6 +667,46 @@ export function SceneDeck() {
           {s.render(i === index && play)}
         </section>
       ))}
+
+      {/* Transition overlays: a bad signal (glitch), a film burn, and a mosaic grid. Hidden between moves. */}
+      <div ref={glitchFx} aria-hidden className="pointer-events-none invisible absolute inset-0 z-[19] overflow-hidden opacity-0">
+        <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgb(255_255_255/0.07)_0_1px,transparent_1px_3px)] mix-blend-overlay" />
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div
+            key={i}
+            data-tear
+            className="absolute inset-x-[-20%] opacity-0 mix-blend-screen"
+            style={{
+              background:
+                i % 3 === 0
+                  ? "linear-gradient(90deg, transparent, rgb(255 40 90 / 0.55) 20%, rgb(255 255 255 / 0.35) 50%, rgb(0 230 255 / 0.55) 80%, transparent)"
+                  : i % 3 === 1
+                    ? "linear-gradient(90deg, rgb(0 230 255 / 0.4), transparent 40%, rgb(255 40 90 / 0.45))"
+                    : "rgb(245 245 247 / 0.18)",
+            }}
+          />
+        ))}
+        <div className="film-grain absolute -inset-[10%] opacity-40 mix-blend-overlay" />
+      </div>
+      <div
+        ref={burnFx}
+        aria-hidden
+        className="pointer-events-none invisible absolute inset-0 z-[19] origin-[78%_30%] opacity-0 mix-blend-screen"
+        style={{
+          background:
+            "radial-gradient(55% 50% at 78% 30%, rgb(255 250 240) 0%, rgb(255 205 150 / 0.95) 20%, rgb(255 120 50 / 0.8) 40%, rgb(170 40 15 / 0.4) 58%, transparent 74%)",
+        }}
+      />
+      <div
+        ref={mosaicFx}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-[19] grid"
+        style={{ gridTemplateColumns: `repeat(${MOSAIC.cols}, 1fr)`, gridTemplateRows: `repeat(${MOSAIC.rows}, 1fr)` }}
+      >
+        {Array.from({ length: MOSAIC.cols * MOSAIC.rows }).map((_, i) => (
+          <span key={i} className="invisible bg-ink opacity-0 [margin:-0.5px]" />
+        ))}
+      </div>
 
       {/* The chapter's own arrival card. */}
       <AnimatePresence>
@@ -534,7 +722,11 @@ export function SceneDeck() {
           >
             <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-bone/80">Chapter {cardChapter.number}</p>
             <motion.p
-              className="mt-4 font-display text-[clamp(3.5rem,10vw,9rem)] leading-[0.9] text-bone [text-shadow:0_4px_60px_rgb(0_0_0/0.5)]"
+              data-text={cardChapter.label}
+              className={cn(
+                "mt-4 font-display text-[clamp(3.5rem,10vw,9rem)] leading-[0.9] text-bone [text-shadow:0_4px_60px_rgb(0_0_0/0.5)]",
+                cardChapter.transition === "glitch" && !reducedMotion && "glitch-text",
+              )}
               initial={{ letterSpacing: "0.12em", opacity: 0, filter: "blur(12px)" }}
               animate={{ letterSpacing: "-0.02em", opacity: 1, filter: "blur(0px)" }}
               transition={{ duration: 0.9, ease: ease.outExpo }}
@@ -592,7 +784,7 @@ export function SceneDeck() {
             </div>
             <div className="text-center">
               <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-bone-2">Loading chapter {loaderChapter.number}</p>
-              <p className="mt-2 font-display text-3xl text-bone">4K footage</p>
+              <p className="mt-2 font-display text-3xl text-bone">{loaderChapter.depth ? "4K poster" : "4K footage"}</p>
             </div>
             <Emblem mood={loaderChapter.mood} />
           </motion.div>
@@ -600,7 +792,13 @@ export function SceneDeck() {
       </AnimatePresence>
 
       {/* Progress rail: how far you are, and where. Never what comes next. */}
-      <nav aria-label="Progress" className="pointer-events-none absolute right-[max(1rem,calc(var(--gutter)-1.5rem))] top-1/2 z-10 hidden h-[46vh] -translate-y-1/2 md:block">
+      <nav
+        aria-label="Progress"
+        onPointerEnter={() => setRailHover(true)}
+        onPointerLeave={() => setRailHover(false)}
+        className="pointer-events-none absolute right-[max(1rem,calc(var(--gutter)-1.5rem))] top-1/2 z-10 hidden h-[46vh] -translate-y-1/2 md:block"
+      >
+        <div aria-hidden className="pointer-events-auto absolute -inset-x-3 inset-y-0" />
         <div className="relative h-full w-px bg-white/15">
           <div ref={progressFill} className="absolute inset-x-0 top-0 h-full origin-top bg-bone" style={{ transform: `scaleY(0)` }} />
           {visitedChapterStarts.map(({ c, i }) => (
@@ -615,8 +813,8 @@ export function SceneDeck() {
           ))}
           <motion.div
             className="absolute right-4 whitespace-nowrap rounded-full border border-white/10 bg-black/45 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-bone backdrop-blur-xl"
-            animate={{ top: `${(index / (N - 1)) * 100}%` }}
-            transition={{ duration: DURATION, ease: ease.inOutQuart }}
+            animate={{ top: `${(index / (N - 1)) * 100}%`, opacity: showRailLabel ? 1 : 0, x: showRailLabel ? 0 : 6 }}
+            transition={{ top: { duration: DURATION, ease: ease.inOutQuart }, opacity: { duration: 0.5 }, x: { duration: 0.5 } }}
             style={{ translateY: "-50%" }}
           >
             {railLabel}

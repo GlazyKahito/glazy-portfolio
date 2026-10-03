@@ -15,7 +15,7 @@ import {
 } from "react";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { ease } from "@/lib/motion";
-import type { ChapterId } from "@/data/scenes";
+import { chapterHashes } from "@/data/scenes";
 import { gotoChapter } from "@/lib/deck";
 
 type Phase = "idle" | "cover" | "reveal";
@@ -70,8 +70,7 @@ export function TransitionProvider({ children }: { children: ReactNode }) {
 
       if (samePage && hash) {
         // On the home page the deck owns navigation.
-        const deckChapter: Record<string, ChapterId> = { projects: "work", "in-progress": "building", about: "about", stack: "stack", contact: "contact" };
-        if (pathname === "/" && deckChapter[hash]) gotoChapter(deckChapter[hash]);
+        if (pathname === "/" && chapterHashes[hash]) gotoChapter(chapterHashes[hash]);
         else scrollToHash(`#${hash}`);
         return;
       }

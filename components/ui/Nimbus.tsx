@@ -10,20 +10,24 @@ import { useTransition } from "@/components/ui/PageTransition";
 import { ResumeViewer } from "@/components/ui/ResumeViewer";
 import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
-import type { ChapterId } from "@/data/scenes";
+import { services } from "@/data/services";
+import { site } from "@/data/site";
+import { chapterHash, type ChapterId } from "@/data/scenes";
 import { skillCategories, skillsByCategory } from "@/data/skills";
 import { gotoChapter } from "@/lib/deck";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /**
- * Mr. Nimbus: Krutik's cat (a tuxedo, and a gentleman), the site's guide.
- * Helps visitors get what they came for, with the occasional joke.
+ * Mr. Nimbus: the studio cat at GLAZY (Krutik's own, a tuxedo, and a
+ * gentleman) and the site's guide. Helps visitors get what they came for,
+ * with the occasional joke.
  *
- * For now Nimbus is a guided assistant, not a language model: it recognises
- * what people ask about (a website, hiring, projects, the stack, contact)
+ * Without an AI key he is a guided assistant: he recognises what people ask
+ * about (a website, the services, hiring, the work, the toolkit, contact)
  * and answers from the same data the site is built from, with buttons that
- * do the thing. It says so openly, and that AI is being linked to it soon.
+ * do the thing. With GEMINI_API_KEY set, real questions go to Gemini through
+ * /api/nimbus, grounded in the same data.
  */
 
 type Action =
@@ -41,17 +45,19 @@ interface Message {
 
 const whatsapp = `https://wa.me/${profile.phone.replace(/\D/g, "")}`;
 const mail = (subject: string) => `mailto:${profile.email}?subject=${encodeURIComponent(subject)}`;
+const founder = profile.name.split(" ")[0];
+const internship = profile.experience.find((e) => /intern/i.test(e.role));
 
-const QUICK = ["I need a website", "I'm hiring", "Show me the projects", "What does he build with?", "How do I contact him?", "Tell me a joke"];
+const QUICK = ["I need a website", "What does GLAZY make?", "Show me the work", "I'm hiring", "How do I reach you?", "Tell me a joke"];
 
 /** Mr. Nimbus's material. Original, and delivered with a straight face. */
 const JOKES = [
   "Why am I the guide here? Someone had to supervise the code, and I was already sitting on the keyboard.",
   "I have personally reviewed every project on this site. Mostly by lying across the laptop while it compiled.",
   "The tuxedo is natural. It saves a great deal of time before formal occasions, which, for a gentleman, is all of them.",
-  "Krutik fixes bugs. I catch them. We are not the same.",
-  "People ask whether I'm an AI. I am a cat. The AI is merely on its way to assist me.",
-  "My hourly rate is two treats and one uninterrupted nap. Krutik's is on request; I'm told his is more reasonable.",
+  `${founder} fixes bugs. I catch them. We are not the same.`,
+  "People ask whether I'm an AI. I am a cat. The AI is merely here to assist me.",
+  "My hourly rate is two treats and one uninterrupted nap. The studio's rates are on request; I'm told they are more reasonable.",
   "I once pushed a glass off the desk to test gravity. Results were reproducible. That is what we call good engineering.",
 ];
 let jokeIndex = 0;
@@ -65,7 +71,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
   if (has("joke", "funny", "laugh", "humour", "humor", "make me smile")) {
     const text = JOKES[jokeIndex % JOKES.length];
     jokeIndex++;
-    return { text, replies: ["Another one", "I need a website", "I'm hiring"] };
+    return { text, replies: ["Another one", "I need a website", "What does GLAZY make?"] };
   }
   if (has("another")) return answer("joke");
 
@@ -76,52 +82,60 @@ function answer(input: string): Omit<Message, "id" | "from"> {
       actions: [
         { kind: "link", label: "Open the case study", href: `/projects/${project.slug}` },
         ...(project.live ? [{ kind: "link" as const, label: "Live site", href: project.live }] : []),
+        ...(project.demo ? [{ kind: "link" as const, label: "Watch the demo", href: project.demo }] : []),
       ],
     };
   }
   if (has("price", "cost", "charge", "budget", "quote", "rate")) {
     return {
-      text: "A gentleman never guesses at a price. Send Krutik a short brief (what the site is for, any site you have now, and your timeline) and he'll reply with a plan and a proper quote.",
+      text: "A gentleman never guesses at a price. Send the studio a short brief (what the site is for, any site you have now, and your timeline) and you'll get a plan and a proper quote.",
       actions: [
-        { kind: "link", label: "Send a brief", href: mail("Website project") },
+        { kind: "link", label: "Send a brief", href: mail("New project for GLAZY") },
         { kind: "link", label: "WhatsApp", href: whatsapp },
       ],
     };
   }
+  if (has("what does glazy", "service", "offer", "what do you do", "what do you make", "what you make")) {
+    return {
+      text: `GLAZY makes ${services.map((s) => s.title.toLowerCase()).join(", ")}. Each one starts with a short brief and ends with a launch.`,
+      actions: [{ kind: "chapter", label: "See what we make", chapter: "services" }],
+      replies: ["I need a website", "How much does it cost?"],
+    };
+  }
   if (has("website", "site", "landing", "web app", "build me", "business", "shop", "redesign", "fix my", "develop")) {
     return {
-      text: "Splendid. Krutik builds websites and web apps as paid projects, entirely online: email, WhatsApp and video calls. Business sites, web apps like CRM360, AI features, or rescuing a site that has misbehaved.",
+      text: "Splendid. GLAZY builds websites and web apps as paid projects, entirely online: email, WhatsApp and video calls. Business sites, cinematic sites like this one, web apps like CRM360, AI features as in ScamShield, or rescuing a site that has misbehaved.",
       actions: [
-        { kind: "link", label: "Start a project", href: mail("Website project") },
+        { kind: "link", label: "Start a project", href: mail("New project for GLAZY") },
         { kind: "link", label: "WhatsApp", href: whatsapp },
-        { kind: "chapter", label: "See how it works", chapter: "hire" },
+        { kind: "chapter", label: "See how it works", chapter: "contact" },
       ],
     };
   }
   if (has("hire", "hiring", "intern", "job", "role", "recruit", "position", "opening", "resume", "cv")) {
     return {
-      text: `Excellent taste. He's looking for paid remote internships: a B.Tech student at KJ Somaiya (2025–2029) who has completed a web development internship at ${profile.experience[0].company}. I can vouch for his work ethic; he rarely naps before I do.`,
+      text: `Excellent taste. ${founder}, the founder, is also open to paid remote internships: a B.Tech student at KJ Somaiya (2025–2029)${internship ? ` who has completed a web development internship at ${internship.company}` : ""}. I can vouch for the work ethic; ${founder} rarely naps before I do.`,
       actions: [
         { kind: "resume", label: "View resume" },
-        { kind: "link", label: "Email him", href: mail("Internship opportunity") },
+        { kind: "link", label: `Email ${founder}`, href: mail("Internship opportunity") },
         { kind: "link", label: "LinkedIn", href: profile.socials.find((s) => s.label === "LinkedIn")?.href ?? "#" },
       ],
     };
   }
   if (has("project", "work", "portfolio", "built", "made", "show")) {
     return {
-      text: `Six projects, all live or open source: ${projects.map((p) => p.title).join(", ")}. Name any one and I'll tell you about it.`,
+      text: `${projects.length} projects, each live, shipped or open source: ${projects.map((p) => p.title).join(", ")}. Name any one and I'll tell you about it.`,
       actions: [{ kind: "chapter", label: "Walk through the work", chapter: "work" }],
       replies: projects.slice(0, 3).map((p) => p.title),
     };
   }
   if (has("stack", "skill", "tech", "language", "framework", "react", "next", "node", "build with", "tools")) {
     const lines = skillCategories.map((c) => `${c}: ${skillsByCategory(c).map((s) => s.name).join(", ")}`);
-    return { text: `His toolkit, catalogued:\n${lines.join("\n")}`, actions: [{ kind: "chapter", label: "See the ecosystem", chapter: "stack" }] };
+    return { text: `The studio's toolkit, catalogued:\n${lines.join("\n")}`, actions: [{ kind: "chapter", label: "See the toolkit", chapter: "stack" }] };
   }
-  if (has("contact", "email", "mail", "phone", "whatsapp", "reach", "call", "talk to him")) {
+  if (has("contact", "email", "mail", "phone", "whatsapp", "reach", "call", "talk to")) {
     return {
-      text: `Email ${profile.email}, or message him on WhatsApp. He reads everything that lands in his inbox, which is more than I can say for the mail I receive.`,
+      text: `Email ${profile.email}, or send a WhatsApp message. Every message is read, which is more than I can say for the mail I receive.`,
       actions: [
         { kind: "link", label: "Email", href: `mailto:${profile.email}` },
         { kind: "link", label: "WhatsApp", href: whatsapp },
@@ -129,16 +143,25 @@ function answer(input: string): Omit<Message, "id" | "from"> {
     };
   }
   if (has("available", "free", "when", "start", "open to")) {
-    return { text: "Indeed he is: open to paid remote internships and paid web projects right now.", replies: ["I need a website", "I'm hiring"] };
+    return { text: `Indeed: the studio is taking on paid web projects, and ${founder} is open to paid remote internships.`, replies: ["I need a website", "I'm hiring"] };
   }
   if (has("who are you", "your name", "nimbus", "are you a cat", "are you ai", "are you real")) {
     return {
-      text: "Mr. Nimbus, Krutik's cat. Tuxedo by nature, gentleman by choice. For now I answer the common questions; AI is being linked to me soon, and then you may chat with me about anything.",
+      text: `Mr. Nimbus, the studio cat at GLAZY and ${founder}'s own. Tuxedo by nature, gentleman by choice. I answer the common questions, and when my AI line is connected you may chat with me about anything.`,
       replies: QUICK.slice(0, 3),
     };
   }
+  if (has("glazy", "studio", "agency", "company", "founder", "founded")) {
+    return {
+      text: `GLAZY is a web studio founded by ${profile.name} in ${site.founded}, in ${profile.location.split(",")[0]}. We design and build websites, web apps and AI features, from the first sketch to launch.`,
+      actions: [
+        { kind: "chapter", label: "Meet the founder", chapter: "about" },
+        { kind: "chapter", label: "See what we make", chapter: "services" },
+      ],
+    };
+  }
   if (has("who", "about", "student", "college", "study", "experience", "krutik")) {
-    return { text: profile.about[0], actions: [{ kind: "chapter", label: "Meet him properly", chapter: "about" }] };
+    return { text: profile.about[0], actions: [{ kind: "chapter", label: "Meet the founder", chapter: "about" }] };
   }
   if (has("thank", "thanks", "cheers")) {
     return { text: "A pleasure. Do mind the whiskers on your way out." };
@@ -147,7 +170,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
     return { text: "Good day to you. Mr. Nimbus, at your service. What brings you in?", replies: QUICK };
   }
   return {
-    text: "Ah, a question beyond my whiskers. AI is being linked to me shortly, after which you may chat with me freely about anything. Until then, may I offer one of these?",
+    text: "Ah, a question beyond my whiskers. May I offer one of these instead? For anything else, the studio reads every email.",
     replies: QUICK,
   };
 }
@@ -198,7 +221,7 @@ export function Nimbus() {
     {
       id: 0,
       from: "nimbus",
-      text: "Good day. Mr. Nimbus, at your service: Krutik's cat and, if I may say, the best-dressed guide on this site. What brings you in?",
+      text: "Good day. Mr. Nimbus, at your service: the studio cat at GLAZY and, if I may say, the best-dressed guide on this site. What brings you in?",
       replies: QUICK,
     },
   ]);
@@ -296,7 +319,7 @@ export function Nimbus() {
     setOpen(false);
     window.setTimeout(() => {
       if (pathname === "/") gotoChapter(c);
-      else navigate(c === "work" ? "/#projects" : `/#${c}`);
+      else navigate(`/#${chapterHash(c)}`);
     }, 250);
   };
 
@@ -340,34 +363,32 @@ export function Nimbus() {
 
   return (
     <>
-      {/* Launcher and invitation. */}
-      <div className="fixed bottom-5 right-5 z-[92] flex flex-col items-end gap-3">
+      {/* Launcher and invitation. The invitation is one line beside the launcher, in the
+          strip every scene keeps free at the foot, so it never covers content; it only
+          shows where there is room for it next to the Continue prompt. */}
+      <div className="fixed bottom-5 right-5 z-[92] flex items-center gap-3">
         <AnimatePresence>
           {bubble && !open && (
             <motion.div
-              className="relative max-w-[250px] rounded-2xl rounded-br-md border border-white/15 bg-[#121214]/92 p-4 text-sm text-bone shadow-[0_20px_50px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
-              initial={{ opacity: 0, y: 12, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.97 }}
+              className="hidden h-12 items-center gap-1 rounded-full border border-white/15 bg-[#121214]/90 pl-4 pr-1.5 text-[13px] text-bone shadow-[0_20px_50px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md min-[1180px]:flex"
+              initial={{ opacity: 0, x: 16, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 10, scale: 0.97 }}
               transition={{ duration: 0.5, ease: ease.outExpo }}
             >
-              <button type="button" onClick={dismissBubble} aria-label="Dismiss" className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-bone-2 hover:text-bone">
-                ×
-              </button>
-              <div className="flex items-center gap-3 pr-4">
-                <Portrait size={40} />
-                <p className="font-medium">Have a doubt?</p>
-              </div>
-              <p className="mt-2 leading-snug text-bone-2">Talk to Mr. Nimbus, Krutik&apos;s cat. A gentleman who knows his way around, and tells a decent joke.</p>
+              <span className="mr-2 text-bone-2">Have a doubt?</span>
               <button
                 type="button"
                 onClick={() => {
                   dismissBubble();
                   setOpen(true);
                 }}
-                className="mt-3 inline-flex h-9 items-center gap-2 rounded-full bg-bone px-4 text-[13px] font-medium text-ink"
+                className="inline-flex h-9 items-center rounded-full bg-bone px-4 font-medium text-ink"
               >
-                Talk to Mr. Nimbus
+                Ask Mr. Nimbus
+              </button>
+              <button type="button" onClick={dismissBubble} aria-label="Dismiss the invitation" className="flex h-9 w-8 items-center justify-center rounded-full text-bone-2 hover:text-bone">
+                ×
               </button>
             </motion.div>
           )}
@@ -412,12 +433,12 @@ export function Nimbus() {
               <Portrait size={44} />
               <div className="min-w-0">
                 <p className="text-[15px] font-medium">Mr. Nimbus</p>
-                <p className="text-xs text-bone-2">Krutik&apos;s cat · gentleman · your guide</p>
+                <p className="text-xs text-bone-2">Studio cat · gentleman · your guide</p>
               </div>
             </div>
             <p className="border-b border-white/10 bg-[#ff8a3d]/10 px-4 py-2.5 text-[12px] leading-snug text-[#ffd9b8]">
               {ai
-                ? "Mr. Nimbus now chats freely, with a little help from Google Gemini. He is a cat, so for anything important, email Krutik."
+                ? "Mr. Nimbus now chats freely, with a little help from AI. He is a cat, so for anything important, email the studio."
                 : "AI is being linked to Mr. Nimbus. Soon you'll be able to chat with him freely; for now he answers the common questions (and tells a joke on request)."}
             </p>
 
@@ -474,7 +495,7 @@ export function Nimbus() {
                 ref={field}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about a website, hiring, a project…"
+                placeholder="Ask about a website, a project, the studio…"
                 autoComplete="off"
                 className="h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.05] px-4 text-[14px] text-bone placeholder:text-bone-3 focus:border-[#ff8a3d]/60 focus:outline-none"
               />

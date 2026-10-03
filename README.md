@@ -1,8 +1,8 @@
 # GLAZY
 
-**A digital space showcasing what I build.**
+**Websites that feel like places.**
 
-GLAZY is the personal portfolio of [Krutik Mhatre](https://github.com/GlazyKahito), built as a short film: one full-screen scene at a time, real 4K footage behind every chapter, and a transition of its own between each. Every project on it is live or open source, and every claim on it comes from the resume or a project README.
+GLAZY is a web studio founded by [Krutik Mhatre](https://github.com/GlazyKahito). This is its site, built as a short film: one full-screen scene at a time, a layered depth-poster opening, real 4K footage behind every chapter, and a transition of its own between each. Every project on it is live, shipped or open source, and every claim on it comes from the founder's resume, a project README or the project's own demo.
 
 ## Stack
 
@@ -19,13 +19,15 @@ GLAZY is the personal portfolio of [Krutik Mhatre](https://github.com/GlazyKahit
 ## Features
 
 - **Loading screen**: the GLAZY wordmark fills with molten glaze as the site really loads, while the opening scene develops behind it. A device check warns weak hardware and offers the lite version, then a title card opens between letterbox bars.
-- **Scene deck**: chapters arrive with an iris, a rise, a zoom-through, opening doors, a sideways slide or a diagonal wipe, each with its own title card; projects swing in sideways in 3D behind a sweep of their own colour. Scroll, swipe, keys, the Continue prompt or the progress rail move one scene, and a move can never be skipped or rushed.
+- **Depth-poster opening**: a 4K still split into planes, with the GLAZY wordmark standing behind a mountain ridge. It rises from behind the ridge on arrival, and the planes drift and follow the pointer at different depths.
+- **Services poster**: the service as a giant word at the foot of the frame, a frosted strip of services across the top; it turns over on its own until you pick one.
+- **Scene deck**: chapters arrive with a zoom-through, a glitch cut, an iris, shutter blinds, a film burn, opening doors or a mosaic, each with its own title card (the glitch chapter's title arrives on a bad signal); projects swing in sideways in 3D behind a sweep of their own colour. Scroll, swipe, keys, the Continue prompt or the progress rail move one scene, and a move can never be skipped or rushed.
 - **No spoilers**: the next scene is never visible early; the progress rail and the menu only show chapters you have reached.
 - **Project stage**: each project in a browser window that tilts toward the pointer, with its mobile capture scrolling on a phone.
-- **Work with me**: a scene for people who want a site built and one for people hiring.
-- **Nimbus**: Krutik's cat and the site's guide. Guided answers and actions today; AI is being linked to it.
-- **Lite mode**: stills instead of video, offered on the loading screen and again if frames drop; the L key toggles it.
-- **Case-study pages** with footage headers, a resume viewer, a viewfinder cursor, reduced-motion support, keyboard paths, sitemap, Open Graph image and JSON-LD.
+- **Start a project**: how a project runs and a ready-made brief; a separate scene for recruiters in the founder chapter.
+- **Mr. Nimbus**: the studio cat and the site's guide. Guided answers and actions, and real chat through the Vercel AI Gateway (free credits, OIDC sign-in, a zero-cost model as the last fallback) grounded only in the site's data.
+- **Lite mode**: stills instead of video, switchable from the 4K/Lite toggle in the header, offered on the loading screen and again if frames drop; the L key toggles it.
+- **Case-study pages** with footage headers, a resume viewer, viewfinder brackets that frame links and buttons (the native pointer stays visible), reduced-motion support, keyboard paths, sitemap, Open Graph image and JSON-LD.
 
 ## Run locally
 
@@ -37,7 +39,7 @@ npm run lint       # eslint
 npm run typecheck  # tsc --noEmit
 ```
 
-Copy `.env.example` to `.env.local` if you add integrations. Nothing is required to run the site today. Never commit `.env` or `.env.local`.
+Copy `.env.example` to `.env.local` if you add integrations. Nothing is required to run the site; on Vercel, Mr. Nimbus signs in to the AI Gateway with the deployment's own OIDC token. Never commit `.env` or `.env.local`.
 
 ## Content lives in `data/`
 
@@ -49,6 +51,7 @@ The site is data-driven. Components never hard-code facts.
 | `data/projects.ts` | The project showcase and detail pages |
 | `data/in-progress.ts` | The "In progress" bench |
 | `data/skills.ts` | The tech stack, each entry with how it is used |
+| `data/services.ts` | What the studio makes, and how a project runs |
 | `data/scenes.ts` | Chapters, their footage, transitions and credits |
 | `data/site.ts` | Navigation, metadata, site URL |
 

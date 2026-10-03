@@ -4,23 +4,21 @@ import { useEffect, useRef } from "react";
 import { useDevice } from "@/lib/hooks/use-device";
 
 /**
- * A camera viewfinder for a cursor. Four focus brackets follow the pointer as
- * a small square; over a link, button or card they snap out to frame it, the
- * way a lens locks focus. Elements can set `data-cursor-label="Open"`.
- * Disabled on touch and for reduced motion.
+ * A viewfinder accent for the native pointer (which always stays visible).
+ * Over a link, button or card, four focus brackets snap out to frame it, the
+ * way a lens locks focus, and fade away when the pointer leaves. Elements can
+ * set `data-cursor-label="Open"`. Disabled on touch and for reduced motion.
  */
 export function Cursor() {
   const { touch, reducedMotion, pending } = useDevice();
   const enabled = !pending && !touch && !reducedMotion;
   const root = useRef<HTMLDivElement>(null);
   const corners = useRef<(HTMLSpanElement | null)[]>([]);
-  const dot = useRef<HTMLSpanElement>(null);
   const label = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (!enabled) return;
     const html = document.documentElement;
-    html.dataset.cursor = "custom";
 
     let px = window.innerWidth / 2;
     let py = window.innerHeight / 2;
@@ -37,14 +35,7 @@ export function Cursor() {
     const onMove = (e: PointerEvent) => {
       px = e.clientX;
       py = e.clientY;
-      if (!visible) {
-        visible = true;
-        box.l = px - 14;
-        box.r = px + 14;
-        box.t = py - 14;
-        box.b = py + 14;
-        if (root.current) root.current.style.opacity = "1";
-      }
+      visible = true;
       const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(selector) ?? null;
       hidden = !!el && ["INPUT", "TEXTAREA", "SELECT", "IFRAME"].includes(el.tagName);
       target = hidden ? null : el;
@@ -82,16 +73,14 @@ export function Cursor() {
       if (tr) tr.style.transform = `translate3d(${box.r - 10}px, ${box.t}px, 0)`;
       if (bl) bl.style.transform = `translate3d(${box.l}px, ${box.b - 10}px, 0)`;
       if (br) br.style.transform = `translate3d(${box.r - 10}px, ${box.b - 10}px, 0)`;
-      if (dot.current) {
-        dot.current.style.transform = `translate3d(${px - 2}px, ${py - 2}px, 0)`;
-        dot.current.style.opacity = target ? "0" : "1";
-      }
       if (label.current) {
         if (label.current.textContent !== lbl) label.current.textContent = lbl;
         label.current.style.transform = `translate3d(${box.l}px, ${box.b + 8}px, 0)`;
         label.current.style.opacity = lbl ? "1" : "0";
       }
-      if (root.current) root.current.style.visibility = hidden ? "hidden" : "visible";
+      // Only show the brackets while they frame something.
+      const framing = visible && !hidden && !!target && target.isConnected;
+      if (root.current) root.current.style.opacity = framing ? "1" : "0";
       raf = requestAnimationFrame(tick);
     };
 
@@ -106,7 +95,6 @@ export function Cursor() {
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointerup", onUp);
       html.removeEventListener("mouseleave", onLeave);
-      delete html.dataset.cursor;
     };
   }, [enabled]);
 
@@ -119,7 +107,6 @@ export function Cursor() {
       <span ref={(el) => { corners.current[1] = el; }} className={`${bracket} border-r-[1.5px] border-t-[1.5px]`} />
       <span ref={(el) => { corners.current[2] = el; }} className={`${bracket} border-b-[1.5px] border-l-[1.5px]`} />
       <span ref={(el) => { corners.current[3] = el; }} className={`${bracket} border-b-[1.5px] border-r-[1.5px]`} />
-      <span ref={dot} className="absolute left-0 top-0 h-1 w-1 rounded-full bg-glaze transition-opacity duration-200" />
       <span
         ref={label}
         className="absolute left-0 top-0 font-mono text-[10px] uppercase tracking-[0.2em] text-bone opacity-0 mix-blend-difference transition-opacity duration-200"

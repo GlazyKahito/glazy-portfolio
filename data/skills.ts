@@ -11,8 +11,8 @@ export const skills: Skill[] = [
   {
     name: "TypeScript",
     category: "Languages",
-    usage: "Default language for every recent project, from ScamShield's analysis engine to the DCN lab.",
-    projects: ["scamshield", "dcn-virtual-lab"],
+    usage: "Default language for every recent project, from NIYAM and ScamShield to CLIMATIQ and the DCN lab.",
+    projects: ["niyam", "scamshield", "climatiq", "dcn-virtual-lab"],
   },
   {
     name: "JavaScript",
@@ -46,8 +46,8 @@ export const skills: Skill[] = [
   {
     name: "Next.js",
     category: "Frontend",
-    usage: "App Router for LexTemporal, ScamShield and this portfolio, with server-only AI calls.",
-    projects: ["lextemporal", "scamshield"],
+    usage: "App Router for NIYAM, ScamShield, CLIMATIQ and this site, with server-only AI calls.",
+    projects: ["niyam", "scamshield", "climatiq"],
   },
   {
     name: "Tailwind CSS",
@@ -70,13 +70,20 @@ export const skills: Skill[] = [
   {
     name: "GSAP",
     category: "Frontend",
-    usage: "Timeline-driven scene transitions and the film-leader opening of this portfolio.",
+    usage: "Timeline-driven scene transitions and the depth-poster opening of this site; motion in CLIMATIQ.",
+    projects: ["climatiq"],
   },
   {
     name: "Recharts",
     category: "Frontend",
-    usage: "Charts on ScamShield's dashboard of past analyses.",
-    projects: ["scamshield"],
+    usage: "Charts on ScamShield's dashboard and CLIMATIQ's climate analytics.",
+    projects: ["scamshield", "climatiq"],
+  },
+  {
+    name: "MapLibre GL",
+    category: "Frontend",
+    usage: "District heat-risk choropleths, heat layers and station maps in CLIMATIQ's command centre.",
+    projects: ["climatiq"],
   },
   {
     name: "Vite",
@@ -105,6 +112,18 @@ export const skills: Skill[] = [
     projects: ["crm360"],
   },
   {
+    name: "PostgreSQL",
+    category: "Backend",
+    usage: "Climate data, incidents, roles and the audit log in CLIMATIQ, through Drizzle ORM.",
+    projects: ["climatiq"],
+  },
+  {
+    name: "SQLite",
+    category: "Backend",
+    usage: "NIYAM's local corpus and model-call cache: 4 GB, 23 tables, 13.2M rows, running offline.",
+    projects: ["niyam"],
+  },
+  {
     name: "Zod",
     category: "Backend",
     usage: "Server-side validation of inputs and of every AI response before it renders.",
@@ -127,28 +146,34 @@ export const skills: Skill[] = [
   {
     name: "Google Gemini API",
     category: "AI",
-    usage: "Semantic analysis layer in ScamShield with structured JSON output, called only server-side.",
-    projects: ["scamshield"],
+    usage: "Structured analysis in ScamShield, drafting and hearing simulation in NIYAM, audience-specific advisories in CLIMATIQ; always server-side.",
+    projects: ["scamshield", "niyam", "climatiq"],
   },
   {
     name: "Prompt design",
     category: "AI",
     usage: "Injection-resistant prompts for production features: fixed schemas, random delimiters, content treated as data.",
-    projects: ["scamshield", "lextemporal"],
+    projects: ["scamshield", "niyam"],
   },
   {
     name: "Agent workflows",
     category: "AI",
-    usage: "Search, draft, simulate and hearing-prep agents inside LexTemporal's workspace.",
-    projects: ["lextemporal"],
+    usage: "An intent router and agents for research, drafting and hearing simulation inside NIYAM's workspace.",
+    projects: ["niyam"],
+  },
+  {
+    name: "Claude API",
+    category: "AI",
+    usage: "An advisory provider in CLIMATIQ alongside Gemini, behind the same validated schema.",
+    projects: ["climatiq"],
   },
 
   // 3D & Graphics (READMEs)
   {
     name: "Three.js",
     category: "3D & Graphics",
-    usage: "Warp-tunnel opening sequence and 3D scenes in the DCN lab, and the landing scene in Grove.",
-    projects: ["dcn-virtual-lab", "grove"],
+    usage: "The 3D heat globe in CLIMATIQ, the warp-tunnel opening in the DCN lab, and Grove's landing scene.",
+    projects: ["climatiq", "dcn-virtual-lab", "grove"],
   },
   {
     name: "React Three Fiber",
@@ -173,6 +198,12 @@ export const skills: Skill[] = [
     name: "Vercel",
     category: "Tooling",
     usage: "Hosting for every live project, including serverless APIs.",
+  },
+  {
+    name: "Playwright",
+    category: "Tooling",
+    usage: "End-to-end and axe accessibility tests in CLIMATIQ; the case-study screenshots on this site.",
+    projects: ["climatiq"],
   },
   {
     name: "VS Code",

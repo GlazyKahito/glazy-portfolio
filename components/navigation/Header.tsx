@@ -45,6 +45,24 @@ export function Header() {
           <Wordmark strokeWidth={10} />
         </TransitionLink>
         <div className="pointer-events-auto flex items-center gap-2">
+          {/* Quality, always in reach: 4K footage or the lite version (stills). L toggles it anywhere. */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={lite}
+            aria-label="Lite version (press L to switch)"
+            title={lite ? "Lite version is on: still frames instead of 4K video (L)" : "Full 4K video. Switch to the lite version for slower devices (L)"}
+            onClick={() => setLite(!lite)}
+            className="relative flex h-10 items-center rounded-full border border-white/15 bg-black/30 p-1 font-mono text-[10px] uppercase tracking-[0.16em] text-bone backdrop-blur-md transition-colors hover:bg-black/45"
+          >
+            <span aria-hidden className={cn("absolute left-1 top-1 h-8 w-[calc(50%-4px)] rounded-full bg-bone transition-transform duration-500 ease-out-expo", lite ? "translate-x-full" : "translate-x-0")} />
+            <span aria-hidden className={cn("relative z-[1] w-11 text-center transition-colors duration-300", lite ? "text-bone/70" : "text-ink")}>
+              4K
+            </span>
+            <span aria-hidden className={cn("relative z-[1] w-11 text-center transition-colors duration-300", lite ? "text-ink" : "text-bone/70")}>
+              Lite
+            </span>
+          </button>
           <ResumeViewer>
             <button type="button" className="hidden h-10 items-center rounded-full px-4 text-sm text-bone/90 transition-colors hover:text-bone sm:flex">
               Resume

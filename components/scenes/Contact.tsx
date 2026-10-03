@@ -76,7 +76,7 @@ function Footer({ onTop }: { onTop?: () => void }) {
           <Wordmark strokeWidth={10} />
         </span>
         <span>
-          © {year} {site.name} · {profile.name}
+          © {year} {site.name}, a web studio · Founded by {profile.name}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -92,7 +92,7 @@ function Footer({ onTop }: { onTop?: () => void }) {
   );
 }
 
-/** 05 Say hello — the last scene of the home deck. */
+/** 06 Say hello — the last scene of the home deck. */
 export function ContactScene({ play }: { play: boolean }) {
   return (
     <div className="container-x relative flex min-h-full flex-col justify-end pb-24 pt-[calc(var(--nav-height)+1.5rem)]">
@@ -108,7 +108,7 @@ export function ContactScene({ play }: { play: boolean }) {
             className="mt-5 font-display text-[clamp(3rem,min(9vw,14vh),9.5rem)] leading-[0.86] tracking-[-0.035em] text-bone"
           />
           <Rise play={play} delay={0.5} as="p" className="mt-6 max-w-xl text-lg leading-relaxed text-bone/85">
-            Send a brief, an idea, or a hello. I read everything that lands in my inbox.
+            Send a brief, an idea, or a hello. Every message is read, and every brief gets a reply.
           </Rise>
           <Rise play={play} delay={0.65} className="mt-8 flex flex-wrap gap-3">
             <a

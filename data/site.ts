@@ -3,21 +3,22 @@
  */
 export const site = {
   name: "GLAZY",
-  title: "GLAZY — Krutik Mhatre",
+  title: "GLAZY — a web studio by Krutik Mhatre",
   description:
-    "GLAZY is the digital space of Krutik Mhatre: full-stack products, AI integration and security-minded builds. Explore LexTemporal, ScamShield, the DCN Virtual Lab and more.",
+    "GLAZY is a web studio founded by Krutik Mhatre in Mumbai. We design and build fast, cinematic websites, web apps and AI features. See NIYAM, ScamShield, CLIMATIQ and more.",
   // Explicit override → Vercel's production domain (set at build time) → local dev.
   url:
     process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000"),
-  tagline: "a digital space showcasing what I build.",
+  tagline: "websites that feel like places.",
+  founded: "2026",
   nav: [
-    { label: "Projects", href: "/#projects" },
-    { label: "In Progress", href: "/#in-progress" },
-    { label: "About", href: "/#about" },
-    { label: "Stack", href: "/#stack" },
-    { label: "Contact", href: "/#contact" },
+    { label: "What we make", href: "/#services" },
+    { label: "Work", href: "/#projects" },
+    { label: "In the studio", href: "/#building" },
+    { label: "Founder", href: "/#about" },
+    { label: "Start a project", href: "/#contact" },
   ],
 } as const;

@@ -50,6 +50,8 @@ export interface Project {
   video?: string;
   github?: string;
   live?: string;
+  /** A recorded demo (e.g. a YouTube link) when there is no public deployment to visit. */
+  demo?: string;
   /** When false the project only appears in the showcase without a detail page. */
   caseStudy?: boolean;
   /** Per-project hue (0-360) used to tint the stage lighting and accents. */
