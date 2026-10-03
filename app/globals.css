@@ -267,6 +267,28 @@
   }
 }
 
+/*
+ * Lite: for the weakest machines. No backdrop blur, no filters, no CSS
+ * animation loops; frosted panels become solid so text stays legible over
+ * the still frames. Applied before first paint by a script in app/layout.tsx.
+ */
+html[data-lite] *,
+html[data-lite] *::before,
+html[data-lite] *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  animation: none !important;
+}
+html[data-lite] [class*="backdrop-blur"] {
+  background-color: rgb(14 14 16 / 0.9) !important;
+}
+html[data-lite] .glitch-text::before,
+html[data-lite] .glitch-text::after,
+html[data-lite] .film-grain {
+  display: none !important;
+}
+
 /* The home page is a deck of full-screen scenes: the page itself never scrolls. */
 html.deck-mode,
 html.deck-mode body {

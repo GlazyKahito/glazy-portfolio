@@ -30,11 +30,11 @@ const copy: Variants = {
 };
 
 /** Every word set to the same height where there is room; long words shrink to fit their column (cqw). */
-const wordSize = (w: string) => `min(23vh, ${(100 / (w.length * 0.6)).toFixed(2)}cqw)`;
+const wordSize = (w: string) => `min(30vh, ${(100 / (w.length * 0.6)).toFixed(2)}cqw)`;
 
 /**
  * 01 · What we make. A film-poster layout: the service as a giant word in
- * cream at the foot of the frame, a frosted strip of the services across
+ * cream across the frame, a frosted strip of the services across
  * the top, and the details beside the word. The poster turns over on its
  * own until the visitor picks one.
  */
@@ -103,7 +103,8 @@ export function ServicesScene({ play }: { play: boolean }) {
           </Rise>
         </div>
 
-        <div className="mt-auto grid gap-8 pt-10 lg:grid-cols-12 lg:items-end">
+        {/* Centred in the space under the strip, so the poster balances at any size. */}
+        <div className="my-auto grid gap-8 pt-10 lg:grid-cols-12 lg:items-end">
           {/* The poster word. Decorative: the service's name is read from the strip and the details. */}
           <div className="min-w-0 [container-type:inline-size] lg:col-span-8" aria-hidden>
             <AnimatePresence mode="wait" initial={false}>
@@ -121,14 +122,11 @@ export function ServicesScene({ play }: { play: boolean }) {
                     {ch}
                   </motion.span>
                 ))}
-                <motion.span variants={letter} className="ml-[0.03em] inline-block self-start text-[0.36em] font-medium leading-none">
-                  *
-                </motion.span>
               </motion.p>
             </AnimatePresence>
           </div>
 
-          <div id="service-detail" aria-live="polite" className="lg:col-span-4 lg:pb-[1.2vh]">
+          <div id="service-detail" aria-live="polite" className="lg:col-span-4 lg:pb-[1.2vh] [text-shadow:0_1px_14px_rgb(0_0_0/0.5)]">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={service.id} variants={copy} initial="hidden" animate={play ? "show" : "hidden"} exit="exit">
                 <h3 className="font-mono text-[11px] uppercase tracking-[0.22em] text-cream">{service.title}</h3>

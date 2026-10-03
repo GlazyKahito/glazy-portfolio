@@ -158,7 +158,7 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
   const drift = !still && "[animation:dolly_22s_ease-in-out_infinite_alternate]";
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-ink" aria-hidden>
+    <div className={cn("absolute inset-0 overflow-hidden bg-ink", !active && "[&_*]:[animation-play-state:paused]")} aria-hidden>
       {/* The stage keeps the still's 16:9 shape and covers the screen, so the wordmark stays locked to the ridge at any size. */}
       <div
         className="absolute left-1/2 top-1/2 [container-type:size] [perspective:1400px]"
@@ -182,7 +182,7 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
             ].map((c, i) => (
               <div
                 key={i}
-                className="absolute left-0 rounded-[50%] mix-blend-screen blur-2xl"
+                className="absolute left-0 rounded-[50%] mix-blend-screen"
                 style={{
                   top: `${c.top}%`,
                   width: `${c.w}%`,
@@ -244,7 +244,7 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
           <div ref={type} className="absolute inset-0 will-change-transform [transform-style:preserve-3d]">
             <div className="absolute inset-x-0 flex justify-center" style={{ top: `${RIDGE * 100}%` }}>
               <p
-                className="flex -translate-y-[86%] font-display [perspective:900px] leading-[0.78] tracking-[-0.03em] [filter:drop-shadow(0_24px_48px_rgb(40_8_0/0.35))]"
+                className="flex -translate-y-[86%] font-display [perspective:900px] leading-[0.78] tracking-[-0.03em]"
                 style={{ fontSize: "min(40cqh, 31vw, 42vh)" }}
               >
                 {WORD.map((ch, i) => (
@@ -266,7 +266,7 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
 
         {/* Haze settling on the ridge line, between the letters and the mountains. */}
         <div
-          className={cn("absolute inset-x-0 h-[18%] opacity-70 mix-blend-screen blur-xl", !still && "[animation:haze-drift_48s_linear_infinite_alternate]")}
+          className={cn("absolute inset-x-0 h-[18%] opacity-70 mix-blend-screen", !still && "[animation:haze-drift_48s_linear_infinite_alternate]")}
           style={{
             top: `${RIDGE * 100 - 9}%`,
             backgroundImage:
@@ -299,13 +299,14 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
             {MOTES.map((m, i) => (
               <span
                 key={i}
-                className="absolute rounded-full bg-[rgb(255_214_170)]"
+                className="absolute rounded-full"
                 style={{
                   left: `${m.x}%`,
                   top: `${m.y}%`,
-                  width: m.size,
-                  height: m.size,
-                  filter: `blur(${m.blur}px)`,
+                  // Soft by gradient, not by filter: far cheaper to draw.
+                  width: m.size * (1 + m.blur / 4),
+                  height: m.size * (1 + m.blur / 4),
+                  background: `radial-gradient(circle, rgb(255 214 170) 0%, rgb(255 214 170 / 0.5) ${m.blur > 2 ? 25 : 45}%, transparent 70%)`,
                   opacity: 0,
                   ["--mote-o" as string]: m.o,
                   ["--mote-x" as string]: `${m.dx}vw`,
@@ -319,7 +320,7 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
 
       {/* Grade: room for the header above and the copy below. */}
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.4),transparent_20%),linear-gradient(to_top,rgb(0_0_0/0.72),rgb(0_0_0/0.25)_38%,transparent_55%)]" />
-      <div className={cn("film-grain pointer-events-none absolute -inset-[10%] opacity-[0.09] mix-blend-overlay", !still && "[animation:grain_1.2s_steps(6)_infinite]")} />
+      <div className="film-grain pointer-events-none absolute inset-0 opacity-[0.08] mix-blend-overlay" />
     </div>
   );
 }

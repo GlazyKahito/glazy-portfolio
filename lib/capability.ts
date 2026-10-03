@@ -46,7 +46,9 @@ export function inspectGpu(): GpuReport {
   if (slow) concerns.push("Your connection looks slow, so scenes may wait for their footage.");
   if ((nav.deviceMemory ?? 8) <= 4) concerns.push("This device reports 4 GB of memory or less.");
   if ((nav.hardwareConcurrency ?? 8) <= 4) concerns.push("This device has 4 CPU cores or fewer.");
-  cachedReport = { renderer, software, concerns, serious: software || saveData || slow };
+  // A very weak machine (2 GB or less, 2 cores or fewer) is worth stopping for, like software rendering.
+  const potato = (nav.deviceMemory ?? 8) <= 2 || (nav.hardwareConcurrency ?? 8) <= 2;
+  cachedReport = { renderer, software, concerns, serious: software || saveData || slow || potato };
   return cachedReport;
 }
 
@@ -73,6 +75,9 @@ export function setLite(on: boolean) {
     /* storage unavailable: the choice lasts for this page view only */
   }
   liteOverride = on;
+  // Lite also strips GPU-heavy styling site-wide (see html[data-lite] in globals.css).
+  if (on) document.documentElement.dataset.lite = "true";
+  else delete document.documentElement.dataset.lite;
   listeners.forEach((l) => l());
 }
 

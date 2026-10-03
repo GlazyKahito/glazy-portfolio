@@ -14,6 +14,7 @@ import { featuredProjects as work } from "@/data/projects";
 import { chapterById, chapterHash, chapterHashes, chapters, type ChapterId, type TransitionStyle } from "@/data/scenes";
 import { GOTO_EVENT, getDeck, setDeck, type GotoDetail } from "@/lib/deck";
 import { gsap } from "@/lib/gsap";
+import { useLite } from "@/lib/capability";
 import { useDevice } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -170,6 +171,7 @@ function Emblem({ mood }: { mood: string }) {
 export function SceneDeck() {
   const { done } = useIntro();
   const { reducedMotion } = useDevice();
+  const lite = useLite();
   const [index, setIndex] = useState(0);
   const [arrived, setArrived] = useState(true);
   const [prompt, setPrompt] = useState(false);
@@ -261,8 +263,9 @@ export function SceneDeck() {
       const axis = dir > 0 ? ts.axis : fs.axis;
       // Chapter changes use the arriving chapter's style (or, going back, the departing one's, reversed).
       // Reduced motion: a plain crossfade, with no glitches, flashes or blinds.
-      const style: TransitionStyle | "fade" = same ? "slide" : reducedMotion ? "fade" : chapterById(dir > 0 ? ts.chapter : fs.chapter).transition;
-      const d = reducedMotion ? 0.5 : DURATION;
+      // Lite (weak machines) gets the same short crossfade: nothing full-screen to clip, filter or blend.
+      const style: TransitionStyle | "fade" = same ? "slide" : reducedMotion || lite ? "fade" : chapterById(dir > 0 ? ts.chapter : fs.chapter).transition;
+      const d = reducedMotion ? 0.5 : lite ? 0.8 : DURATION;
 
       setArrived(false);
       if (!same) {
@@ -306,12 +309,13 @@ export function SceneDeck() {
       });
 
       // Outgoing content always leaves quickly, in the direction of travel.
-      tl.to(scOut, { autoAlpha: 0, [axis]: `${-dir * (axis === "x" ? 8 : 6)}${axis === "x" ? "vw" : "vh"}`, filter: "blur(8px)", duration: d * 0.45, ease: "power3.in" }, 0);
+      // Transform and opacity only: the GPU moves these without repainting (no full-screen blur).
+      tl.to(scOut, { autoAlpha: 0, [axis]: `${-dir * (axis === "x" ? 8 : 6)}${axis === "x" ? "vw" : "vh"}`, scale: 0.985, duration: d * 0.45, ease: "power3.in" }, 0);
       // Incoming content fades up at the end; its own entrance plays once it has arrived.
       tl.fromTo(scIn, { autoAlpha: 0 }, { autoAlpha: 1, duration: d * 0.25, ease: "power2.out" }, d * 0.75);
       if (axis === "x" && same) tl.fromTo(scIn, { x: `${dir * 8}vw` }, { x: 0, duration: d * 0.5, ease: "expo.out" }, d * 0.5);
 
-      if (same && ts.chapter === "work" && !reducedMotion) {
+      if (same && ts.chapter === "work" && !reducedMotion && !lite) {
         // Between projects: the window swings away in depth, a light sweep in the next
         // project's colour crosses the frame, its number flashes up, and it swings in.
         const next = work[to - firstStepOf("work")];
@@ -320,7 +324,7 @@ export function SceneDeck() {
         const stageIn = scIn.querySelector<HTMLElement>("[data-stage-wrap]");
         tl.clear();
         gsap.set(scIn, { autoAlpha: 0, x: 0 });
-        if (stageOut) tl.to(stageOut, { rotateY: -dir * 38, xPercent: -dir * 45, z: -200, autoAlpha: 0, filter: "blur(10px)", duration: d * 0.5, ease: "power3.in" }, 0);
+        if (stageOut) tl.to(stageOut, { rotateY: -dir * 38, xPercent: -dir * 45, z: -200, autoAlpha: 0, duration: d * 0.5, ease: "power3.in" }, 0);
         if (copyOut) tl.to(copyOut, { x: `${-dir * 6}vw`, autoAlpha: 0, duration: d * 0.4, ease: "power3.in" }, 0);
         tl.to(scOut, { autoAlpha: 0, duration: 0.2 }, d * 0.5);
         tl.fromTo(bgIn, { xPercent: 0, scale: 1 }, { xPercent: -dir * 4, scale: 1.08, duration: d * 0.5, ease: "power2.inOut", yoyo: true, repeat: 1 }, 0);
@@ -332,7 +336,7 @@ export function SceneDeck() {
         tl.call(() => setProjectCard({ n: to - firstStepOf("work") + 1, title: next.title, hue: next.hue }), [], d * 0.22);
         tl.call(() => setProjectCard(null), [], d * 0.62);
         tl.set(scIn, { autoAlpha: 1 }, d * 0.6);
-        if (stageIn) tl.fromTo(stageIn, { rotateY: dir * 38, xPercent: dir * 45, z: -200, autoAlpha: 0, filter: "blur(10px)" }, { rotateY: 0, xPercent: 0, z: 0, autoAlpha: 1, filter: "blur(0px)", duration: d * 0.55, ease: "expo.out" }, d * 0.6);
+        if (stageIn) tl.fromTo(stageIn, { rotateY: dir * 38, xPercent: dir * 45, z: -200, autoAlpha: 0 }, { rotateY: 0, xPercent: 0, z: 0, autoAlpha: 1, duration: d * 0.55, ease: "expo.out" }, d * 0.6);
         tl.add(() => {
           [stageOut, copyOut, stageIn].forEach((el) => el && gsap.set(el, { clearProps: "transform,filter,opacity,visibility" }));
         }, d * 1.2);
@@ -484,7 +488,7 @@ export function SceneDeck() {
       // Progress rail.
       if (progressFill.current) tl.to(progressFill.current, { scaleY: to / (N - 1), ease: "expo.inOut" }, 0);
     },
-    [reducedMotion, waitForFootage],
+    [reducedMotion, lite, waitForFootage],
   );
 
   /* Input ------------------------------------------------------------- */
@@ -635,7 +639,7 @@ export function SceneDeck() {
               <SceneVideo
                 name={c.footage}
                 load={loadable.has(c.id)}
-                play={step.chapter === c.id || (card !== null && card === c.id)}
+                play={card !== null ? card === c.id : step.chapter === c.id}
                 onReady={() => markReady(c.id)}
                 onProgress={(p) => {
                   loaderProgress.current[c.id] = p;
@@ -717,7 +721,7 @@ export function SceneDeck() {
             className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, filter: "blur(10px)", scale: 1.04 }}
+            exit={{ opacity: 0, scale: 1.04 }}
             transition={{ duration: 0.45, ease: ease.outQuart }}
           >
             <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-bone/80">Chapter {cardChapter.number}</p>
@@ -725,7 +729,7 @@ export function SceneDeck() {
               data-text={cardChapter.label}
               className={cn(
                 "mt-4 font-display text-[clamp(3.5rem,10vw,9rem)] leading-[0.9] text-bone [text-shadow:0_4px_60px_rgb(0_0_0/0.5)]",
-                cardChapter.transition === "glitch" && !reducedMotion && "glitch-text",
+                cardChapter.transition === "glitch" && !reducedMotion && !lite && "glitch-text",
               )}
               initial={{ letterSpacing: "0.12em", opacity: 0, filter: "blur(12px)" }}
               animate={{ letterSpacing: "-0.02em", opacity: 1, filter: "blur(0px)" }}
@@ -750,7 +754,7 @@ export function SceneDeck() {
             className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center"
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.08, filter: "blur(8px)" }}
+            exit={{ opacity: 0, scale: 1.08 }}
             transition={{ duration: 0.4, ease: ease.outExpo }}
           >
             <span
@@ -834,8 +838,8 @@ export function SceneDeck() {
             type="button"
             onClick={() => go(last ? 0 : index + 1)}
             className="deck-prompt absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] py-2.5 pl-5 pr-2.5 text-sm text-bone shadow-[0_10px_40px_-10px_rgb(0_0_0/0.6)] backdrop-blur-md transition-colors hover:bg-white/[0.16] md:bottom-8"
-            initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.6, ease: ease.outExpo }}
           >

@@ -26,7 +26,7 @@ export function Rise({ play, delay = 0, className, children, as = "div" }: { pla
     <Tag
       className={className}
       initial={false}
-      animate={play ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 22, filter: "blur(6px)" }}
+      animate={play ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
       transition={{ duration: 1, ease: ease.outExpo, delay: play ? delay : 0 }}
     >
       {children}
