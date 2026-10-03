@@ -321,6 +321,17 @@ html.deck-mode body {
   from { transform: translateX(0); }
   to { transform: translateX(-40px); }
 }
+/* Mr. Nimbus: an occasional curious twitch of the head, and paw prints while he thinks. */
+@keyframes nimbus-twitch {
+  0%, 88%, 100% { transform: rotate(0deg); }
+  91% { transform: rotate(-9deg); }
+  94% { transform: rotate(5deg); }
+  97% { transform: rotate(-2deg); }
+}
+@keyframes paw-hop {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
 @keyframes cat-blink {
   0%, 92%, 100% { transform: scaleY(1); }
   95% { transform: scaleY(0.1); }
@@ -345,6 +356,30 @@ html.deck-mode body {
 @keyframes glint {
   from { background-position: 0 0; }
   to { background-position: 0 -64px; }
+}
+/* The opening's living background: clouds, a flock, motes of dust, rays. */
+@keyframes cloud-drift {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(260%); }
+}
+@keyframes flock {
+  0% { transform: translate(-150%, 0); }
+  55% { transform: translate(1350%, -35%); }
+  100% { transform: translate(1350%, -35%); }
+}
+@keyframes flap {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0.35); }
+}
+@keyframes mote-rise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  15% { opacity: var(--mote-o, 0.6); }
+  85% { opacity: var(--mote-o, 0.6); }
+  100% { transform: translate3d(var(--mote-x, 2vw), -38vh, 0); opacity: 0; }
+}
+@keyframes rays-sway {
+  0%, 100% { transform: translateX(-50%) rotate(-2deg); }
+  50% { transform: translateX(-50%) rotate(2deg); }
 }
 @keyframes glow-breathe {
   0%, 100% { opacity: 0.75; transform: scale(1); }

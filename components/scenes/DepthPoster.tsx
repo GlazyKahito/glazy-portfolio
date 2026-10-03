@@ -11,6 +11,21 @@ const WORD = ["G", "L", "A", "Z", "Y"];
 /** Where the ridge crosses the middle of the frame, as a fraction of its height (measured from the still). */
 const RIDGE = 0.456;
 
+/** Dust motes: fixed positions (no randomness at render), small and sharp far away, large and soft up close. */
+const MOTES = Array.from({ length: 18 }, (_, i) => {
+  const size = 3 + ((i * 7) % 15);
+  return {
+    x: (i * 37 + 11) % 100,
+    y: 45 + ((i * 53) % 50),
+    size,
+    blur: size > 10 ? size * 0.55 : size * 0.2,
+    o: size > 10 ? 0.35 : 0.65,
+    dx: ((i * 29) % 7) - 3,
+    d: 16 + ((i * 11) % 16),
+    delay: -((i * 13) % 30),
+  };
+});
+
 const src = (layer: "sky" | "ridge") => ({
   src: `/scenes/glazy-${layer}-1920.webp`,
   srcSet: `/scenes/glazy-${layer}-1920.webp 1920w, /scenes/glazy-${layer}-3840.webp 3840w`,
@@ -157,11 +172,72 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
           </div>
         </div>
 
-        {/* The low sun behind the letters. */}
+        {/* Weather: slow cloud wisps catching the last light, and a flock crossing behind the wordmark. */}
+        {!still && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            {[
+              { top: 9, w: 46, h: 13, o: 0.22, d: 95, delay: -20 },
+              { top: 21, w: 38, h: 10, o: 0.16, d: 120, delay: -75 },
+              { top: 3, w: 30, h: 9, o: 0.12, d: 140, delay: -40 },
+            ].map((c, i) => (
+              <div
+                key={i}
+                className="absolute left-0 rounded-[50%] mix-blend-screen blur-2xl"
+                style={{
+                  top: `${c.top}%`,
+                  width: `${c.w}%`,
+                  height: `${c.h}%`,
+                  opacity: c.o,
+                  background: "radial-gradient(closest-side, rgb(255 222 196), rgb(255 170 120 / 0.5) 60%, transparent)",
+                  animation: `cloud-drift ${c.d}s linear ${c.delay}s infinite`,
+                }}
+              />
+            ))}
+            <div className="absolute left-0 top-[24%] w-[7%] [animation:flock_42s_linear_-6s_infinite]">
+              {[
+                [0, 30, 1],
+                [22, 0, 0.8],
+                [40, 42, 0.9],
+                [58, 14, 0.7],
+                [78, 36, 0.75],
+              ].map(([x, y, s], i) => (
+                <svg
+                  key={i}
+                  viewBox="0 0 20 8"
+                  className="absolute w-[24%] overflow-visible text-[rgb(40_18_20/0.75)]"
+                  style={{ left: `${x}%`, top: `${y}%`, transform: `scale(${s})` }}
+                >
+                  <path
+                    d="M0 6 Q5 0 10 5 Q15 0 20 6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    className="origin-[50%_70%]"
+                    style={{ animation: `flap ${0.34 + i * 0.04}s ease-in-out ${i * 0.11}s infinite alternate` }}
+                  />
+                </svg>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* The low sun behind the letters, and its rays. */}
         <div
           className={cn("absolute left-1/2 h-[70%] w-[60%] -translate-x-1/2 rounded-full mix-blend-screen", !still && "[animation:glow-breathe_9s_ease-in-out_infinite]")}
           style={{ top: `${RIDGE * 100 - 42}%`, background: "radial-gradient(closest-side, rgb(255 138 76 / 0.42), rgb(255 138 76 / 0.12) 55%, transparent)" }}
         />
+        {!still && (
+          <div
+            className="pointer-events-none absolute left-1/2 h-[80%] w-[120%] origin-bottom opacity-70 mix-blend-screen [animation:rays-sway_16s_ease-in-out_infinite]"
+            style={{
+              top: `${RIDGE * 100 - 80}%`,
+              background: "repeating-conic-gradient(from 270deg at 50% 100%, rgb(255 205 160 / 0.09) 0deg 3deg, transparent 3deg 9deg, rgb(255 190 140 / 0.05) 9deg 11deg, transparent 11deg 17deg)",
+              maskImage: "radial-gradient(70% 100% at 50% 100%, black 10%, transparent 70%)",
+              WebkitMaskImage: "radial-gradient(70% 100% at 50% 100%, black 10%, transparent 70%)",
+            }}
+          />
+        )}
 
         {/* Middle: the wordmark, standing behind the mountains. */}
         <div className={cn("absolute inset-0", drift)} style={{ ["--dolly" as string]: "0.8%" }}>
@@ -216,6 +292,29 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
             />
           </div>
         </div>
+
+        {/* Nearest of all: motes of dust drifting up through the light, out of focus. */}
+        {!still && (
+          <div className={cn("pointer-events-none absolute inset-0", drift)} style={{ ["--dolly" as string]: "2.4%" }}>
+            {MOTES.map((m, i) => (
+              <span
+                key={i}
+                className="absolute rounded-full bg-[rgb(255_214_170)]"
+                style={{
+                  left: `${m.x}%`,
+                  top: `${m.y}%`,
+                  width: m.size,
+                  height: m.size,
+                  filter: `blur(${m.blur}px)`,
+                  opacity: 0,
+                  ["--mote-o" as string]: m.o,
+                  ["--mote-x" as string]: `${m.dx}vw`,
+                  animation: `mote-rise ${m.d}s linear ${m.delay}s infinite`,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Grade: room for the header above and the copy below. */}
