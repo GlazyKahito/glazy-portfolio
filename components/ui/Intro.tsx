@@ -13,7 +13,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { LoaderDiorama } from "@/components/ui/LoaderDiorama";
+import { LoaderType3D } from "@/components/ui/LoaderType3D";
 import { useDevice, useMounted } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
@@ -24,8 +24,8 @@ import { getDeck } from "@/lib/deck";
 const MIN_LOAD = 2.4;
 /** Give up waiting for the footage and continue on its poster frame (s). */
 const FOOTAGE_TIMEOUT = 20;
-/** The diorama assembling into the opening frame. */
-const TITLE_HOLD = 2.0;
+/** The lettering turning to face the camera. */
+const TITLE_HOLD = 1.6;
 const OPENING = 2.6;
 
 interface IntroContextValue {
@@ -61,16 +61,16 @@ function Timecode({ run }: { run: boolean }) {
 /**
  * GLAZY's opening, as a film would open.
  *
- * 1. The opening scene floats in pieces, an exploded stage set in 3D,
- *    while the site genuinely loads: the fonts, then the scene's 4K
- *    planes. The wordmark fills with glaze at the real progress, never
- *    faked ahead of it.
+ * 1. GLAZY as solid, extruded lettering turns slowly in warm light while
+ *    the site genuinely loads: the fonts, then the opening scene's 4K
+ *    planes. Its face fills with glaze at the real progress, never faked
+ *    ahead of it; the scene develops behind it.
  * 2. The device check: if graphics run without hardware acceleration, or
  *    the connection is slow or on data saver, it says so plainly and offers
  *    the lite version. Otherwise everyone gets the full 4K experience.
- * 3. The pieces lock together into the opening frame, a warm flash, and
- *    the letterbox bars open onto the live scene as the wordmark rises
- *    from behind the ridge.
+ * 3. The lettering turns to face the camera, a warm flash, and the
+ *    letterbox bars open onto the live scene as the wordmark rises from
+ *    behind the ridge.
  *
  * The skip button or Escape goes straight in.
  */
@@ -145,7 +145,8 @@ export function IntroProvider({ children }: { children: ReactNode }) {
             : "Loading the opening scene · 4K"
           : "Threading the reel";
       // Never faster than the minimum run, never ahead of the truth.
-      target = Math.min(target, t / MIN_LOAD);
+      // (The first frame can be stamped a hair before start: never below zero.)
+      target = Math.max(0, Math.min(target, t / MIN_LOAD));
       shown += (target - shown) * 0.12;
       if (target >= 0.999 && shown > 0.985) shown = 1;
       const timedOut = t > FOOTAGE_TIMEOUT;
@@ -241,15 +242,26 @@ export function IntroProvider({ children }: { children: ReactNode }) {
               animate={{ opacity: opening ? 0 : 1 }}
               transition={{ duration: 0.6 }}
             />
-            {/* The opening scene, in pieces, assembling. */}
+            {/* The scene develops behind the lettering, like a print in the darkroom. */}
+            <motion.div aria-hidden className="absolute inset-0 overflow-hidden" initial={false} animate={{ opacity: opening ? 0 : 1 }} transition={{ duration: 0.8 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- decorative, already in cache for the opening scene */}
+              <img
+                src="/scenes/glazy-poster.jpg"
+                alt=""
+                className="absolute inset-0 h-full w-full scale-110 object-cover"
+                style={{ opacity: 0.06 + progress * 0.22, filter: `blur(${30 - progress * 18}px) saturate(${0.4 + progress * 0.8})`, transition: "opacity 0.4s, filter 0.4s" }}
+              />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_15%,rgb(0_0_0/0.8)_75%)]" />
+            </motion.div>
+            {/* The lettering. */}
             <motion.div
               aria-hidden
-              className="absolute inset-0"
+              className="absolute inset-0 flex items-center justify-center pb-[6vh]"
               initial={false}
-              animate={{ opacity: opening ? 0 : 1 }}
+              animate={opening ? { opacity: 0, scale: 1.08, filter: "blur(10px)" } : { opacity: 1, scale: 1, filter: "blur(0px)" }}
               transition={{ duration: 0.8, ease: ease.outQuart }}
             >
-              <LoaderDiorama progress={progress} assemble={titled} />
+              <LoaderType3D progress={progress} settle={titled} />
             </motion.div>
             <div aria-hidden className="film-grain pointer-events-none absolute -inset-[10%] opacity-[0.07] mix-blend-overlay [animation:grain_1.2s_steps(6)_infinite]" />
             <motion.div
