@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { apiKey, askNimbus, type ChatTurn } from "@/lib/server/nimbus-brain";
+import { aiAvailable, askNimbus, type ChatTurn } from "@/lib/server/nimbus-brain";
 
 /**
  * POST /api/nimbus — one turn of conversation with Mr. Nimbus.
- * GET  /api/nimbus — whether his AI is connected (a key is configured).
+ * GET  /api/nimbus — whether his AI is connected (a Gemini key, or the AI Gateway on Vercel).
  *
  * Limits: 12 turns of history, 600 characters per message, 20 requests per
  * minute per visitor. Messages are not stored or logged.
@@ -24,8 +24,11 @@ function limited(ip: string) {
   return recent.length > MAX_PER_WINDOW;
 }
 
-export async function GET() {
-  return NextResponse.json({ ai: !!apiKey() });
+/** On Vercel, the deployment's OIDC token arrives with each request; it signs Mr. Nimbus in to the AI Gateway. */
+const oidc = (req: Request) => req.headers.get("x-vercel-oidc-token");
+
+export async function GET(req: Request) {
+  return NextResponse.json({ ai: aiAvailable(oidc(req)) });
 }
 
 export async function POST(req: Request) {
@@ -50,7 +53,7 @@ export async function POST(req: Request) {
   // Gemini expects the first turn from the user.
   while (turns.length && turns[0].from !== "you") turns.shift();
 
-  const result = await askNimbus(turns);
+  const result = await askNimbus(turns, oidc(req));
   if (!result.ok) return NextResponse.json({ error: result.reason }, { status: result.reason === "no-key" ? 503 : 502 });
   return NextResponse.json({ reply: result.reply, intent: result.intent });
 }

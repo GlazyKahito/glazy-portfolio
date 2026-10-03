@@ -166,7 +166,7 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
             />
             <BrowserFrame
               image={project.image}
-              url={project.live ?? project.github}
+              url={project.live ?? project.github ?? project.demo}
               priority
               sizes="(min-width: 1500px) 1500px, 100vw"
               tint={`linear-gradient(160deg, ${hsl(project.hue, 70, 60, 0.3)}, transparent 55%)`}
@@ -195,6 +195,11 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
                 {project.live && (
                   <MagneticButton href={project.live} icon={<ArrowUpRight />} aria-label={`Open ${project.title} live site`}>
                     Live site
+                  </MagneticButton>
+                )}
+                {project.demo && (
+                  <MagneticButton href={project.demo} variant={project.live ? "ghost" : undefined} icon={<ArrowUpRight />} aria-label={`Watch the ${project.title} demo`}>
+                    Watch the demo
                   </MagneticButton>
                 )}
                 {project.github && (
@@ -229,6 +234,13 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
                     <li>
                       <a href={project.live} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 text-bone-2 transition-colors hover:text-bone">
                         {prettyUrl(project.live)} <ArrowUpRight />
+                      </a>
+                    </li>
+                  )}
+                  {project.demo && (
+                    <li>
+                      <a href={project.demo} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 text-bone-2 transition-colors hover:text-bone">
+                        Demo video ({prettyUrl(project.demo)}) <ArrowUpRight />
                       </a>
                     </li>
                   )}

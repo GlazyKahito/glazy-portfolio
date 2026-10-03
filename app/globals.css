@@ -25,6 +25,10 @@
   --color-glaze: #ff2d1a;
   --color-glaze-2: #c8102e;
   --color-glaze-dim: rgb(255 45 26 / 0.14);
+  /* Editorial cream for poster type over footage; peach and ember tint the dusk wordmark. */
+  --color-cream: #ece6d3;
+  --color-peach: #ffc9a3;
+  --color-ember: #ff8a4c;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -141,13 +145,6 @@
     max-width: 100%;
   }
 
-  /* When the custom cursor is active, hide the native one on interactive things. */
-  html[data-cursor="custom"] body,
-  html[data-cursor="custom"] a,
-  html[data-cursor="custom"] button,
-  html[data-cursor="custom"] [role="button"] {
-    cursor: none;
-  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -327,4 +324,73 @@ html.deck-mode body {
 @keyframes cat-blink {
   0%, 92%, 100% { transform: scaleY(1); }
   95% { transform: scaleY(0.1); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Depth poster (the opening)                                           */
+/* ------------------------------------------------------------------ */
+/*
+ * A slow lateral dolly: every layer drifts the same way at its own distance,
+ * so sky, wordmark and ridge slide past each other like a camera move.
+ * --dolly is set per layer (far layers small, near layers large).
+ */
+@keyframes dolly {
+  from { transform: translate3d(calc(var(--dolly, 0.5%) * -1), 0, 0); }
+  to { transform: translate3d(var(--dolly, 0.5%), calc(var(--dolly, 0.5%) * -0.25), 0); }
+}
+@keyframes haze-drift {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+@keyframes glint {
+  from { background-position: 0 0; }
+  to { background-position: 0 -64px; }
+}
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+/* Chapter titles that arrive on a bad signal: red and cyan copies slip and slice. */
+.glitch-text {
+  position: relative;
+}
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.glitch-text::before {
+  color: rgb(255 40 90 / 0.85);
+  transform: translateX(-0.035em);
+  animation: glitch-slice 0.8s steps(1) infinite;
+}
+.glitch-text::after {
+  color: rgb(0 230 255 / 0.85);
+  transform: translateX(0.035em);
+  animation: glitch-slice 0.65s steps(1) infinite reverse;
+}
+@keyframes glitch-slice {
+  0% { clip-path: inset(8% 0 72% 0); }
+  17% { clip-path: inset(62% 0 14% 0); }
+  33% { clip-path: inset(34% 0 48% 0); }
+  50% { clip-path: inset(82% 0 3% 0); }
+  67% { clip-path: inset(4% 0 86% 0); }
+  83% { clip-path: inset(46% 0 30% 0); }
+  100% { clip-path: inset(20% 0 60% 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .glitch-text::before,
+  .glitch-text::after {
+    display: none;
+  }
+}
+
+/* Film grain: a static noise tile, nudged around a few times a second. */
+@utility film-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
 }

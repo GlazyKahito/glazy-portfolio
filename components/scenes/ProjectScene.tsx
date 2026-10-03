@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { ArrowUpRight } from "@/components/ui/MagneticButton";
 import { TransitionLink } from "@/components/ui/PageTransition";
 import { RevealWords } from "@/components/ui/Reveal";
-import { projects } from "@/data/projects";
+import { featuredProjects } from "@/data/projects";
 import { useDevice } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import type { Project } from "@/lib/types";
@@ -124,7 +124,7 @@ export function ProjectScene({ project, index, play }: { project: Project; index
           <motion.p {...fade(0.05)} className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.2em] text-bone-2">
             <span className="tabular-nums text-bone">{String(index + 1).padStart(2, "0")}</span>
             <span className="h-px w-6 bg-bone/40" />
-            <span className="tabular-nums">{String(projects.length).padStart(2, "0")}</span>
+            <span className="tabular-nums">{String(featuredProjects.length).padStart(2, "0")}</span>
             <span className="ml-2">{project.category}</span>
           </motion.p>
           <RevealWords
@@ -174,6 +174,16 @@ export function ProjectScene({ project, index, play }: { project: Project; index
                 className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/[0.06] px-5 text-sm text-bone backdrop-blur-xl transition-colors hover:bg-white/[0.12]"
               >
                 Live site <ArrowUpRight />
+              </a>
+            )}
+            {project.demo && (
+              <a
+                href={project.demo}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/[0.06] px-5 text-sm text-bone backdrop-blur-xl transition-colors hover:bg-white/[0.12]"
+              >
+                Watch the demo <ArrowUpRight />
               </a>
             )}
             {project.github && (

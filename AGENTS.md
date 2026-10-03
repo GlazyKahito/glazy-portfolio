@@ -4,9 +4,9 @@ This file is for any AI assistant or automated tool working in this repository (
 
 ## What this is
 
-GLAZY is Krutik Mhatre's personal portfolio: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, GSAP, Motion. It is deployed on Vercel from the `main` branch.
+GLAZY is a web studio founded by Krutik Mhatre, and this is its site: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, GSAP, Motion. It is deployed on Vercel from the `main` branch. The voice is the studio's ("we"); the founder chapter speaks about Krutik by name. Never invent team members, clients or testimonials.
 
-The home page is a **scene deck**: one full-screen scene at a time, grouped into chapters (`data/scenes.ts`). Each chapter has its own 4K footage (`public/video/`) and its own transition; projects move sideways. Moves are locked until they finish, so nothing can be skipped. Case-study pages are ordinary scrolling pages.
+The home page is a **scene deck**: one full-screen scene at a time, grouped into chapters (`data/scenes.ts`): the opening, What we make, The work, In the studio, The founder, The toolkit, Start a project. The opening is a **depth poster** (a 4K still split into a sky plate and a cut-out ridge with the wordmark between them); every other chapter has its own 4K footage (`public/video/`). Each chapter arrives with its own transition (zoom, glitch, iris, shutter, film burn, doors, mosaic); projects move sideways. Moves are locked until they finish, so nothing can be skipped. Case-study pages are ordinary scrolling pages.
 
 ## Ground rules
 
@@ -35,12 +35,15 @@ npm run typecheck   # tsc --noEmit
 | Device capability / reduced motion | `lib/hooks/use-device.ts` |
 | Loading screen (glaze-filling wordmark, device check, letterbox opening) | `components/ui/Intro.tsx` |
 | Scene deck (steps, transitions, input lock, progress rail, Continue prompt) | `components/scenes/SceneDeck.tsx` |
-| Chapters, footage and transition styles | `data/scenes.ts` |
-| Scene content | `components/scenes/ChapterScenes.tsx`, `ProjectScene.tsx`, `HireScenes.tsx`, `Stack.tsx`, `Contact.tsx` |
+| Chapters, footage, transition styles, hash aliases | `data/scenes.ts` |
+| Services and how a project runs | `data/services.ts` |
+| The opening's depth poster (sky, wordmark, ridge, parallax) | `components/scenes/DepthPoster.tsx`, `public/scenes/` |
+| The services poster | `components/scenes/ServicesScene.tsx` |
+| Scene content | `components/scenes/ChapterScenes.tsx`, `ProjectScene.tsx`, `HireScenes.tsx` (start a project, recruiters), `Stack.tsx`, `Contact.tsx` |
 | Footage player (4K, poster first, lite stills) | `components/scenes/SceneVideo.tsx` |
 | Deck state shared with the header and loader | `lib/deck.ts` |
 | Header and menu (only reached chapters are listed) | `components/navigation/Header.tsx` |
-| Nimbus, the site guide (a cat; guided answers, AI coming) | `components/ui/Nimbus.tsx` |
+| Mr. Nimbus, the studio cat and guide (guided answers; AI via the gateway) | `components/ui/Nimbus.tsx`, `lib/server/nimbus-brain.ts`, `app/api/nimbus/route.ts` |
 | Route transitions + `TransitionLink` | `components/ui/PageTransition.tsx` |
 | Providers | `components/ui/Providers.tsx` |
 | Viewfinder cursor (`data-cursor-label="…"`) | `components/ui/Cursor.tsx` |

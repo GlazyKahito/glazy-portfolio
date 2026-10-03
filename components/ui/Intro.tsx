@@ -120,7 +120,7 @@ function GlazeMark({ progress }: { progress: number }) {
  * GLAZY's opening, as a film would open.
  *
  * 1. A film leader counts down while the site genuinely loads: the fonts,
- *    then the opening scene's 4K footage. The count is tied to real
+ *    then the opening scene's 4K planes. The count is tied to real
  *    progress, never faked ahead of it.
  * 2. The device check: if graphics run without hardware acceleration, or
  *    the connection is slow or on data saver, it says so plainly and offers
@@ -199,7 +199,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
         : footage < 1
           ? lite
             ? "Loading the opening frame"
-            : "Loading the opening scene · 4K footage"
+            : "Loading the opening scene · 4K"
           : "Threading the reel";
       // Never faster than the minimum run, never ahead of the truth.
       target = Math.min(target, t / MIN_LOAD);
@@ -308,7 +308,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
               <div aria-hidden className="absolute inset-0 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element -- decorative, must paint immediately */}
                 <img
-                  src="/video/sea-poster.jpg"
+                  src="/scenes/glazy-poster.jpg"
                   alt=""
                   className="absolute inset-0 h-full w-full scale-110 object-cover"
                   style={{ opacity: 0.08 + progress * 0.5, filter: `blur(${36 - progress * 26}px) saturate(${0.3 + progress * 0.9})`, transition: "opacity 0.4s, filter 0.4s" }}
@@ -363,7 +363,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                   <div className="w-[min(70vw,460px)] text-bone">
                     <Wordmark draw delay={0.15} duration={0.8} strokeWidth={7} />
                   </div>
-                  <p className="font-display text-2xl italic text-bone/90 md:text-3xl">A portfolio by Krutik Mhatre</p>
+                  <p className="font-display text-2xl italic text-bone/90 md:text-3xl">A web studio by Krutik Mhatre</p>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -14,15 +14,15 @@ import type { InProgressItem } from "@/lib/types";
 export const inProgress: InProgressItem[] = [
   {
     id: "glazy",
-    title: "GLAZY, rebuilt",
+    title: "The GLAZY studio site",
     description:
-      "This portfolio, rebuilt as a sequence of full-screen cinematic scenes: real 4K footage, one transition per chapter, a film-leader opening and a lite mode for low-power devices. It is being rebuilt in the open; you are looking at the work in progress.",
+      "The studio's own site, built in the open as a sequence of full-screen cinematic scenes: a layered depth-poster opening, real 4K footage, one transition per chapter, and a lite mode for low-power devices. You are looking at the work in progress.",
     status: "building",
-    progress: 85,
+    progress: 90,
     technologies: ["Next.js", "TypeScript", "GSAP", "Motion", "Tailwind CSS"],
     startedAt: "2026-09",
     github: "https://github.com/GlazyKahito/glazy-portfolio",
-    focus: ["Scene transitions and loaders", "Case-study pages", "Performance on older phones"],
+    focus: ["Depth-poster opening and services poster", "Case studies for client work", "Mr. Nimbus's AI answers"],
     hue: 190,
   },
 ];

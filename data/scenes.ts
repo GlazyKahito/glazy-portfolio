@@ -5,13 +5,17 @@
  * Each chapter has its own 4K footage and its own transition. The work
  * chapter expands into one scene per project (moving sideways).
  *
+ * The opening is a depth poster rather than a clip: a 4K still of the dusk
+ * footage split into a sky plate and a cut-out ridge (public/scenes/), with
+ * the wordmark between them (components/scenes/DepthPoster.tsx).
+ *
  * Footage: Mixkit stock video, free under the Mixkit Stock Video Free
  * License (https://mixkit.co/license/#videoFree) — commercial use allowed,
  * no attribution required (credited anyway). Re-encoded for the web into
  * seamless loops: /public/video/<name>-2160.mp4 (4K), -1080.mp4, -poster.jpg.
  */
 
-export type TransitionStyle = "iris" | "slide" | "rise" | "zoom" | "doors" | "wipe";
+export type TransitionStyle = "iris" | "slide" | "rise" | "zoom" | "doors" | "wipe" | "glitch" | "shutter" | "burn" | "mosaic";
 
 export interface Footage {
   name: string;
@@ -32,13 +36,15 @@ export const footage = {
 
 export type FootageName = keyof typeof footage;
 
-export type ChapterId = "intro" | "work" | "building" | "about" | "stack" | "hire" | "contact";
+export type ChapterId = "intro" | "services" | "work" | "building" | "about" | "stack" | "contact";
 
 export interface Chapter {
   id: ChapterId;
   number: string;
   label: string;
   footage: FootageName;
+  /** Rendered as the layered depth poster built from this footage, instead of the clip. */
+  depth?: boolean;
   /** How this chapter arrives. */
   transition: TransitionStyle;
   /** The arrival card's emblem and tint. */
@@ -46,13 +52,35 @@ export interface Chapter {
 }
 
 export const chapters: Chapter[] = [
-  { id: "intro", number: "00", label: "Opening", footage: "sea", transition: "zoom", mood: "sea" },
-  { id: "work", number: "01", label: "The work", footage: "city", transition: "iris", mood: "city" },
-  { id: "building", number: "02", label: "On the bench", footage: "stars", transition: "rise", mood: "stars" },
-  { id: "about", number: "03", label: "The person", footage: "dawn", transition: "zoom", mood: "dawn" },
-  { id: "stack", number: "04", label: "The ecosystem", footage: "canyon", transition: "doors", mood: "wind" },
-  { id: "hire", number: "05", label: "Work with me", footage: "dusk", transition: "slide", mood: "sea" },
-  { id: "contact", number: "06", label: "Say hello", footage: "flight", transition: "wipe", mood: "dusk" },
+  { id: "intro", number: "00", label: "GLAZY", footage: "dusk", depth: true, transition: "zoom", mood: "dusk" },
+  { id: "services", number: "01", label: "What we make", footage: "sea", transition: "glitch", mood: "sea" },
+  { id: "work", number: "02", label: "The work", footage: "city", transition: "iris", mood: "city" },
+  { id: "building", number: "03", label: "In the studio", footage: "stars", transition: "shutter", mood: "stars" },
+  { id: "about", number: "04", label: "The founder", footage: "dawn", transition: "burn", mood: "dawn" },
+  { id: "stack", number: "05", label: "The toolkit", footage: "canyon", transition: "doors", mood: "wind" },
+  { id: "contact", number: "06", label: "Start a project", footage: "flight", transition: "mosaic", mood: "dusk" },
 ];
+
+/** Old and friendly hashes, mapped to chapters (deep links, the menu, Mr. Nimbus). */
+export const chapterHashes: Record<string, ChapterId> = {
+  services: "services",
+  "what-we-make": "services",
+  projects: "work",
+  work: "work",
+  "in-progress": "building",
+  building: "building",
+  studio: "building",
+  about: "about",
+  founder: "about",
+  stack: "stack",
+  toolkit: "stack",
+  hire: "contact",
+  "work-with-me": "contact",
+  start: "contact",
+  contact: "contact",
+};
+
+/** The hash a chapter writes to the address bar. */
+export const chapterHash = (id: ChapterId) => (id === "work" ? "projects" : id);
 
 export const chapterById = (id: ChapterId) => chapters.find((c) => c.id === id)!;
