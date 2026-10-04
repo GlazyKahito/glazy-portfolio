@@ -14,7 +14,8 @@ The home page is a **scene deck**: one full-screen scene at a time, grouped into
 2. **Content is data, presentation is components.** Adding a project means editing `data/projects.ts` and dropping images in `public/projects/<slug>/`. Do not hard-code project details in components.
 3. **No secrets in the repo.** `.env` and `.env.local` are git-ignored; document new variables in `.env.example` with empty values.
 4. **Respect the motion system.** Use the eases, durations and variants in `lib/motion.ts`; deck transitions are GSAP timelines in `components/scenes/SceneDeck.tsx`. Everything must degrade under `prefers-reduced-motion` and on touch devices (see `lib/hooks/use-device.ts`).
-5. **Full quality by default, lite by choice.** Everyone gets the 4K footage; there is no silent downgrade. The loading screen warns weak devices and offers lite mode (stills instead of video); `components/ui/LagWatch.tsx` offers it again if frames drop, and the L key toggles it anywhere (`lib/capability.ts`). Only one clip plays at a time, and footage loads a chapter ahead.
+5. **Full quality by default, lite by choice.** Everyone gets the 4K footage; there is no silent downgrade. The loading screen shows every visitor a 4K / Lite choice, and stops weak devices (software rendering, data saver, slow network, 2 GB of memory or 2 cores) to offer lite first; `components/ui/LagWatch.tsx` offers it again if frames drop, the header has a 4K / Lite switch, and the L key toggles it anywhere (`lib/capability.ts`). Lite must run on the weakest machines: stills instead of video, and `html[data-lite]` (set before first paint) strips backdrop blur, filters and animation loops, with crossfades instead of chapter transitions. Only one clip decodes at a time, and footage loads a chapter ahead.
+7. **Smooth means compositor-only.** Animate transforms and opacity; never animate `filter: blur()` on full-screen layers, and pause decorative loops that are off screen.
 6. **Accessibility is not optional.** Semantic headings in order, focus-visible styles, `aria-*` on custom controls, alt text from data, keyboard paths for every interaction.
 
 ## Commands
@@ -33,7 +34,7 @@ npm run typecheck   # tsc --noEmit
 | Design tokens (colours, fonts, eases, type scale) | `app/globals.css` (`@theme inline`) |
 | Motion vocabulary | `lib/motion.ts` |
 | Device capability / reduced motion | `lib/hooks/use-device.ts` |
-| Loading screen (the opening as an exploded 3D stage set that assembles; device check; letterbox opening) | `components/ui/Intro.tsx`, `components/ui/LoaderDiorama.tsx` |
+| Loading screen (3D extruded GLAZY lettering filling with glaze; 4K / Lite choice; device check; letterbox opening) | `components/ui/Intro.tsx`, `components/ui/LoaderType3D.tsx` |
 | Project screens assembling like a jigsaw | `components/scenes/PuzzleImage.tsx` |
 | Scene deck (steps, transitions, input lock, progress rail, Continue prompt) | `components/scenes/SceneDeck.tsx` |
 | Chapters, footage, transition styles, hash aliases | `data/scenes.ts` |

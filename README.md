@@ -18,7 +18,7 @@ GLAZY is a web studio founded by [Krutik Mhatre](https://github.com/GlazyKahito)
 
 ## Features
 
-- **Loading screen**: the opening scene floats as an exploded 3D stage set (sky, wordmark, ridge) while the site really loads, the wordmark filling with glaze; at 100% the pieces lock together into the opening frame and the letterbox opens. A device check warns weak hardware and offers the lite version.
+- **Loading screen**: GLAZY as solid, extruded 3D lettering turning in warm light, its face filling with glaze as the site really loads; at 100% it turns to face you and the letterbox opens onto the opening scene. Every visitor can pick 4K or Lite before anything heavy loads, and weak machines are stopped and offered Lite first.
 - **Depth-poster opening**: a 4K still split into planes, with the GLAZY wordmark standing behind a mountain ridge. It rises from behind the ridge on arrival, and the planes drift and follow the pointer at different depths.
 - **Services poster**: the service as a giant word at the foot of the frame, a frosted strip of services across the top; it turns over on its own until you pick one.
 - **Scene deck**: chapters arrive with a zoom-through, a glitch cut, an iris, shutter blinds, a film burn, opening doors or a mosaic, each with its own title card (the glitch chapter's title arrives on a bad signal); projects swing in sideways in 3D behind a sweep of their own colour. Scroll, swipe, keys, the Continue prompt or the progress rail move one scene, and a move can never be skipped or rushed.
@@ -26,7 +26,7 @@ GLAZY is a web studio founded by [Krutik Mhatre](https://github.com/GlazyKahito)
 - **Project stage**: each project in a browser window that tilts toward the pointer; its screen assembles from interlocking jigsaw pieces that fly in from all sides, and its mobile capture scrolls on a phone.
 - **Start a project**: how a project runs, and a brief form that sends by WhatsApp, Gmail or the visitor's email app (or copies it); a separate scene for recruiters in the founder chapter.
 - **Mr. Nimbus**: the studio cat and the site's guide. Guided answers and actions, and real chat through the Vercel AI Gateway (free credits, OIDC sign-in, a zero-cost model as the last fallback) grounded only in the site's data.
-- **Lite mode**: stills instead of video, switchable from the 4K/Lite toggle in the header, offered on the loading screen and again if frames drop; the L key toggles it.
+- **Lite mode**: built for the weakest machines: stills instead of video, no blur, filters or animation loops, and crossfades between chapters. Chosen on the loading screen, from the 4K/Lite switch in the header, or when frames drop; the L key toggles it.
 - **Case-study pages** with footage headers, a resume viewer, viewfinder brackets that frame links and buttons (the native pointer stays visible), reduced-motion support, keyboard paths, sitemap, Open Graph image and JSON-LD.
 
 ## Run locally
