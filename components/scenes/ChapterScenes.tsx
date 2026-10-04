@@ -213,11 +213,18 @@ export function BuildingScene({ play }: { play: boolean }) {
               )}
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-[13px] text-bone-2">{item.technologies.join(" · ")}</p>
-                {item.github && (
-                  <a href={item.github} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1.5 text-sm text-bone hover:underline">
-                    Follow the build <ArrowUpRight />
-                  </a>
-                )}
+                <div className="flex flex-wrap items-center gap-4">
+                  {item.live && (
+                    <a href={item.live} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1.5 text-sm text-bone hover:underline">
+                      Live preview <ArrowUpRight />
+                    </a>
+                  )}
+                  {item.github && (
+                    <a href={item.github} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1.5 text-sm text-bone hover:underline">
+                      Follow the build <ArrowUpRight />
+                    </a>
+                  )}
+                </div>
               </div>
             </Rise>
           ))}
