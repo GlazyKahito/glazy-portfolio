@@ -33,7 +33,8 @@ export const skills: Skill[] = [
   {
     name: "C / C++",
     category: "Languages",
-    usage: "Systems and data-structures coursework.",
+    usage: "Data-structures coursework in C, including all eight experiments behind HEATSYNC, tested on real heat data.",
+    projects: ["heatsync"],
   },
 
   // Frontend (resume + READMEs)
@@ -70,8 +71,8 @@ export const skills: Skill[] = [
   {
     name: "GSAP",
     category: "Frontend",
-    usage: "Timeline-driven scene transitions and the depth-poster opening of this site; motion in CLIMATIQ.",
-    projects: ["climatiq"],
+    usage: "Timeline-driven scene transitions and the depth-poster opening of this site; scroll stories in CLIMATIQ and HEATSYNC.",
+    projects: ["climatiq", "heatsync"],
   },
   {
     name: "Recharts",
@@ -173,7 +174,7 @@ export const skills: Skill[] = [
     name: "Three.js",
     category: "3D & Graphics",
     usage: "The 3D heat globe in CLIMATIQ, the warp-tunnel opening in the DCN lab, and Grove's landing scene.",
-    projects: ["climatiq", "dcn-virtual-lab", "grove"],
+    projects: ["climatiq", "heatsync", "dcn-virtual-lab", "grove"],
   },
   {
     name: "React Three Fiber",
@@ -204,6 +205,12 @@ export const skills: Skill[] = [
     category: "Tooling",
     usage: "End-to-end and axe accessibility tests in CLIMATIQ; the case-study screenshots on this site.",
     projects: ["climatiq"],
+  },
+  {
+    name: "Vitest",
+    category: "Tooling",
+    usage: "160+ unit tests for the HEATSYNC data-structure engine; tests in CLIMATIQ.",
+    projects: ["heatsync", "climatiq"],
   },
   {
     name: "VS Code",

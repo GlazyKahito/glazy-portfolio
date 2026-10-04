@@ -13,20 +13,6 @@ import type { InProgressItem } from "@/lib/types";
  */
 export const inProgress: InProgressItem[] = [
   {
-    id: "heatsync",
-    title: "HEATSYNC",
-    description:
-      "A heatwave response engine for Maharashtra, built for use case KJS-CES-01 with IMD Mumbai–Pune: a live hotspot ranking, contiguous heat zones, alert rings across district borders and audience-specific advisories, each step powered by one of eight classic data structures, on real ERA5 data with a 3D map of the state.",
-    status: "building",
-    progress: 75,
-    technologies: ["Next.js", "TypeScript", "React Three Fiber", "GSAP", "Vitest", "C"],
-    startedAt: "2026-10",
-    github: "https://github.com/GlazyKahito/heatsync",
-    live: "https://heatsync-mh.vercel.app",
-    focus: ["Response console: replay the May 2024 heat spell day by day", "DSA lab: every structure, step by step, with the C source", "Live 7-day guidance from Open-Meteo"],
-    hue: 18,
-  },
-  {
     id: "glazy",
     title: "The GLAZY site",
     description:
