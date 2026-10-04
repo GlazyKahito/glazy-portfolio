@@ -470,6 +470,42 @@ export const projects: Project[] = [
     ],
     context: "Concept store for a fictional brand, designed and built by GLAZY; nothing is sold. 3D models from the Khronos glTF Sample Assets: Sheen Chair (© 2020 Wayfair, CC0 1.0) and Glam Velvet Sofa (© 2021 Wayfair, CC BY 4.0), both by Eric Chadwick, modified.",
   },
+  {
+    id: "ember",
+    slug: "ember",
+    title: "Ember",
+    tagline: "A kitchen built around one wood fire.",
+    description:
+      "A concept site for a made-up wood-fire restaurant in Bandra West, with a real-time WebGL fire: a shader flame field, rising embers that react to the pointer, and a wordmark shimmering in the heat.",
+    longDescription: [
+      "Ember is a concept restaurant site GLAZY designed and built to show what a small business's website can feel like: a fictional kitchen and bar in Bandra West, Mumbai.",
+      "The fire is real-time and written by hand in GLSL: a flame field of warped noise that bends in a breeze, up to 3,000 embers drifting on curl noise and pushed by the pointer, and the EMBER wordmark rendered in the heat haze. The opening starts in darkness with a single spark whose counter follows real loading, then the letters catch one by one. Below it sits everything a restaurant actually needs: a menu with accessible tabs and prices in rupees, a reservation form with real validation, hours with today highlighted and a live open/closed badge, and a hand-drawn map.",
+    ],
+    category: "Concept",
+    technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Three.js", "React Three Fiber", "GLSL", "Zod", "Motion"],
+    year: "2026",
+    status: "live",
+    featured: false,
+    image: {
+      src: "/projects/ember/cover.jpg",
+      alt: "Ember concept site: a real-time wood fire with rising embers below a giant EMBER wordmark",
+      width: 1440,
+      height: 900,
+    },
+    mobileImage: { src: "/projects/ember/mobile.jpg", alt: "Ember on mobile", width: 390, height: 844 },
+    github: "https://github.com/GlazyKahito/ember-glazy",
+    live: "https://ember-glazy.vercel.app",
+    caseStudy: true,
+    hue: 22,
+    features: [
+      "Hand-written GLSL fire: a warped-noise flame field, up to 3,000 additive embers on curl noise that react to the pointer, and a heat-hazed wordmark",
+      "Opening sequence: a spark and a counter that follow real loading (fonts, shaders, the wordmark texture), then the letters catch one by one; skippable, once per session",
+      "Menu with accessible tabs (arrow keys, Home and End), prices in rupees and veg/non-veg marks",
+      "Reservation form validated with Zod: a 14-day picker in Mumbai time, slots per day, an error summary and focus on the first problem",
+      "Adaptive particle count, off-screen pause, a CSS/SVG fallback without WebGL 2 and a still frame under reduced motion",
+    ],
+    context: "Concept site for a fictional restaurant, designed and built by GLAZY; reservations are not real. Noise functions follow webgl-noise by Ian McEwan and Stefan Gustavson (MIT).",
+  },
 ];
 
 /** Projects with `featured: true`, in display order. */
