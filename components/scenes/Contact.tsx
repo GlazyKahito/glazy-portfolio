@@ -76,7 +76,7 @@ function Footer({ onTop }: { onTop?: () => void }) {
           <Wordmark strokeWidth={10} />
         </span>
         <span>
-          © {year} {site.name}, a web &amp; SaaS agency · Founded by {profile.name}
+          © {year} {site.name}, a freelance web &amp; SaaS agency · Founded by {profile.name}
         </span>
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">

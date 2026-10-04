@@ -46,6 +46,7 @@ export const metadata: Metadata = {
     "Krutik Mhatre",
     "GLAZY",
     "web agency",
+    "freelance web developer",
     "SaaS development",
     "web design agency",
     "website development",

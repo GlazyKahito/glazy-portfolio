@@ -112,7 +112,7 @@ export function IntroScene({ play }: { play: boolean }) {
     <div className="container-x relative flex min-h-full flex-col justify-between pb-28 pt-[calc(var(--nav-height)+0.25rem)]">
       <Rise play={play} delay={1.2} className="mx-auto flex w-full max-w-[1400px] items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-cream/75 sm:text-[11px]">
         <span>
-          Web &amp; SaaS agency <span className="mx-2 text-cream/35">/</span> Est. {site.founded}
+          Freelance web &amp; SaaS agency <span className="mx-2 text-cream/35">/</span> Est. {site.founded}
         </span>
         <span className="hidden sm:inline">
           Vol. 01 <span className="mx-2 text-cream/35">/</span> {city} <LocalTime /> IST
@@ -120,7 +120,7 @@ export function IntroScene({ play }: { play: boolean }) {
       </Rise>
 
       <div className="mx-auto w-full max-w-[1400px]">
-        <h1 className="sr-only">GLAZY, a web and SaaS agency founded by {profile.name}</h1>
+        <h1 className="sr-only">GLAZY, a freelance web and SaaS agency founded by {profile.name}</h1>
         <div className="grid gap-7 md:grid-cols-12 md:items-end">
           <div className="md:col-span-7">
             <RevealWords
