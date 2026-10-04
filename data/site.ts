@@ -12,6 +12,14 @@ export const site = {
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000"),
+  /**
+   * Search Console / Bing Webmaster ownership tokens: the `content` value of
+   * the HTML-tag verification method. Not secrets; they ship in the page head.
+   */
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION ?? "",
+    bing: process.env.BING_SITE_VERIFICATION ?? "",
+  },
   tagline: "websites that feel like places.",
   founded: "2026",
   nav: [
