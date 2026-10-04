@@ -14,9 +14,9 @@ import type { InProgressItem } from "@/lib/types";
 export const inProgress: InProgressItem[] = [
   {
     id: "glazy",
-    title: "The GLAZY studio site",
+    title: "The GLAZY site",
     description:
-      "The studio's own site, built in the open as a sequence of full-screen cinematic scenes: a layered depth-poster opening, real 4K footage, one transition per chapter, and a lite mode for low-power devices. You are looking at the work in progress.",
+      "Our own site, built in the open as a sequence of full-screen cinematic scenes: a layered depth-poster opening, real 4K footage, one transition per chapter, and a lite mode for low-power devices. You are looking at the work in progress.",
     status: "building",
     progress: 90,
     technologies: ["Next.js", "TypeScript", "GSAP", "Motion", "Tailwind CSS"],

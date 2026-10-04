@@ -19,7 +19,7 @@ import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /**
- * Mr. Nimbus: the studio cat at GLAZY (Krutik's own, a tuxedo, and a
+ * Mr. Nimbus: the office cat at GLAZY (Krutik's own, a tuxedo, and a
  * gentleman) and the site's guide. Helps visitors get what they came for,
  * with the occasional joke.
  *
@@ -57,7 +57,7 @@ const JOKES = [
   "The tuxedo is natural. It saves a great deal of time before formal occasions, which, for a gentleman, is all of them.",
   `${founder} fixes bugs. I catch them. We are not the same.`,
   "People ask whether I'm an AI. I am a cat. The AI is merely here to assist me.",
-  "My hourly rate is two treats and one uninterrupted nap. The studio's rates are on request; I'm told they are more reasonable.",
+  "My hourly rate is two treats and one uninterrupted nap. GLAZY's rates are on request; I'm told they are more reasonable.",
   "I once pushed a glass off the desk to test gravity. Results were reproducible. That is what we call good engineering.",
 ];
 let jokeIndex = 0;
@@ -88,7 +88,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
   }
   if (has("price", "cost", "charge", "budget", "quote", "rate")) {
     return {
-      text: "A gentleman never guesses at a price. Send the studio a short brief (what the site is for, any site you have now, and your timeline) and you'll get a plan and a proper quote.",
+      text: "A gentleman never guesses at a price. Send us a short brief (what the site is for, any site you have now, and your timeline) and you'll get a plan and a proper quote.",
       actions: [
         { kind: "chapter", label: "Write a brief", chapter: "contact" },
         { kind: "link", label: "WhatsApp", href: whatsapp },
@@ -131,7 +131,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
   }
   if (has("stack", "skill", "tech", "language", "framework", "react", "next", "node", "build with", "tools")) {
     const lines = skillCategories.map((c) => `${c}: ${skillsByCategory(c).map((s) => s.name).join(", ")}`);
-    return { text: `The studio's toolkit, catalogued:\n${lines.join("\n")}`, actions: [{ kind: "chapter", label: "See the toolkit", chapter: "stack" }] };
+    return { text: `Our toolkit, catalogued:\n${lines.join("\n")}`, actions: [{ kind: "chapter", label: "See the toolkit", chapter: "stack" }] };
   }
   if (has("contact", "email", "mail", "phone", "whatsapp", "reach", "call", "talk to")) {
     return {
@@ -143,17 +143,17 @@ function answer(input: string): Omit<Message, "id" | "from"> {
     };
   }
   if (has("available", "free", "when", "start", "open to")) {
-    return { text: `Indeed: the studio is taking on paid web projects, and ${founder} is open to paid remote internships.`, replies: ["I need a website", "I'm hiring"] };
+    return { text: `Indeed: GLAZY is taking on paid web and SaaS projects, and ${founder} is open to paid remote internships.`, replies: ["I need a website", "I'm hiring"] };
   }
   if (has("who are you", "your name", "nimbus", "are you a cat", "are you ai", "are you real")) {
     return {
-      text: `Mr. Nimbus, the studio cat at GLAZY and ${founder}'s own. Tuxedo by nature, gentleman by choice. I answer the common questions, and when my AI line is connected you may chat with me about anything.`,
+      text: `Mr. Nimbus, the office cat at GLAZY and ${founder}'s own. Tuxedo by nature, gentleman by choice. I answer the common questions, and when my AI line is connected you may chat with me about anything.`,
       replies: QUICK.slice(0, 3),
     };
   }
   if (has("glazy", "studio", "agency", "company", "founder", "founded")) {
     return {
-      text: `GLAZY is a web studio founded by ${profile.name} in ${site.founded}, in ${profile.location.split(",")[0]}. We design and build websites, web apps and AI features, from the first sketch to launch.`,
+      text: `GLAZY is a web and SaaS agency founded by ${profile.name} in ${site.founded}, in ${profile.location.split(",")[0]}. We design and build websites, web apps, SaaS products and AI features, from the first sketch to launch.`,
       actions: [
         { kind: "chapter", label: "Meet the founder", chapter: "about" },
         { kind: "chapter", label: "See what we make", chapter: "services" },
@@ -170,7 +170,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
     return { text: "Good day to you. Mr. Nimbus, at your service. What brings you in?", replies: QUICK };
   }
   return {
-    text: "Ah, a question beyond my whiskers. May I offer one of these instead? For anything else, the studio reads every email.",
+    text: "Ah, a question beyond my whiskers. May I offer one of these instead? For anything else, we read every email.",
     replies: QUICK,
   };
 }
@@ -228,7 +228,7 @@ export function Nimbus() {
     {
       id: 0,
       from: "nimbus",
-      text: "Good day. Mr. Nimbus, at your service: the studio cat at GLAZY and, if I may say, the best-dressed guide on this site. What brings you in?",
+      text: "Good day. Mr. Nimbus, at your service: the office cat at GLAZY and, if I may say, the best-dressed guide on this site. What brings you in?",
       replies: QUICK,
     },
   ]);
@@ -390,7 +390,7 @@ export function Nimbus() {
         <AnimatePresence>
           {bubble && !open && (
             <motion.div
-              className="hidden h-12 items-center gap-1 rounded-full border border-white/15 bg-[#121214]/90 pl-4 pr-1.5 text-[13px] text-bone shadow-[0_20px_50px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md min-[1180px]:flex"
+              className="hidden h-12 items-center gap-1 rounded-full border border-white/15 bg-ink-3/90 pl-4 pr-1.5 text-[13px] text-bone shadow-[0_20px_50px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md min-[1180px]:flex"
               initial={{ opacity: 0, x: 16, scale: 0.96 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 10, scale: 0.97 }}
@@ -421,7 +421,7 @@ export function Nimbus() {
           }}
           aria-expanded={open}
           aria-controls="nimbus-panel"
-          className="group flex h-12 items-center gap-2 rounded-full border border-white/15 bg-[#121214]/85 px-2 sm:pl-3 sm:pr-4 text-sm text-bone shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-md transition-colors hover:bg-[#1c1c20]/90"
+          className="group flex h-12 items-center gap-2 rounded-full border border-white/15 bg-ink-3/85 px-2 sm:pl-3 sm:pr-4 text-sm text-bone shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-md transition-colors hover:bg-ink-4/90"
           initial={{ opacity: 0, scale: 0.6, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           whileHover={{ y: -2 }}
@@ -430,12 +430,12 @@ export function Nimbus() {
         >
           <span className="relative flex h-8 w-8 items-center justify-center">
             <span aria-hidden className="absolute -inset-[3px] rounded-full bg-[conic-gradient(from_0deg,var(--color-ember),transparent_30%,var(--color-peach)_55%,transparent_80%,var(--color-ember))] opacity-80 [animation:leader-sweep_5s_linear_infinite] group-hover:opacity-100 group-hover:[animation-duration:1.6s]" />
-            <span className="relative rounded-full bg-[#121214] p-px">
+            <span className="relative rounded-full bg-ink-3 p-px">
               <Portrait size={30} twitch={!open} />
             </span>
             <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
               <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-[#28c840] opacity-60" />
-              <span className="relative h-2.5 w-2.5 rounded-full border-2 border-[#121214] bg-[#28c840]" />
+              <span className="relative h-2.5 w-2.5 rounded-full border-2 border-ink-3 bg-[#28c840]" />
             </span>
           </span>
           <span className="hidden sm:inline">{open ? "Close" : "Mr. Nimbus"}</span>
@@ -451,7 +451,7 @@ export function Nimbus() {
             role="dialog"
             aria-label="Mr. Nimbus, site guide"
             data-lenis-prevent
-            className="fixed bottom-20 right-5 z-[92] flex h-[min(560px,calc(100svh-7rem))] w-[min(92vw,380px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0f0f11]/95 text-bone shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] backdrop-blur-md"
+            className="fixed bottom-20 right-5 z-[92] flex h-[min(560px,calc(100svh-7rem))] w-[min(92vw,380px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-ink-2/95 text-bone shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] backdrop-blur-md"
             style={{ transformOrigin: "100% 100%" }}
             initial={{ opacity: 0, y: 30, scale: 0.6, filter: "blur(8px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
@@ -462,7 +462,7 @@ export function Nimbus() {
               <Portrait size={44} tilt={typing} twitch={!typing} />
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-medium">Mr. Nimbus</p>
-                <p className="text-xs text-bone-2">{typing ? "Thinking it over…" : "Studio cat · gentleman · your guide"}</p>
+                <p className="text-xs text-bone-2">{typing ? "Thinking it over…" : "Office cat · gentleman · your guide"}</p>
               </div>
               <motion.button
                 type="button"
@@ -478,9 +478,9 @@ export function Nimbus() {
                 </svg>
               </motion.button>
             </div>
-            <p className="border-b border-white/10 bg-[#ff8a3d]/10 px-4 py-2.5 text-[12px] leading-snug text-[#ffd9b8]">
+            <p className="border-b border-white/10 bg-ember/10 px-4 py-2.5 text-[12px] leading-snug text-peach">
               {ai
-                ? "Mr. Nimbus now chats freely, with a little help from AI. He is a cat, so for anything important, email the studio."
+                ? "Mr. Nimbus now chats freely, with a little help from AI. He is a cat, so for anything important, email us."
                 : "AI is being linked to Mr. Nimbus. Soon you'll be able to chat with him freely; for now he answers the common questions (and tells a joke on request)."}
             </p>
 
@@ -501,7 +501,7 @@ export function Nimbus() {
                   <p
                     className={cn(
                       "max-w-[85%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed",
-                      m.from === "you" ? "rounded-br-md bg-[#ff7a2e] text-white" : "rounded-bl-md bg-white/[0.07] text-bone",
+                      m.from === "you" ? "rounded-br-md bg-ember text-white" : "rounded-bl-md bg-white/[0.07] text-bone",
                     )}
                   >
                     {m.text}
@@ -510,7 +510,7 @@ export function Nimbus() {
                   {m.replies && (
                     <div className="flex flex-wrap gap-1.5">
                       {m.replies.map((r) => (
-                        <button key={r} type="button" onClick={() => ask(r)} className="rounded-full border border-[#ff8a3d]/50 px-3 py-1.5 text-[13px] text-[#ffd9b8] transition-colors hover:bg-[#ff8a3d]/15">
+                        <button key={r} type="button" onClick={() => ask(r)} className="rounded-full border border-ember/50 px-3 py-1.5 text-[13px] text-peach transition-colors hover:bg-ember/15">
                           {r}
                         </button>
                       ))}
@@ -549,11 +549,11 @@ export function Nimbus() {
                 ref={field}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about a website, a project, the studio…"
+                placeholder="Ask about a website, a project, the agency…"
                 autoComplete="off"
-                className="h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.05] px-4 text-[14px] text-bone placeholder:text-bone-3 focus:border-[#ff8a3d]/60 focus:outline-none"
+                className="h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.05] px-4 text-[14px] text-bone placeholder:text-bone-3 focus:border-ember/60 focus:outline-none"
               />
-              <button type="submit" aria-label="Send" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#ff7a2e] text-white disabled:opacity-40" disabled={!input.trim()}>
+              <button type="submit" aria-label="Send" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ember text-white disabled:opacity-40" disabled={!input.trim()}>
                 <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
                 </svg>

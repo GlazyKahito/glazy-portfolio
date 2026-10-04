@@ -167,7 +167,7 @@ export function RecruiterScene({ play }: { play: boolean }) {
           <Kicker number="04" label="For recruiters" play={play} />
           <RevealWords as="h2" play={play} delay={0.1} text="Hiring? Let's talk." accent={["talk."]} className="mt-5 font-display text-[clamp(2.8rem,min(6.4vw,11vh),6.5rem)] leading-[0.9] tracking-[-0.03em] text-bone" />
           <Rise play={play} delay={0.45} as="p" className="mt-6 max-w-[46ch] text-base leading-relaxed text-bone/85">
-            Alongside the studio, {profile.name.split(" ")[0]} is open to paid remote internships, building full-stack products end to end: interfaces, APIs, data and the AI layer, with the security and testing that make them trustworthy. The work is live or open source, so you can check it, not just read about it.
+            Alongside running GLAZY, {profile.name.split(" ")[0]} is open to paid remote internships, building full-stack products end to end: interfaces, APIs, data and the AI layer, with the security and testing that make them trustworthy. The work is live or open source, so you can check it, not just read about it.
           </Rise>
           <Rise play={play} delay={0.6} className="mt-8 flex flex-wrap gap-3">
             <ResumeViewer>

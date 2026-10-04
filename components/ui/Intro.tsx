@@ -320,7 +320,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                   animate={{ opacity: opening ? 0 : 1, y: opening ? -12 : 0, filter: opening ? "blur(8px)" : "blur(0px)" }}
                   transition={{ duration: opening ? 0.6 : 0.8, ease: ease.outQuart, delay: opening ? 0 : 0.9 }}
                 >
-                  <p className="font-display text-2xl italic text-cream/90 md:text-3xl">A web studio by Krutik Mhatre</p>
+                  <p className="font-display text-2xl italic text-cream/90 md:text-3xl">A web &amp; SaaS agency by Krutik Mhatre</p>
                 </motion.div>
               )}
             </AnimatePresence>

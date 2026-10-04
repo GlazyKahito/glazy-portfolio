@@ -45,7 +45,8 @@ export const metadata: Metadata = {
   keywords: [
     "Krutik Mhatre",
     "GLAZY",
-    "web studio",
+    "web agency",
+    "SaaS development",
     "web design agency",
     "website development",
     "full-stack developer",

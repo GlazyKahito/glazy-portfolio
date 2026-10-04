@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { profile } from "@/data/profile";
 import { site } from "@/data/site";
 
-export const alt = "GLAZY — a web studio by Krutik Mhatre";
+export const alt = "GLAZY — a web and SaaS agency by Krutik Mhatre";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -25,13 +25,13 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 64,
-          background: "linear-gradient(160deg, #050506 0%, #0c0c0e 60%, #1a0b0a 100%)",
+          background: "linear-gradient(160deg, #060505 0%, #120c0a 55%, #3a1a10 100%)",
           color: "#f5f5f7",
           fontFamily: "sans-serif",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 4, color: "#a1a1a6" }}>
-          <span>WEB STUDIO · EST. {site.founded}</span>
+          <span>WEB &amp; SAAS AGENCY · EST. {site.founded}</span>
           <span>{profile.location.toUpperCase()}</span>
         </div>
         <svg width="760" height="167" viewBox="-6 -6 376 92" fill="none">
@@ -49,7 +49,7 @@ export default function OpenGraphImage() {
         </svg>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <span style={{ fontSize: 34, color: "#f5f5f7" }}>{site.tagline.charAt(0).toUpperCase() + site.tagline.slice(1)}</span>
-          <span style={{ fontSize: 22, letterSpacing: 4, color: "#ff2d1a" }}>FOUNDED BY {profile.name.toUpperCase()}</span>
+          <span style={{ fontSize: 22, letterSpacing: 4, color: "#ff8a4c" }}>FOUNDED BY {profile.name.toUpperCase()}</span>
         </div>
       </div>
     ),

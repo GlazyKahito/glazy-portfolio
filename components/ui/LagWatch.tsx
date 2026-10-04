@@ -80,7 +80,7 @@ export function LagWatch() {
             role="alertdialog"
             aria-labelledby="lag-title"
             aria-describedby="lag-body"
-            className="fixed bottom-5 left-5 z-[92] flex max-w-[calc(100vw-7rem)] items-center gap-3 rounded-full border border-white/15 bg-[#121214]/92 py-1.5 pl-4 pr-1.5 text-bone shadow-[0_20px_60px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
+            className="fixed bottom-5 left-5 z-[92] flex max-w-[calc(100vw-7rem)] items-center gap-3 rounded-full border border-white/15 bg-ink-3/92 py-1.5 pl-4 pr-1.5 text-bone shadow-[0_20px_60px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -123,7 +123,7 @@ export function LagWatch() {
         {toast && (
           <motion.div
             role="status"
-            className="fixed left-1/2 top-5 z-[106] -translate-x-1/2 rounded-full border border-white/15 bg-[#121214]/90 px-4 py-2 text-sm text-bone backdrop-blur-md"
+            className="fixed left-1/2 top-5 z-[106] -translate-x-1/2 rounded-full border border-white/15 bg-ink-3/90 px-4 py-2 text-sm text-bone backdrop-blur-md"
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}

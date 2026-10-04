@@ -34,7 +34,7 @@ export function Rise({ play, delay = 0, className, children, as = "div" }: { pla
   );
 }
 
-/** The chapter line above every heading: "03 — In the studio". */
+/** The chapter line above every heading: "03 — In the works". */
 export function Kicker({ number, label, play }: { number: string; label: string; play: boolean }) {
   return (
     <Rise play={play} as="p" className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-bone-2">
@@ -112,7 +112,7 @@ export function IntroScene({ play }: { play: boolean }) {
     <div className="container-x relative flex min-h-full flex-col justify-between pb-28 pt-[calc(var(--nav-height)+0.25rem)]">
       <Rise play={play} delay={1.2} className="mx-auto flex w-full max-w-[1400px] items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-cream/75 sm:text-[11px]">
         <span>
-          Web studio <span className="mx-2 text-cream/35">/</span> Est. {site.founded}
+          Web &amp; SaaS agency <span className="mx-2 text-cream/35">/</span> Est. {site.founded}
         </span>
         <span className="hidden sm:inline">
           Vol. 01 <span className="mx-2 text-cream/35">/</span> {city} <LocalTime /> IST
@@ -120,7 +120,7 @@ export function IntroScene({ play }: { play: boolean }) {
       </Rise>
 
       <div className="mx-auto w-full max-w-[1400px]">
-        <h1 className="sr-only">GLAZY, a web studio founded by {profile.name}</h1>
+        <h1 className="sr-only">GLAZY, a web and SaaS agency founded by {profile.name}</h1>
         <div className="grid gap-7 md:grid-cols-12 md:items-end">
           <div className="md:col-span-7">
             <RevealWords
@@ -159,7 +159,7 @@ export function IntroScene({ play }: { play: boolean }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* 03 In the studio                                                     */
+/* 03 In the works                                                      */
 /* ------------------------------------------------------------------ */
 
 const STATUS: Record<string, string> = { building: "Building", exploring: "Exploring", planning: "Planning", shipping: "Shipping" };
@@ -169,10 +169,10 @@ export function BuildingScene({ play }: { play: boolean }) {
     <div className="container-x relative flex min-h-full items-center pb-28 pt-[calc(var(--nav-height)+1.5rem)]">
       <div className="mx-auto grid w-full max-w-[1400px] items-center gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <Kicker number="03" label="In the studio" play={play} />
+          <Kicker number="03" label="In the works" play={play} />
           <RevealWords as="h2" play={play} delay={0.1} text="Currently building." accent={["building."]} className="mt-5 font-display text-[clamp(2.8rem,min(6.4vw,11vh),6.5rem)] leading-[0.9] tracking-[-0.03em] text-bone" />
           <Rise play={play} delay={0.5} as="p" className="mt-6 max-w-[40ch] text-base leading-relaxed text-bone/80">
-            What the studio is building right now, in the open. Each one moves to the work when it ships.
+            What we are building right now, in the open. Each one moves to the work when it ships.
           </Rise>
         </div>
         <div className="flex flex-col gap-4 lg:col-span-7">
