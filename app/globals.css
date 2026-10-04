@@ -10,21 +10,22 @@
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /*
-   * Palette: Apple-grade neutrals (true black, #F5F5F7 white, graphite greys)
-   * with one Ferrari rosso accent. "glaze" is the accent token used everywhere.
+   * Palette: one dusk, everywhere. Warm near-black, warm white, warm greys,
+   * and a single ember accent ("glaze"), matching the footage and the
+   * opening's cream and peach.
    */
-  --color-ink: #050506;
-  --color-ink-2: #0c0c0e;
-  --color-ink-3: #161618;
-  --color-ink-4: #1d1d1f;
-  --color-bone: #f5f5f7;
-  --color-bone-2: #a1a1a6;
-  --color-bone-3: #8b8b91;
-  --color-line: rgb(245 245 247 / 0.12);
-  --color-line-strong: rgb(245 245 247 / 0.24);
-  --color-glaze: #ff2d1a;
-  --color-glaze-2: #c8102e;
-  --color-glaze-dim: rgb(255 45 26 / 0.14);
+  --color-ink: #060505;
+  --color-ink-2: #0d0b0a;
+  --color-ink-3: #171413;
+  --color-ink-4: #1f1b19;
+  --color-bone: #f4f1ea;
+  --color-bone-2: #aaa49b;
+  --color-bone-3: #918a81;
+  --color-line: rgb(244 241 234 / 0.12);
+  --color-line-strong: rgb(244 241 234 / 0.24);
+  --color-glaze: #ff6a33;
+  --color-glaze-2: #d9461c;
+  --color-glaze-dim: rgb(255 106 51 / 0.14);
   /* Editorial cream for poster type over footage; peach and ember tint the dusk wordmark. */
   --color-cream: #ece6d3;
   --color-peach: #ffc9a3;
@@ -172,7 +173,7 @@
     100deg,
     var(--color-bone) 0%,
     var(--color-bone) 35%,
-    #ff2d1a 47%,
+    var(--color-glaze) 47%,
     #ff7a5c 53%,
     #ffd9a8 58%,
     var(--color-bone) 70%,
@@ -241,8 +242,8 @@
 }
 
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(255 45 26 / 0.55); }
-  70% { box-shadow: 0 0 0 10px rgb(255 45 26 / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(255 106 51 / 0.55); }
+  70% { box-shadow: 0 0 0 10px rgb(255 106 51 / 0); }
 }
 
 @keyframes scan {

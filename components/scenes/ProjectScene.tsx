@@ -90,7 +90,7 @@ function Stage({ project, play }: { project: Project; play: boolean }) {
             animate={play ? { opacity: 1, y: 0, rotate: -5 } : { opacity: 0, y: 50, rotate: 0 }}
             transition={{ duration: 1.1, ease: ease.outExpo, delay: play ? PUZZLE_DONE - 0.4 : 0 }}
           >
-            <div className="overflow-hidden rounded-[26px] border-[5px] border-[#1c1c20] bg-black shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9)] ring-1 ring-white/15">
+            <div className="overflow-hidden rounded-[26px] border-[5px] border-ink-4 bg-black shadow-[0_30px_70px_-20px_rgb(0_0_0/0.9)] ring-1 ring-white/15">
               <div className="relative aspect-[390/760] overflow-hidden">
                 <Image
                   src={project.mobileImage.src}

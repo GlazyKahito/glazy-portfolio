@@ -43,7 +43,7 @@ const STEPS: Step[] = [
     label: project.title,
     render: (p) => <ProjectScene project={project} index={i} play={p} />,
   })),
-  { key: "building", chapter: "building", axis: "y", label: "In the studio", render: (p) => <BuildingScene play={p} /> },
+  { key: "building", chapter: "building", axis: "y", label: "In the works", render: (p) => <BuildingScene play={p} /> },
   { key: "about", chapter: "about", axis: "y", label: "The founder", render: (p) => <AboutScene play={p} /> },
   { key: "experience", chapter: "about", axis: "x", label: "Experience", render: (p) => <ExperienceScene play={p} /> },
   { key: "recruit", chapter: "about", axis: "x", label: "For recruiters", render: (p) => <RecruiterScene play={p} /> },
@@ -110,7 +110,7 @@ function Emblem({ mood }: { mood: string }) {
   switch (mood) {
     case "city":
       return (
-        <svg viewBox="0 0 120 24" className="h-5 w-28 text-[#ff6bd6]" aria-hidden>
+        <svg viewBox="0 0 120 24" className="h-5 w-28 text-ember" aria-hidden>
           <path d="M2 20h12V8h12v8h14V4h12v16h14V10h14v8h14V6h14v14h10" fill="none" stroke="currentColor" strokeWidth="1.5" className="[animation:draw-line_1.4s_ease-out_both]" pathLength={1} strokeDasharray="1" />
         </svg>
       );
@@ -118,7 +118,7 @@ function Emblem({ mood }: { mood: string }) {
       return (
         <span className="relative block h-5 w-28" aria-hidden>
           {Array.from({ length: 14 }).map((_, i) => (
-            <span key={i} className="absolute h-[3px] w-[3px] rounded-full bg-[#dfe7ff] [animation:twinkle_1.6s_ease-in-out_infinite]" style={{ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 90}%`, animationDelay: `${(i % 7) * 0.2}s` }} />
+            <span key={i} className="absolute h-[3px] w-[3px] rounded-full bg-cream [animation:twinkle_1.6s_ease-in-out_infinite]" style={{ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 90}%`, animationDelay: `${(i % 7) * 0.2}s` }} />
           ))}
         </span>
       );
@@ -126,7 +126,7 @@ function Emblem({ mood }: { mood: string }) {
       return (
         <span className="relative block h-8 w-8" aria-hidden>
           {[0, 1, 2].map((i) => (
-            <span key={i} className="absolute inset-0 rounded-full border border-[#ffe3c4]/70 [animation:ripple-out_2.4s_ease-out_infinite]" style={{ animationDelay: `${i * 0.8}s` }} />
+            <span key={i} className="absolute inset-0 rounded-full border border-peach/70 [animation:ripple-out_2.4s_ease-out_infinite]" style={{ animationDelay: `${i * 0.8}s` }} />
           ))}
         </span>
       );
@@ -140,7 +140,7 @@ function Emblem({ mood }: { mood: string }) {
       return (
         <svg viewBox="0 0 60 30" className="h-7 w-14" aria-hidden>
           <path d="M4 26 H56" stroke="rgb(245 245 247 / 0.6)" strokeWidth="1" />
-          <circle cx="30" cy="26" r="12" fill="#ff8a3d" className="[animation:sun-rise_2.4s_ease-out_infinite]" />
+          <circle cx="30" cy="26" r="12" fill="var(--color-ember)" className="[animation:sun-rise_2.4s_ease-out_infinite]" />
         </svg>
       );
     default:

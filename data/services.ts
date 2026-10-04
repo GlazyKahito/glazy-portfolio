@@ -2,7 +2,7 @@
  * SERVICES
  * --------
  * What GLAZY builds for clients, shown in "What we make" and used by
- * Mr. Nimbus. Keep every line to things the studio has actually shipped;
+ * Mr. Nimbus. Keep every line to things GLAZY has actually shipped;
  * `proof` points at a project in data/projects.ts that shows it.
  * No prices: every quote follows a brief.
  */
@@ -35,9 +35,9 @@ export const services: Service[] = [
   },
   {
     id: "apps",
-    word: "Web apps",
-    title: "Web apps",
-    body: "Dashboards, CRMs and tools with accounts and data, built on Next.js or the MERN stack.",
+    word: "SaaS",
+    title: "Web apps and SaaS",
+    body: "SaaS products, dashboards, CRMs and tools with accounts, roles and data, built on Next.js or the MERN stack.",
     includes: ["Sign-in and roles", "Dashboards and data views", "APIs with validation and rate limits"],
     proof: "crm360",
   },

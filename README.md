@@ -2,7 +2,7 @@
 
 **Websites that feel like places.**
 
-GLAZY is a web studio founded by [Krutik Mhatre](https://github.com/GlazyKahito). This is its site, built as a short film: one full-screen scene at a time, a layered depth-poster opening, real 4K footage behind every chapter, and a transition of its own between each. Every project on it is live, shipped or open source, and every claim on it comes from the founder's resume, a project README or the project's own demo.
+GLAZY is a web and SaaS agency founded by [Krutik Mhatre](https://github.com/GlazyKahito). This is its site, built as a short film: one full-screen scene at a time, a layered depth-poster opening, real 4K footage behind every chapter, and a transition of its own between each. Every project on it is live, shipped or open source, and every claim on it comes from the founder's resume, a project README or the project's own demo.
 
 ## Stack
 
@@ -25,7 +25,7 @@ GLAZY is a web studio founded by [Krutik Mhatre](https://github.com/GlazyKahito)
 - **No spoilers**: the next scene is never visible early; the progress rail and the menu only show chapters you have reached.
 - **Project stage**: each project in a browser window that tilts toward the pointer; its screen assembles from interlocking jigsaw pieces that fly in from all sides, and its mobile capture scrolls on a phone.
 - **Start a project**: how a project runs, and a brief form that sends by WhatsApp, Gmail or the visitor's email app (or copies it); a separate scene for recruiters in the founder chapter.
-- **Mr. Nimbus**: the studio cat and the site's guide. Guided answers and actions, and real chat through the Vercel AI Gateway (free credits, OIDC sign-in, a zero-cost model as the last fallback) grounded only in the site's data.
+- **Mr. Nimbus**: the office cat and the site's guide. Guided answers and actions, and real chat through the Vercel AI Gateway (free credits, OIDC sign-in, a zero-cost model as the last fallback) grounded only in the site's data.
 - **Lite mode**: built for the weakest machines: stills instead of video, no blur, filters or animation loops, and crossfades between chapters. Chosen on the loading screen, from the 4K/Lite switch in the header, or when frames drop; the L key toggles it.
 - **Case-study pages** with footage headers, a resume viewer, viewfinder brackets that frame links and buttons (the native pointer stays visible), reduced-motion support, keyboard paths, sitemap, Open Graph image and JSON-LD.
 
@@ -51,7 +51,7 @@ The site is data-driven. Components never hard-code facts.
 | `data/projects.ts` | The project showcase and detail pages |
 | `data/in-progress.ts` | The "In progress" bench |
 | `data/skills.ts` | The tech stack, each entry with how it is used |
-| `data/services.ts` | What the studio makes, and how a project runs |
+| `data/services.ts` | What GLAZY makes, and how a project runs |
 | `data/scenes.ts` | Chapters, their footage, transitions and credits |
 | `data/site.ts` | Navigation, metadata, site URL |
 

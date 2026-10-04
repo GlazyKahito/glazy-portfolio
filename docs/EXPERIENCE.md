@@ -1,6 +1,6 @@
 # GLAZY: the experience
 
-Design notes for the cinematic rebuild (September 2026) and the studio relaunch (October 2026): what it is, why it is built this way, where the footage comes from, and how to extend it.
+Design notes for the cinematic rebuild (September 2026) and the agency relaunch (October 2026): what it is, why it is built this way, where the footage comes from, and how to extend it.
 
 ## Art direction
 
@@ -15,10 +15,10 @@ Design notes for the cinematic rebuild (September 2026) and the studio relaunch 
 | --- | --- | --- | --- |
 | 00 | GLAZY (the opening) | Depth poster from the dusk clip | The loader's letterbox opening; the wordmark rises from behind the ridge |
 | 01 | What we make | Sunset over the sea | A glitch cut: bands tear in, RGB tear bars, a title on a bad signal |
-| 02 | The work (5 scenes, sideways) | A city at night from the air | An iris; projects swing in in 3D behind a sweep of their colour |
-| 03 | In the studio | Stars over a still lake | Shutter blinds opening in a wave |
-| 04 | The founder (3 scenes, sideways) | First light over a misty valley | A film burn |
-| 05 | The toolkit | Flying over a green canyon | Opening doors |
+| 02 | The work (5 scenes, sideways) | A city at dusk from high above, a red horizon | An iris; projects swing in in 3D behind a sweep of their colour |
+| 03 | In the works | The Milky Way over a dark ridge | Shutter blinds opening in a wave |
+| 04 | The founder (3 scenes, sideways) | Sunset over a bay of islands | A film burn |
+| 05 | The toolkit | A road at golden hour, from above (graded warm) | Opening doors |
 | 06 | Start a project (2 scenes, sideways) | An aircraft wing at dusk | A mosaic |
 
 Every chapter change also plays that chapter's title card with its own small emblem. Going back plays the departing chapter's transition in reverse.
@@ -52,10 +52,10 @@ All clips are from Mixkit under the [Mixkit Stock Video Free License](https://mi
 | File | Clip |
 | --- | --- |
 | `sea` | [Stunning sunset seen from the sea](https://mixkit.co/free-stock-video/stunning-sunset-seen-from-the-sea-4119/) |
-| `city` | [Movement in a city at night in an aerial shot](https://mixkit.co/free-stock-video/movement-in-a-city-at-night-in-an-aerial-shot-42343/) |
-| `stars` | [Night sky with stars at a calm lake, time-lapse](https://mixkit.co/free-stock-video/night-sky-with-stars-at-a-calm-lake-time-lapse-1704/) |
-| `dawn` | [Beautiful sunrise landscape](https://mixkit.co/free-stock-video/beautiful-sunrise-landscape-1944/) |
-| `canyon` | [Fly over a huge canyon covered in vegetation](https://mixkit.co/free-stock-video/fly-over-a-huge-canyon-covered-in-vegetation-41401/) |
+| `citydusk` | [Tour high above a city at dusk](https://mixkit.co/free-stock-video/tour-high-above-a-city-at-dusk-41375/) |
+| `nightridge` | [Milky Way seen at night](https://mixkit.co/free-stock-video/milky-way-seen-at-night-4148/) (denoised, warmed) |
+| `bay` | [Beautiful sunset on a bay from above](https://mixkit.co/free-stock-video/beautiful-sunset-on-a-bay-from-above-4999/) |
+| `goldroad` | [Natural landscape with a road at sunset](https://mixkit.co/free-stock-video/natural-landscape-with-a-road-at-sunset-50267/) (darkened, warmed) |
 | `flight` | [Panorama from the window of an airplane at dusk](https://mixkit.co/free-stock-video/panorama-from-the-window-of-an-airplane-at-dusk-40102/) |
 | `dusk` | [Landscape of a lake during a red sunset](https://mixkit.co/free-stock-video/landscape-of-a-lake-during-a-red-sunset-5002/) |
 
@@ -65,7 +65,7 @@ Higgsfield was not used: its pricing and free tier could not be verified from he
 
 1. **Services (the opening is now a depth poster).** "Slow cinematic dolly over a calm sea at sunset, sun touching the horizon, long golden reflection on gentle swells, thin clouds lit orange and magenta, anamorphic lens, soft film grain, 16:9, 10 seconds, locked horizon, no people."
 2. **The work.** "Aerial drone glide over a dense modern city at night, glowing office windows and cool blue building edges, light traffic streaks below, slow forward motion, moody teal and amber grade, 16:9, 10 seconds."
-3. **In the studio.** "Time-lapse of the Milky Way rotating over a perfectly still mountain lake, stars reflected in the water, faint horizon glow, deep blue night, static tripod shot, 16:9, 12 seconds."
+3. **In the works.** "Time-lapse of the Milky Way rotating over a perfectly still mountain lake, stars reflected in the water, faint horizon glow, deep blue night, static tripod shot, 16:9, 12 seconds."
 4. **The founder.** "Sunrise over a misty valley, layers of fog between hills, first warm light spilling across the mist, very slow push-in, soft pastel grade, 16:9, 10 seconds."
 5. **The toolkit.** "Drone flight along a lush green canyon with a river at the bottom, morning light, forward motion following the river, natural greens, 16:9, 10 seconds."
 6. **The opening and case-study headers.** "Wide shot of a lake between dark mountains at dusk, red sky reflected in still water, gentle ripples, locked-off camera, 16:9, 12 seconds."
@@ -73,7 +73,7 @@ Higgsfield was not used: its pricing and free tier could not be verified from he
 
 ## Mr. Nimbus
 
-Mr. Nimbus is the studio cat (Krutik's own: a black-and-white tuxedo, and a gentleman) and the site's guide. His portrait (`public/nimbus/`) is his own photo, colour-corrected and cut out onto a studio backdrop.
+Mr. Nimbus is the office cat (Krutik's own: a black-and-white tuxedo, and a gentleman) and the site's guide. His portrait (`public/nimbus/`) is his own photo, colour-corrected and cut out onto a warm backdrop.
 
 - **On Vercel, with nothing to configure**, his replies come through the Vercel AI Gateway, signed in with the deployment's own OIDC token: Gemini Flash-Lite first, then a zero-cost model if the credits run out. **With `GEMINI_API_KEY` set**, Gemini is called directly first. Either way the route is `app/api/nimbus/route.ts` and he is grounded only in the site's own data (`lib/server/nimbus-brain.ts`). The key stays on the server; replies are structured JSON (reply plus an intent that picks the follow-up buttons); history is capped at 12 turns, 600 characters a message and 20 requests a minute; nothing is stored.
 - **If no AI line answers,** he falls back to his guided answers, with the same buttons.

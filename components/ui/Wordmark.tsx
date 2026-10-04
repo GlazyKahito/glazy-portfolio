@@ -60,7 +60,7 @@ export function Wordmark({
           <linearGradient id="glaze-sheen" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stopColor="#f5f5f7" />
             <stop offset="0.45" stopColor="#f5f5f7" />
-            <stop offset="0.55" stopColor="#ff2d1a" />
+            <stop offset="0.55" stopColor="#ff6a33" />
             <stop offset="0.62" stopColor="#ff7a5c" />
             <stop offset="0.7" stopColor="#f5f5f7" />
             <stop offset="1" stopColor="#f5f5f7" />

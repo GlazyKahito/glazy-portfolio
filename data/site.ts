@@ -3,9 +3,9 @@
  */
 export const site = {
   name: "GLAZY",
-  title: "GLAZY — a web studio by Krutik Mhatre",
+  title: "GLAZY — a web and SaaS agency by Krutik Mhatre",
   description:
-    "GLAZY is a web studio founded by Krutik Mhatre in Mumbai. We design and build fast, cinematic websites, web apps and AI features. See NIYAM, ScamShield, CLIMATIQ and more.",
+    "GLAZY is a web and SaaS agency founded by Krutik Mhatre in Mumbai. We design and build fast, cinematic websites, web apps, SaaS products and AI features. See NIYAM, ScamShield, CLIMATIQ and more.",
   // Explicit override → Vercel's production domain (set at build time) → local dev.
   url:
     process.env.NEXT_PUBLIC_SITE_URL ??
@@ -17,7 +17,7 @@ export const site = {
   nav: [
     { label: "What we make", href: "/#services" },
     { label: "Work", href: "/#projects" },
-    { label: "In the studio", href: "/#building" },
+    { label: "In the works", href: "/#building" },
     { label: "Founder", href: "/#about" },
     { label: "Start a project", href: "/#contact" },
   ],

@@ -21,7 +21,7 @@ interface SpotlightProps {
 export function Spotlight({
   children,
   className,
-  color = "rgb(255 45 26 / 0.14)",
+  color = "rgb(255 106 51 / 0.14)",
   size = 420,
   border = true,
 }: SpotlightProps) {
