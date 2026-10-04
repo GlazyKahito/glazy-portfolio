@@ -97,12 +97,13 @@ function blindsClip(n: number, p: number, fromRight = false) {
 const MOSAIC = { cols: 16, rows: 9 };
 
 /** Put the transition overlays away once a move has finished. */
-function resetFx(glitch: HTMLElement | null, burn: HTMLElement | null, mosaic: HTMLElement | null) {
+function resetFx(glitch: HTMLElement | null, burn: HTMLElement | null, flash: HTMLElement | null, mosaic: HTMLElement | null) {
   if (glitch) {
     gsap.set(glitch, { autoAlpha: 0 });
     glitch.querySelectorAll<HTMLElement>("[data-tear]").forEach((t) => (t.style.opacity = "0"));
   }
   if (burn) gsap.set(burn, { autoAlpha: 0 });
+  if (flash) gsap.set(flash, { autoAlpha: 0 });
   if (mosaic) gsap.set([...mosaic.children], { autoAlpha: 0 });
 }
 
@@ -195,6 +196,7 @@ export function SceneDeck() {
   const sweep = useRef<HTMLDivElement>(null);
   const glitchFx = useRef<HTMLDivElement>(null);
   const burnFx = useRef<HTMLDivElement>(null);
+  const flashFx = useRef<HTMLDivElement>(null);
   const mosaicFx = useRef<HTMLDivElement>(null);
   const [railHold, setRailHold] = useState(true);
   const [railHover, setRailHover] = useState(false);
@@ -291,7 +293,7 @@ export function SceneDeck() {
             gsap.set(el, { autoAlpha: el === bgIn ? 1 : 0 });
           });
           gsap.set(scOut, { autoAlpha: 0, clearProps: "transform,filter" });
-          resetFx(glitchFx.current, burnFx.current, mosaicFx.current);
+          resetFx(glitchFx.current, burnFx.current, flashFx.current, mosaicFx.current);
           setRailHold(true);
           indexRef.current = to;
           setIndex(to);
@@ -403,16 +405,22 @@ export function SceneDeck() {
         tl.fromTo(top, { scale: dir > 0 ? 1.12 : 1 }, { scale: dir > 0 ? 1 : 1.12 }, 0);
         tl.fromTo(dir > 0 ? bgOut : bgIn, { scale: dir > 0 ? 1 : 1.06 }, { scale: dir > 0 ? 1.06 : 1 }, 0);
       } else if (style === "burn") {
-        // Film burn: a light leak blooms over the frame, burns it out, and the next place develops through it.
+        // Film burn: a light leak blooms over the frame, burns it out to warm white, and the next place
+        // develops through it. Opacity and transforms only: a flat warm layer does the burning, so the
+        // 4K footage underneath is never filtered.
         gsap.set(bgIn, { zIndex: 2, autoAlpha: 0 });
         gsap.set(bgOut, { zIndex: 1 });
         const burn = burnFx.current;
-        tl.to(bgOut, { filter: "brightness(1.7) saturate(1.35)", duration: d * 0.5, ease: "power2.in" }, 0);
+        const flash = flashFx.current;
+        if (flash) {
+          tl.fromTo(flash, { autoAlpha: 0 }, { autoAlpha: 0.82, duration: d * 0.5, ease: "power2.in" }, 0);
+          tl.to(flash, { autoAlpha: 0, duration: d * 0.58, ease: "power2.out" }, d * 0.46);
+        }
         if (burn) {
           tl.fromTo(burn, { autoAlpha: 0, scale: 0.35, xPercent: 18 }, { autoAlpha: 1, scale: 2.4, xPercent: -6, duration: d * 0.5, ease: "power2.in" }, 0);
           tl.to(burn, { autoAlpha: 0, scale: 3.4, xPercent: -14, duration: d * 0.5, ease: "power2.out" }, d * 0.5);
         }
-        tl.fromTo(bgIn, { autoAlpha: 0, filter: "brightness(1.8) saturate(1.3)", scale: 1.08 }, { autoAlpha: 1, filter: "brightness(1) saturate(1)", scale: 1, duration: d * 0.55, ease: "power2.out" }, d * 0.42);
+        tl.fromTo(bgIn, { autoAlpha: 0, scale: 1.08 }, { autoAlpha: 1, scale: 1, duration: d * 0.55, ease: "power2.out" }, d * 0.42);
       } else if (style === "mosaic") {
         // Mosaic: the frame breaks into blocks that go dark in a random order, then the next place
         // comes back block by block.
@@ -697,6 +705,7 @@ export function SceneDeck() {
         ))}
         <div className="film-grain absolute -inset-[10%] opacity-40 mix-blend-overlay" />
       </div>
+      <div ref={flashFx} aria-hidden className="pointer-events-none invisible absolute inset-0 z-[18] bg-cream opacity-0" />
       <div
         ref={burnFx}
         aria-hidden
@@ -736,8 +745,8 @@ export function SceneDeck() {
                 "mt-4 font-display text-[clamp(3.5rem,10vw,9rem)] leading-[0.9] text-bone [text-shadow:0_4px_60px_rgb(0_0_0/0.5)]",
                 cardChapter.transition === "glitch" && !reducedMotion && !lite && "glitch-text",
               )}
-              initial={{ letterSpacing: "0.12em", opacity: 0, filter: "blur(12px)" }}
-              animate={{ letterSpacing: "-0.02em", opacity: 1, filter: "blur(0px)" }}
+              initial={{ opacity: 0, scale: 1.08, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.9, ease: ease.outExpo }}
             >
               {cardChapter.label}
@@ -750,7 +759,7 @@ export function SceneDeck() {
       </AnimatePresence>
 
       {/* Between projects: a light sweep and the next project's number. */}
-      <div ref={sweep} aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[45vw] opacity-0 mix-blend-screen blur-2xl" />
+      <div ref={sweep} aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[45vw] opacity-0 mix-blend-screen" />
       <AnimatePresence>
         {projectCard && (
           <motion.div
