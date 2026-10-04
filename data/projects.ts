@@ -434,6 +434,42 @@ export const projects: Project[] = [
     ],
     context: "Concept site for a fictional product, designed and built by GLAZY. The brand, customers and prices are made up.",
   },
+  {
+    id: "maison",
+    slug: "maison",
+    title: "Maison",
+    tagline: "Velvet, wood & patience, configured live.",
+    description:
+      "A concept store for a made-up furniture atelier: the hero is a live 3D configurator where you turn a chair or sofa, change its velvet and wood, and add that exact build to a working cart.",
+    longDescription: [
+      "Maison is a concept e-commerce site GLAZY designed and built for a fictional furniture atelier between Copenhagen and Mumbai: cream and ink, a terracotta accent, editorial serif type.",
+      "The product is the hero. A real 3D lounge chair (and a sofa) turns slowly and responds to dragging, swiping and the arrow keys; five velvets and three finishes recolour it live with a smooth tween, and the configured piece goes into a working cart drawer. The opening is a showroom reveal: a line drawing of the chair traces itself as the model really loads, then curtains part onto the live 3D chair.",
+    ],
+    category: "Concept",
+    technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Three.js", "React Three Fiber", "drei", "Motion", "glTF"],
+    year: "2026",
+    status: "live",
+    featured: false,
+    image: {
+      src: "/projects/maison/cover.jpg",
+      alt: "Maison concept store: a 3D velvet lounge chair beside fabric swatches, wood finishes and an add-to-cart panel",
+      width: 1440,
+      height: 900,
+    },
+    mobileImage: { src: "/projects/maison/mobile.jpg", alt: "Maison on mobile", width: 390, height: 844 },
+    github: "https://github.com/GlazyKahito/maison-glazy",
+    live: "https://maison-glazy.vercel.app",
+    caseStudy: true,
+    hue: 18,
+    features: [
+      "Live 3D configurator (React Three Fiber, glTF): five velvets and three finishes recolour the model with a smooth tween; drag, swipe or arrow keys to turn it",
+      "Two products, a chair and a sofa, with models compressed from 4.1 MB and 3.1 MB to 705 KB and 394 KB",
+      "Showroom intro: the chair's line drawing traces itself with real loading progress, then curtains part onto the live model; skippable, once per session",
+      "Working cart drawer with quantities and a focus trap, saved locally; clearly labelled a concept store",
+      "Collection, craft and materials sections with staggered reveals; baked ground shadows; a still image where WebGL is unavailable",
+    ],
+    context: "Concept store for a fictional brand, designed and built by GLAZY; nothing is sold. 3D models from the Khronos glTF Sample Assets: Sheen Chair (© 2020 Wayfair, CC0 1.0) and Glam Velvet Sofa (© 2021 Wayfair, CC BY 4.0), both by Eric Chadwick, modified.",
+  },
 ];
 
 /** Projects with `featured: true`, in display order. */
