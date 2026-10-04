@@ -10,7 +10,8 @@ import { ProjectScene } from "@/components/scenes/ProjectScene";
 import { SceneVideo } from "@/components/scenes/SceneVideo";
 import { ServicesScene } from "@/components/scenes/ServicesScene";
 import { useIntro } from "@/components/ui/Intro";
-import { featuredProjects as work } from "@/data/projects";
+import { conceptProjects, featuredProjects as work } from "@/data/projects";
+import { ConceptsScene } from "@/components/scenes/ConceptsScene";
 import { chapterById, chapterHash, chapterHashes, chapters, type ChapterId, type TransitionStyle } from "@/data/scenes";
 import { GOTO_EVENT, getDeck, setDeck, type GotoDetail } from "@/lib/deck";
 import { gsap } from "@/lib/gsap";
@@ -43,6 +44,9 @@ const STEPS: Step[] = [
     label: project.title,
     render: (p) => <ProjectScene project={project} index={i} play={p} />,
   })),
+  ...(conceptProjects.length
+    ? [{ key: "work-concepts", chapter: "work", axis: "x", label: "Concepts", render: (p) => <ConceptsScene play={p} /> } satisfies Step]
+    : []),
   { key: "building", chapter: "building", axis: "y", label: "In the works", render: (p) => <BuildingScene play={p} /> },
   { key: "about", chapter: "about", axis: "y", label: "The founder", render: (p) => <AboutScene play={p} /> },
   { key: "experience", chapter: "about", axis: "x", label: "Experience", render: (p) => <ExperienceScene play={p} /> },
@@ -315,7 +319,8 @@ export function SceneDeck() {
       tl.fromTo(scIn, { autoAlpha: 0 }, { autoAlpha: 1, duration: d * 0.25, ease: "power2.out" }, d * 0.75);
       if (axis === "x" && same) tl.fromTo(scIn, { x: `${dir * 8}vw` }, { x: 0, duration: d * 0.5, ease: "expo.out" }, d * 0.5);
 
-      if (same && ts.chapter === "work" && !reducedMotion && !lite) {
+      // Project to project only: the concepts scene arrives with the ordinary sideways slide.
+      if (same && ts.chapter === "work" && !reducedMotion && !lite && work[to - firstStepOf("work")] && work[from - firstStepOf("work")]) {
         // Between projects: the window swings away in depth, a light sweep in the next
         // project's colour crosses the frame, its number flashes up, and it swings in.
         const next = work[to - firstStepOf("work")];

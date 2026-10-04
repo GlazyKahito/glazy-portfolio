@@ -13,7 +13,8 @@ export type ProjectCategory =
   | "Simulation"
   | "Full-Stack"
   | "Frontend"
-  | "Experiment";
+  | "Experiment"
+  | "Concept";
 
 export interface ImageAsset {
   /** Path under /public, e.g. "/projects/scamshield/cover.jpg" */

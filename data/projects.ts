@@ -398,10 +398,49 @@ export const projects: Project[] = [
     ],
     context: "Personal project.",
   },
+  {
+    id: "prism",
+    slug: "prism",
+    title: "Prism",
+    tagline: "Messy docs in. Clear answers out.",
+    description:
+      "A concept launch site for a made-up AI knowledge-search product, opening with a cinematic light sequence that hands off to a real-time refractive glass prism.",
+    longDescription: [
+      "Prism is a concept site GLAZY designed and built to show what a SaaS launch page can feel like: a fictional product that turns a company's scattered docs into cited, permission-aware answers.",
+      "A short opening sequence splits a beam of light into a spectrum while the page genuinely loads, then hands off to the hero's glass prism, rendered in real time with refraction and chromatic aberration. Below it, the product is explained through live HTML mock-ups rather than screenshots: a search box that types, an answer whose citations light up their sources, a working permissions switch.",
+    ],
+    category: "Concept",
+    technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Three.js", "React Three Fiber", "drei", "Motion"],
+    year: "2026",
+    status: "live",
+    featured: false,
+    image: {
+      src: "/projects/prism/cover.jpg",
+      alt: "Prism concept site: the headline beside a glass prism splitting a beam of light into a spectrum",
+      width: 1440,
+      height: 900,
+    },
+    mobileImage: { src: "/projects/prism/mobile.jpg", alt: "Prism on mobile", width: 390, height: 844 },
+    github: "https://github.com/GlazyKahito/prism-glazy",
+    live: "https://prism-glazy.vercel.app",
+    caseStudy: true,
+    hue: 265,
+    features: [
+      "Opening sequence: a beam splits into a spectrum while a real loading percentage tracks fonts, the 3D code and the first frames; skippable, once per session",
+      "Real-time glass prism (drei MeshTransmissionMaterial) lit only by Lightformers, with custom beam and spectrum shaders; turns toward the pointer",
+      "Adaptive quality: pixel density drops if frames do, rendering pauses off screen, and weak devices get a matching CSS and SVG hero",
+      "Six-card bento of live HTML mock-ups: typing search, cited answer, permissions switch, connectors, index counter",
+      "Scroll-driven how-it-works, accessible pricing toggle and FAQ, full metadata and social card",
+    ],
+    context: "Concept site for a fictional product, designed and built by GLAZY. The brand, customers and prices are made up.",
+  },
 ];
 
 /** Projects with `featured: true`, in display order. */
 export const featuredProjects = projects.filter((p) => p.featured);
+
+/** Concept sites for made-up brands, shown together in one scene at the end of "The work". */
+export const conceptProjects = projects.filter((p) => p.category === "Concept");
 
 export function getProject(slug: string): Project | undefined {
   return projects.find((p) => p.slug === slug);
