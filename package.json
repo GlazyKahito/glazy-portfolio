@@ -2,7 +2,7 @@
   "name": "glazy-portfolio",
   "version": "1.0.0",
   "private": true,
-  "description": "GLAZY — a cinematic personal portfolio and project showcase for Krutik Mhatre.",
+  "description": "GLAZY, a freelance web and SaaS agency founded by Krutik Mhatre: the agency site, built as a cinematic scene deck.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
