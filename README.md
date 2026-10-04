@@ -2,7 +2,7 @@
 
 **Websites that feel like places.**
 
-GLAZY is a web and SaaS agency founded by [Krutik Mhatre](https://github.com/GlazyKahito). This is its site, built as a short film: one full-screen scene at a time, a layered depth-poster opening, real 4K footage behind every chapter, and a transition of its own between each. Every project on it is live, shipped or open source, and every claim on it comes from the founder's resume, a project README or the project's own demo.
+GLAZY is a freelance web and SaaS agency founded by [Krutik Mhatre](https://github.com/GlazyKahito). This is its site, built as a short film: one full-screen scene at a time, a layered depth-poster opening, real 4K footage behind every chapter, and a transition of its own between each. Every project on it is live, shipped or open source, and every claim on it comes from the founder's resume, a project README or the project's own demo.
 
 ## Stack
 

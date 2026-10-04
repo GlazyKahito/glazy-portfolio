@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { profile } from "@/data/profile";
 import { site } from "@/data/site";
 
-export const alt = "GLAZY — a web and SaaS agency by Krutik Mhatre";
+export const alt = "GLAZY — a freelance web and SaaS agency by Krutik Mhatre";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -31,7 +31,7 @@ export default function OpenGraphImage() {
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 4, color: "#a1a1a6" }}>
-          <span>WEB &amp; SAAS AGENCY · EST. {site.founded}</span>
+          <span>FREELANCE WEB &amp; SAAS AGENCY · EST. {site.founded}</span>
           <span>{profile.location.toUpperCase()}</span>
         </div>
         <svg width="760" height="167" viewBox="-6 -6 376 92" fill="none">

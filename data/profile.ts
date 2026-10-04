@@ -2,7 +2,7 @@ import type { Profile } from "@/lib/types";
 
 /**
  * Source of truth: Krutik_Mhatre_Resume (September 2026), plus Krutik's own
- * word that he founded GLAZY as a web and SaaS agency (October 2026).
+ * word that he founded GLAZY as a freelance web and SaaS agency (October 2026).
  * Every fact here appears on the resume, in a linked repository README, or
  * in a project's own demo.
  */
@@ -34,10 +34,10 @@ export const profile: Profile = {
   experience: [
     {
       role: "Founder",
-      company: "GLAZY (web & SaaS agency)",
+      company: "GLAZY (freelance web & SaaS agency)",
       period: "2026 — present",
       bullets: [
-        "Founded GLAZY, a web and SaaS agency that designs and builds websites, web apps, SaaS products and AI features for businesses, from the first brief to launch on Vercel.",
+        "Founded GLAZY, a freelance web and SaaS agency that designs and builds websites, web apps, SaaS products and AI features for businesses, from the first brief to launch on Vercel.",
         "Designed and built the agency's own site: a cinematic scene deck on 4K footage with per-chapter transitions, and Mr. Nimbus, a guide grounded in the site's own data.",
       ],
     },
@@ -65,7 +65,7 @@ export const profile: Profile = {
     },
   ],
   about: [
-    "I'm Krutik, the founder of GLAZY, a web and SaaS agency that designs and builds websites, web apps and SaaS products. I'm also a B.Tech student at KJ Somaiya College of Engineering, and I recently completed a web development internship at Ediglobe.",
+    "I'm Krutik, the founder of GLAZY, a freelance web and SaaS agency that designs and builds websites, web apps and SaaS products. I'm also a B.Tech student at KJ Somaiya College of Engineering, and I recently completed a web development internship at Ediglobe.",
     "My work sits where the web meets AI and security: NIYAM, a legal research workspace (built with my team) that checks every authority against the amendments that came after it; ScamShield, an AI security analyst that explains why a message looks like a scam; CLIMATIQ, a heatwave decision-support platform for India; and a networking virtual lab with packet simulation and fault diagnosis.",
     "I build with Next.js and the MERN stack, integrate Google Gemini into production features, and ship to Vercel. I care about products that show their working instead of returning a bare verdict.",
   ],

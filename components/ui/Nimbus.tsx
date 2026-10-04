@@ -143,7 +143,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
     };
   }
   if (has("available", "free", "when", "start", "open to")) {
-    return { text: `Indeed: GLAZY is taking on paid web and SaaS projects, and ${founder} is open to paid remote internships.`, replies: ["I need a website", "I'm hiring"] };
+    return { text: `Indeed: GLAZY is taking on paid freelance web and SaaS projects, and ${founder} is open to paid remote internships.`, replies: ["I need a website", "I'm hiring"] };
   }
   if (has("who are you", "your name", "nimbus", "are you a cat", "are you ai", "are you real")) {
     return {
@@ -153,7 +153,7 @@ function answer(input: string): Omit<Message, "id" | "from"> {
   }
   if (has("glazy", "studio", "agency", "company", "founder", "founded")) {
     return {
-      text: `GLAZY is a web and SaaS agency founded by ${profile.name} in ${site.founded}, in ${profile.location.split(",")[0]}. We design and build websites, web apps, SaaS products and AI features, from the first sketch to launch.`,
+      text: `GLAZY is a freelance web and SaaS agency founded by ${profile.name} in ${site.founded}, in ${profile.location.split(",")[0]}. We design and build websites, web apps, SaaS products and AI features, from the first sketch to launch.`,
       actions: [
         { kind: "chapter", label: "Meet the founder", chapter: "about" },
         { kind: "chapter", label: "See what we make", chapter: "services" },
