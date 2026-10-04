@@ -71,12 +71,17 @@ export const metadata: Metadata = {
     title: site.title,
     description: site.description,
   },
-  robots: { index: true, follow: true },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
   alternates: { canonical: "/" },
+  // Search engine ownership tokens (public by design; they appear in the page head).
+  verification: {
+    ...(site.verification.google ? { google: site.verification.google } : {}),
+    ...(site.verification.bing ? { other: { "msvalidate.01": site.verification.bing } } : {}),
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08080a",
+  themeColor: "#060505",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
