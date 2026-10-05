@@ -8,7 +8,7 @@ import { TransitionLink } from "@/components/ui/PageTransition";
 import { RevealWords } from "@/components/ui/Reveal";
 import { conceptProjects } from "@/data/projects";
 import { ease } from "@/lib/motion";
-import { hsl, prettyUrl } from "@/lib/utils";
+import { prettyUrl, tint } from "@/lib/utils";
 
 /**
  * The work · Concepts. Sites GLAZY designed and built for made-up brands, to
@@ -17,7 +17,7 @@ import { hsl, prettyUrl } from "@/lib/utils";
  */
 export function ConceptsScene({ play }: { play: boolean }) {
   return (
-    <div className="container-x relative flex min-h-full items-center pb-28 pt-[calc(var(--nav-height)+1rem)] md:pr-[max(var(--gutter),4.5rem)]">
+    <div className="container-x relative flex min-h-full items-center pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+1rem)] md:pr-[max(var(--gutter),4.5rem)]">
       <div className="mx-auto w-full max-w-[1400px]">
         <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-7">
@@ -28,10 +28,10 @@ export function ConceptsScene({ play }: { play: boolean }) {
               delay={0.1}
               text="Concepts, built for real."
               accent={["real."]}
-              className="mt-5 font-display text-[clamp(2.6rem,min(5.6vw,10vh),5.8rem)] leading-[0.92] tracking-[-0.03em] text-bone"
+              className="legible mt-5 font-display text-[clamp(2.6rem,min(5.6vw,10vh),5.8rem)] leading-[0.92] tracking-[-0.03em] text-bone"
             />
           </div>
-          <Rise play={play} delay={0.4} as="p" className="max-w-[44ch] text-[15px] leading-relaxed text-bone/80 lg:col-span-5 lg:justify-self-end">
+          <Rise play={play} delay={0.4} as="p" className="legible max-w-[44ch] text-[15px] leading-relaxed text-bone/90 lg:col-span-5 lg:justify-self-end">
             Made-up brands, real code: the kind of site we build for clients, each one live and open source. Every one is
             a concept, not a client.
           </Rise>
@@ -41,7 +41,7 @@ export function ConceptsScene({ play }: { play: boolean }) {
           {conceptProjects.map((p, i) => (
             <motion.li
               key={p.slug}
-              className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/40 backdrop-blur-md"
+              className="group relative flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-black/50 backdrop-blur-md"
               initial={false}
               animate={play ? { opacity: 1, y: 0, rotateX: 0 } : { opacity: 0, y: 40, rotateX: 8 }}
               transition={{ duration: 1.1, ease: ease.outExpo, delay: play ? 0.35 + i * 0.12 : 0 }}
@@ -58,16 +58,16 @@ export function ConceptsScene({ play }: { play: boolean }) {
                 />
                 <div aria-hidden className="absolute inset-0 bg-[linear-gradient(to_top,rgb(0_0_0/0.55),transparent_45%)]" />
                 <span
-                  className="absolute left-4 top-4 rounded-full border border-white/20 bg-black/50 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-cream backdrop-blur-md"
-                  style={{ boxShadow: `inset 0 0 0 1px ${hsl(p.hue, 80, 60, 0.35)}` }}
+                  className="absolute left-4 top-4 rounded-full border border-white/20 bg-black/75 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-cream backdrop-blur-md"
+                  style={{ boxShadow: `inset 0 0 0 1px ${tint(p.hue, 80, 60, 0.35)}` }}
                 >
                   Concept
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <h3 className="font-display text-3xl leading-none text-bone">{p.title}</h3>
-                <p className="mt-2 font-display text-lg italic leading-snug text-bone/80">{p.tagline}</p>
-                <p className="mt-3 truncate text-[12px] text-bone-2">{p.technologies.slice(0, 4).join(" · ")}</p>
+                <p className="mt-2 font-display text-lg italic leading-snug text-bone/85">{p.tagline}</p>
+                <p className="mt-3 truncate text-[12px] text-bone/75">{p.technologies.slice(0, 4).join(" · ")}</p>
                 <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
                   {p.live && (
                     <a

@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion, type Variants } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Kicker, PillCTA, Rise } from "@/components/scenes/ChapterScenes";
 import { TransitionLink } from "@/components/ui/PageTransition";
 import { getProject } from "@/data/projects";
 import { services } from "@/data/services";
 import { gotoChapter } from "@/lib/deck";
+import { useDevice } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,8 @@ export function ServicesScene({ play }: { play: boolean }) {
   const service = services[index];
   const proof = service.proof ? getProject(service.proof) : undefined;
   const running = play && auto && !hold;
+  const strip = useRef<HTMLDivElement>(null);
+  const { reducedMotion } = useDevice();
 
   useEffect(() => {
     if (!running) return;
@@ -53,53 +56,83 @@ export function ServicesScene({ play }: { play: boolean }) {
     return () => window.clearTimeout(t);
   }, [running, index]);
 
+  // Where the strip is wider than the screen, its cut-off ends fade out (a hint that it scrolls),
+  // and the service on show is brought into view as the poster turns over.
+  useEffect(() => {
+    const el = strip.current;
+    if (!el) return;
+    const update = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      el.toggleAttribute("data-more-start", el.scrollLeft > 2);
+      el.toggleAttribute("data-more-end", el.scrollLeft < max - 2);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
+  useEffect(() => {
+    const el = strip.current;
+    const tab = el?.children[index] as HTMLElement | undefined;
+    if (!el || !tab || el.scrollWidth <= el.clientWidth + 2) return;
+    const left = tab.offsetLeft - (el.clientWidth - tab.offsetWidth) / 2;
+    el.scrollTo({ left, behavior: reducedMotion ? "auto" : "smooth" });
+  }, [index, reducedMotion]);
+
   return (
-    <div className="container-x relative flex min-h-full flex-col pb-28 pt-[calc(var(--nav-height)+0.25rem)]">
+    <div className="container-x relative flex min-h-full flex-col pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+0.25rem)]">
       <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col">
         <div className="flex flex-col items-start gap-5 lg:flex-row lg:items-center lg:justify-between">
           <Kicker number="01" label="What we make" play={play} />
           <h2 className="sr-only">What we make</h2>
           <Rise play={play} delay={0.25} className="max-w-full">
-            <div
-              role="group"
-              aria-label="Services"
-              onPointerEnter={() => setHold(true)}
-              onPointerLeave={() => setHold(false)}
-              onFocus={() => setHold(true)}
-              onBlur={() => setHold(false)}
-              className="no-scrollbar flex max-w-full overflow-x-auto rounded-full border border-white/10 bg-black/45 p-1 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.7)] backdrop-blur-xl"
-            >
-              {services.map((s, n) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  aria-pressed={n === index}
-                  aria-controls="service-detail"
-                  onClick={() => {
-                    setIndex(n);
-                    setAuto(false);
-                  }}
-                  className={cn(
-                    "relative shrink-0 rounded-full px-4 py-2.5 text-[13px] transition-colors duration-300",
-                    n === index ? "text-cream" : "text-cream/60 hover:text-cream",
-                  )}
-                >
-                  {n === index && (
-                    <motion.span layoutId="service-pill" className="absolute inset-0 rounded-full bg-white/[0.11]" transition={{ duration: 0.6, ease: ease.outExpo }} />
-                  )}
-                  <span className="relative">{s.title}</span>
-                  {n === index && running && (
-                    <motion.span
-                      key={`timer-${index}`}
-                      aria-hidden
-                      className="absolute inset-x-4 bottom-1 h-px origin-left bg-cream/60"
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ duration: CYCLE / 1000, ease: "linear" }}
-                    />
-                  )}
-                </button>
-              ))}
+            <div className="max-w-full overflow-hidden rounded-full border border-white/10 bg-black/55 p-1 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.7)] backdrop-blur-xl">
+              <div
+                ref={strip}
+                role="group"
+                aria-label="Services"
+                onPointerEnter={() => setHold(true)}
+                onPointerLeave={() => setHold(false)}
+                onFocus={() => setHold(true)}
+                onBlur={() => setHold(false)}
+                className="edge-fade no-scrollbar relative flex max-w-full overflow-x-auto"
+              >
+                {services.map((s, n) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    aria-pressed={n === index}
+                    aria-controls="service-detail"
+                    onClick={() => {
+                      setIndex(n);
+                      setAuto(false);
+                    }}
+                    className={cn(
+                      "relative shrink-0 rounded-full px-4 py-2.5 text-[13px] transition-colors duration-300",
+                      n === index ? "text-cream" : "text-cream/75 hover:text-cream",
+                    )}
+                  >
+                    {n === index && (
+                      <motion.span layoutId="service-pill" className="absolute inset-0 rounded-full bg-white/[0.11]" transition={{ duration: 0.6, ease: ease.outExpo }} />
+                    )}
+                    <span className="relative">{s.title}</span>
+                    {n === index && running && (
+                      <motion.span
+                        key={`timer-${index}`}
+                        aria-hidden
+                        className="absolute inset-x-4 bottom-1 h-px origin-left bg-cream/60"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: CYCLE / 1000, ease: "linear" }}
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </Rise>
         </div>
@@ -127,15 +160,15 @@ export function ServicesScene({ play }: { play: boolean }) {
             </AnimatePresence>
           </div>
 
-          <div id="service-detail" aria-live="polite" className="lg:col-span-4 lg:pb-[1.2vh] [text-shadow:0_1px_14px_rgb(0_0_0/0.5)]">
+          <div id="service-detail" aria-live="polite" className="legible lg:col-span-4 lg:pb-[1.2vh]">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={service.id} variants={copy} initial="hidden" animate={play ? "show" : "hidden"} exit="exit">
                 <h3 className="font-mono text-[11px] uppercase tracking-[0.22em] text-cream">{service.title}</h3>
-                <p className="mt-3 max-w-[38ch] text-[15px] leading-relaxed text-cream/85">{service.body}</p>
+                <p className="mt-3 max-w-[38ch] text-[15px] leading-relaxed text-cream">{service.body}</p>
                 <ul className="mt-4 flex flex-col gap-2">
                   {service.includes.map((item) => (
-                    <li key={item} className="flex items-center gap-3 text-[13px] text-cream/75">
-                      <span aria-hidden className="h-px w-4 bg-cream/40" />
+                    <li key={item} className="flex items-center gap-3 text-[13px] text-cream/90">
+                      <span aria-hidden className="h-px w-4 bg-cream/50" />
                       {item}
                     </li>
                   ))}
@@ -145,7 +178,7 @@ export function ServicesScene({ play }: { play: boolean }) {
             <Rise play={play} delay={0.6} className="mt-6 flex flex-wrap items-center gap-4">
               <PillCTA onClick={() => gotoChapter("contact")}>Start a project</PillCTA>
               {proof && (
-                <TransitionLink href={`/projects/${proof.slug}`} className="text-sm text-cream/80 underline-offset-4 transition-colors hover:text-cream hover:underline">
+                <TransitionLink href={`/projects/${proof.slug}`} className="text-sm text-cream/90 underline-offset-4 transition-colors hover:text-cream hover:underline">
                   See it in {proof.title}
                 </TransitionLink>
               )}

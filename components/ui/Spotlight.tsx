@@ -21,7 +21,7 @@ interface SpotlightProps {
 export function Spotlight({
   children,
   className,
-  color = "rgb(255 106 51 / 0.14)",
+  color = "var(--color-glaze-dim)",
   size = 420,
   border = true,
 }: SpotlightProps) {
@@ -43,7 +43,7 @@ export function Spotlight({
           className="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] opacity-0 transition-opacity duration-700 group-hover/spot:opacity-100"
           style={{
             padding: 1,
-            background: `radial-gradient(${size * 0.6}px circle at var(--sx, 50%) var(--sy, 50%), rgb(245 245 247 / 0.5), transparent 60%)`,
+            background: `radial-gradient(${size * 0.6}px circle at var(--sx, 50%) var(--sy, 50%), color-mix(in srgb, var(--color-bone) 50%, transparent), transparent 60%)`,
             WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
             WebkitMaskComposite: "xor",
             maskComposite: "exclude",

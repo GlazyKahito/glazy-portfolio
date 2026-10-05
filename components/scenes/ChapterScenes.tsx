@@ -13,7 +13,7 @@ import { gotoChapter } from "@/lib/deck";
 import { useMediaQuery } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import type { Skill } from "@/lib/types";
-import { cn, hsl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ */
 /* Shared pieces                                                        */
@@ -33,19 +33,19 @@ export function Rise({ play, delay = 0, className, children, as = "div" }: { pla
   );
 }
 
-/** The chapter line above every heading: "03 — In the works". */
+/** The chapter line above every heading: "03 — In the works". Bright enough to read over any frame. */
 export function Kicker({ number, label, play }: { number: string; label: string; play: boolean }) {
   return (
-    <Rise play={play} as="p" className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-bone-2">
+    <Rise play={play} as="p" className="legible flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-bone/85">
       <span className="text-bone">{number}</span>
-      <span className="h-px w-8 bg-bone/40" />
+      <span className="h-px w-8 bg-bone/50" />
       {label}
     </Rise>
   );
 }
 
-/** Apple-style frosted panel. */
-export const panel = "rounded-3xl border border-white/10 bg-black/35 backdrop-blur-md";
+/** Apple-style frosted panel, dark enough that its small print reads over the brightest sky. */
+export const panel = "rounded-3xl border border-white/10 bg-black/45 backdrop-blur-md";
 
 const pill =
   "group inline-flex h-12 items-center gap-3 rounded-full border border-white/10 bg-black/55 pl-5 pr-1.5 text-sm text-cream shadow-[0_14px_40px_-12px_rgb(0_0_0/0.7)] backdrop-blur-md transition-colors duration-300 hover:bg-black/75";
@@ -112,7 +112,7 @@ function LocalTime() {
 export function IntroScene({ play }: { play: boolean }) {
   const city = profile.location.split(",")[0];
   return (
-    <div className="container-x relative flex min-h-full flex-col justify-between pb-28 pt-[calc(var(--nav-height)+0.25rem)]">
+    <div className="container-x relative flex min-h-full flex-col justify-between pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+0.25rem)]">
       <Rise play={play} delay={1.2} className="mx-auto flex w-full max-w-[1400px] items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-cream/75 sm:text-[11px]">
         <span>
           Freelance web &amp; SaaS agency <span className="mx-2 text-cream/35">/</span> Est. {site.founded}
@@ -169,19 +169,19 @@ const STATUS: Record<string, string> = { building: "Building", exploring: "Explo
 
 export function BuildingScene({ play }: { play: boolean }) {
   return (
-    <div className="container-x relative flex min-h-full items-center pb-28 pt-[calc(var(--nav-height)+1.5rem)]">
+    <div className="container-x relative flex min-h-full items-center pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+1.5rem)]">
       <div className="mx-auto grid w-full max-w-[1400px] items-center gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <Kicker number="03" label="In the works" play={play} />
-          <RevealWords as="h2" play={play} delay={0.1} text="Currently building." accent={["building."]} className="mt-5 font-display text-[clamp(2.8rem,min(6.4vw,11vh),6.5rem)] leading-[0.9] tracking-[-0.03em] text-bone" />
-          <Rise play={play} delay={0.5} as="p" className="mt-6 max-w-[40ch] text-base leading-relaxed text-bone/80">
+          <RevealWords as="h2" play={play} delay={0.1} text="Currently building." accent={["building."]} className="legible mt-5 font-display text-[clamp(2.8rem,min(6.4vw,11vh),6.5rem)] leading-[0.9] tracking-[-0.03em] text-bone" />
+          <Rise play={play} delay={0.5} as="p" className="legible mt-6 max-w-[40ch] text-base leading-relaxed text-bone/85">
             What we are building right now, in the open. Each one moves to the work when it ships.
           </Rise>
         </div>
         <div className="flex flex-col gap-4 lg:col-span-7">
           {inProgress.map((item, i) => (
             <Rise key={item.id} play={play} delay={0.45 + i * 0.12} className={cn(panel, "p-6 md:p-8")}>
-              <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-bone-2">
+              <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-bone/75">
                 <span className="flex items-center gap-2">
                   <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-glaze" />
                   {STATUS[item.status]}
@@ -191,14 +191,14 @@ export function BuildingScene({ play }: { play: boolean }) {
               <h3 className="mt-4 font-display text-4xl leading-none text-bone md:text-5xl">{item.title}</h3>
               <p className="mt-4 max-w-prose text-[15px] leading-relaxed text-bone/80">{item.description}</p>
               <div className="mt-6">
-                <div className="flex justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-bone-2">
+                <div className="flex justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-bone/75">
                   <span>Progress</span>
                   <span className="tabular-nums text-bone">{item.progress}%</span>
                 </div>
                 <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-white/10">
+                  {/* One warm palette: glaze into peach, whatever the item's own hue. */}
                   <motion.div
-                    className="h-full origin-left rounded-full"
-                    style={{ background: `linear-gradient(90deg, ${hsl(item.hue, 80, 55)}, ${hsl(item.hue + 40, 90, 70)})` }}
+                    className="h-full origin-left rounded-full bg-linear-to-r from-glaze via-ember to-peach"
                     initial={false}
                     animate={{ scaleX: play ? item.progress / 100 : 0 }}
                     transition={{ duration: 1.8, ease: ease.outExpo, delay: play ? 0.8 : 0 }}
@@ -215,7 +215,7 @@ export function BuildingScene({ play }: { play: boolean }) {
                 </ul>
               )}
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                <p className="text-[13px] text-bone-2">{item.technologies.join(" · ")}</p>
+                <p className="text-[13px] text-bone/75">{item.technologies.join(" · ")}</p>
                 <div className="flex flex-wrap items-center gap-4">
                   {item.live && (
                     <a href={item.live} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1.5 text-sm text-bone hover:underline">
@@ -244,17 +244,17 @@ export function BuildingScene({ play }: { play: boolean }) {
 export function AboutScene({ play }: { play: boolean }) {
   const [lead, ...rest] = profile.about;
   return (
-    <div className="container-x relative flex min-h-full items-center pb-28 pt-[calc(var(--nav-height)+1.5rem)]">
+    <div className="container-x relative flex min-h-full items-center pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+1.5rem)]">
       <div className="mx-auto w-full max-w-[1400px]">
         <Kicker number="04" label="The founder" play={play} />
-        <RevealWords as="h2" play={play} delay={0.1} text="The person behind GLAZY." accent={["behind"]} className="mt-5 font-display text-[clamp(2.8rem,min(6.4vw,11vh),6.5rem)] leading-[0.9] tracking-[-0.03em] text-bone" />
+        <RevealWords as="h2" play={play} delay={0.1} text="The person behind GLAZY." accent={["behind"]} className="legible mt-5 font-display text-[clamp(2.8rem,min(6.4vw,11vh),6.5rem)] leading-[0.9] tracking-[-0.03em] text-bone" />
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <Rise play={play} delay={0.45} className="lg:col-span-7">
-            <p className="font-display text-[clamp(1.5rem,2.4vw,2.2rem)] leading-[1.25] text-bone">{lead}</p>
+            <p className="legible font-display text-[clamp(1.5rem,2.4vw,2.2rem)] leading-[1.25] text-bone">{lead}</p>
           </Rise>
           <div className="flex flex-col gap-5 lg:col-span-5">
             {rest.map((p, i) => (
-              <Rise key={i} play={play} delay={0.6 + i * 0.1} as="p" className="text-[15px] leading-relaxed text-bone/80">
+              <Rise key={i} play={play} delay={0.6 + i * 0.1} as="p" className="legible text-[15px] leading-relaxed text-bone/90">
                 {p}
               </Rise>
             ))}
@@ -267,7 +267,7 @@ export function AboutScene({ play }: { play: boolean }) {
             ["Studying", "B.Tech IT / CS, 2025–2029"],
           ].map(([k, v]) => (
             <div key={k} className={cn(panel, "px-5 py-4")}>
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone-2">{k}</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/75">{k}</p>
               <p className="mt-1.5 text-base text-bone">{v}</p>
             </div>
           ))}
@@ -279,7 +279,7 @@ export function AboutScene({ play }: { play: boolean }) {
 
 export function ExperienceScene({ play }: { play: boolean }) {
   return (
-    <div className="container-x relative flex min-h-full items-center pb-28 pt-[calc(var(--nav-height)+1.5rem)]">
+    <div className="container-x relative flex min-h-full items-center pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+1.5rem)]">
       <div className="mx-auto grid w-full max-w-[1400px] gap-5 lg:grid-cols-12">
         <div className="lg:col-span-12">
           <Kicker number="04" label="Experience and education" play={play} />
@@ -287,10 +287,10 @@ export function ExperienceScene({ play }: { play: boolean }) {
         <div className="flex flex-col gap-5 lg:col-span-7">
         {profile.experience.map((exp, i) => (
           <Rise key={exp.role} play={play} delay={0.15 + i * 0.1} className={cn(panel, "p-6 md:p-8")}>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone-2">Experience</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/75">Experience</p>
             <h3 className="mt-3 font-display text-4xl leading-none text-bone md:text-[2.75rem]">{exp.role}</h3>
-            <p className="mt-2 text-bone/80">
-              {exp.company} <span className="mx-2 text-bone/30">·</span> {exp.period}
+            <p className="mt-2 text-bone/85">
+              {exp.company} <span className="mx-2 text-bone/40">·</span> {exp.period}
             </p>
             <ul className="mt-5 flex flex-col gap-3">
               {exp.bullets.map((b, i) => (
@@ -320,10 +320,10 @@ export function ExperienceScene({ play }: { play: boolean }) {
         </div>
         {profile.education.map((ed) => (
           <Rise key={ed.institution} play={play} delay={0.3} className={cn(panel, "flex flex-col self-start p-6 md:p-9 lg:col-span-5")}>
-            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone-2">Education</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/75">Education</p>
             <h3 className="mt-4 font-display text-4xl leading-[1.02] text-bone">{ed.institution}</h3>
-            <p className="mt-3 text-bone/80">{ed.degree}</p>
-            <p className="mt-auto pt-6 font-mono text-[11px] uppercase tracking-[0.18em] text-bone-2">
+            <p className="mt-3 text-bone/85">{ed.degree}</p>
+            <p className="mt-auto pt-6 font-mono text-[11px] uppercase tracking-[0.18em] text-bone/75">
               {ed.period} · {ed.location}
             </p>
           </Rise>
@@ -338,20 +338,26 @@ export function ExperienceScene({ play }: { play: boolean }) {
 /* ------------------------------------------------------------------ */
 
 export function StackScene({ play }: { play: boolean }) {
-  const [selected, setSelected] = useState<Skill | null>(null);
-  const wide = useMediaQuery("(min-width: 1024px)", true);
+  // The first technology is on show from the start, so the detail never sits empty.
+  const [selected, setSelected] = useState<Skill>(skills[0]);
+  // The turning disc needs room (1280 px and up); below that, the technologies are listed by group,
+  // with the detail opening right under the group of the one tapped.
+  const wide = useMediaQuery("(min-width: 1280px)", true);
   return (
-    <div className="container-x relative flex min-h-full items-center pb-28 pt-[calc(var(--nav-height)+1rem)]">
+    // Clear of the progress rail on the right, and clipped so the disc's near edge never widens the scene.
+    <div className="container-x relative flex min-h-full items-center overflow-x-clip pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+1rem)] md:pr-[max(var(--gutter),4.5rem)]">
       <div className="mx-auto grid w-full max-w-[1400px] items-center gap-8 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <Kicker number="05" label="The toolkit" play={play} />
-          <RevealWords as="h2" play={play} delay={0.1} text="What we build with." accent={["with."]} className="mt-5 font-display text-[clamp(2.6rem,min(5.4vw,10vh),5.6rem)] leading-[0.92] tracking-[-0.03em] text-bone" />
-          <Rise play={play} delay={0.45} as="p" className="mt-5 max-w-[36ch] text-[15px] leading-relaxed text-bone/80">
-            {skills.length} technologies, every one taken from a shipped project or the founder&apos;s resume. Hover or tap one to see where it is used.
+          <RevealWords as="h2" play={play} delay={0.1} text="What we build with." accent={["with."]} className="legible mt-5 font-display text-[clamp(2.6rem,min(5.4vw,10vh),5.6rem)] leading-[0.92] tracking-[-0.03em] text-bone" />
+          <Rise play={play} delay={0.45} as="p" className="legible mt-5 max-w-[36ch] text-[15px] leading-relaxed text-bone/90">
+            {skills.length} technologies, every one taken from a shipped project or the founder&apos;s resume. {wide ? "Hover" : "Tap"} one to see where it is used.
           </Rise>
-          <Rise play={play} delay={0.55} className="mt-6">
-            <SkillDetail skill={selected} />
-          </Rise>
+          {wide && (
+            <Rise play={play} delay={0.55} className="mt-6">
+              <SkillDetail skill={selected} />
+            </Rise>
+          )}
         </div>
         <Rise play={play} delay={0.3} className="lg:col-span-8">
           {wide ? <OrbitSystem selected={selected} onSelect={setSelected} play={play} /> : <CompactStack selected={selected} onSelect={setSelected} />}

@@ -10,7 +10,7 @@ import { Reveal, RevealWords } from "@/components/ui/Reveal";
 import { projectNumber } from "@/data/projects";
 import type { ImageAsset, Project } from "@/lib/types";
 import { ease, fadeUp, stagger, viewportOnce, wipeUp } from "@/lib/motion";
-import { cn, hsl, prettyUrl } from "@/lib/utils";
+import { cn, prettyUrl, tint as warmTint } from "@/lib/utils";
 import { SceneVideo } from "@/components/scenes/SceneVideo";
 import { onIdle } from "@/lib/hooks/use-device";
 
@@ -108,7 +108,8 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
   // The header shows the footage's poster at once; the 4K clip (about 7 MB) loads after the page is interactive.
   const clip = useAfterLoad();
   const number = projectNumber(project);
-  const tint = hsl(project.hue, 70, 60, 0.28);
+  // The project's own tint, kept inside the warm band (lib/utils.ts).
+  const tint = warmTint(project.hue, 70, 60, 0.28);
 
   return (
     <article className="relative overflow-x-clip">
@@ -183,15 +184,16 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
           >
             <div
               aria-hidden
-              className="absolute inset-x-0 -bottom-10 top-16 -z-10 rounded-[100%] blur-3xl"
-              style={{ background: hsl(project.hue, 70, 55, 0.3) }}
+              className="absolute -inset-x-16 -bottom-24 top-0 -z-10"
+              // Soft by gradient, not by a blur filter, so lite mode (no filters) keeps it soft.
+              style={{ background: `radial-gradient(closest-side, ${warmTint(project.hue, 70, 55, 0.32)}, ${warmTint(project.hue, 70, 55, 0.12)} 55%, transparent)` }}
             />
             <BrowserFrame
               image={project.image}
               url={project.live ?? project.github ?? project.demo}
               priority
               sizes="(min-width: 1500px) 1500px, 100vw"
-              tint={`linear-gradient(160deg, ${hsl(project.hue, 70, 60, 0.3)}, transparent 55%)`}
+              tint={`linear-gradient(160deg, ${warmTint(project.hue, 70, 60, 0.3)}, transparent 55%)`}
             />
             {project.mobileImage && (
               <motion.div

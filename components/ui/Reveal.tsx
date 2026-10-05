@@ -159,7 +159,7 @@ export function RevealWords({
     words.push({
       word,
       start: count,
-      cls: cn("reveal-unit [transform-style:preserve-3d]", isAccent && "font-serif italic text-bone-2", isHighlight && "text-glaze", wordClassName),
+      cls: cn("reveal-unit [transform-style:preserve-3d]", isAccent && "font-serif italic text-peach", isHighlight && "text-glaze", wordClassName),
     });
     count += by === "word" ? 1 : Array.from(word).length;
   }

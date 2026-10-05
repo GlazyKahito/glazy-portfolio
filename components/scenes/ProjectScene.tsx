@@ -11,7 +11,7 @@ import { featuredProjects } from "@/data/projects";
 import { useDevice } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import type { Project } from "@/lib/types";
-import { cn, hsl, prettyUrl } from "@/lib/utils";
+import { cn, prettyUrl, tint } from "@/lib/utils";
 
 const STATUS: Record<Project["status"], string> = {
   live: "Live",
@@ -56,17 +56,23 @@ function Stage({ project, play }: { project: Project; play: boolean }) {
         transition={{ duration: 1.3, ease: ease.outExpo, delay: play ? 0.15 : 0 }}
         className="relative"
       >
-        {/* Colour spill from the project's hue. */}
-        <div aria-hidden className="absolute -inset-x-16 -bottom-16 top-10 -z-10 rounded-[50%] opacity-70 blur-3xl" style={{ background: hsl(project.hue, 80, 50, 0.35) }} />
+        {/* Colour spill from the project's hue, kept in the warm band (the scene clips it at the screen's edge).
+            Soft by gradient, not by a blur filter: cheaper to draw, and lite mode (no filters) keeps it soft. */}
+        <div
+          aria-hidden
+          className="absolute -inset-x-6 -bottom-24 top-0 -z-10 opacity-70 sm:-inset-x-24"
+          style={{ background: `radial-gradient(closest-side, ${tint(project.hue, 80, 50, 0.38)}, ${tint(project.hue, 80, 50, 0.14)} 55%, transparent)` }}
+        />
 
         {/* Browser window. */}
         {/* No overflow clipping here: the puzzle pieces fly in from outside the window. */}
-        <div className="rounded-[18px] border border-white/15 bg-[#0d0d10]/90 shadow-[0_50px_120px_-30px_rgb(0_0_0/0.9)] backdrop-blur-xl [transform-style:preserve-3d]">
+        <div className="rounded-[18px] border border-white/15 bg-ink-2/90 shadow-[0_50px_120px_-30px_rgb(0_0_0/0.9)] backdrop-blur-xl [transform-style:preserve-3d]">
           <div className="flex h-9 items-center gap-3 rounded-t-[17px] border-b border-white/10 bg-white/[0.04] px-4">
+            {/* Window controls in the palette's own warm greys, as on the case-study frames. */}
             <span className="flex gap-1.5" aria-hidden>
-              <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-bone-3/60" />
+              <span className="h-2.5 w-2.5 rounded-full bg-bone-3/40" />
+              <span className="h-2.5 w-2.5 rounded-full bg-bone-3/25" />
             </span>
             <span className="mx-auto flex h-6 min-w-[45%] max-w-[65%] items-center justify-center gap-2 truncate rounded-md bg-white/[0.06] px-3 font-sans text-[11px] text-bone-2">
               <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 shrink-0 opacity-70" aria-hidden>
@@ -81,10 +87,11 @@ function Stage({ project, play }: { project: Project; play: boolean }) {
           </PuzzleImage>
         </div>
 
-        {/* Phone, its screen slowly scrolling the mobile capture. */}
+        {/* Phone, its screen slowly scrolling the mobile capture. It overhangs the window only on
+            wide screens, where the copy column leaves room; on tablets it stays inside the frame. */}
         {project.mobileImage && (
           <motion.div
-            className="absolute -bottom-10 -left-6 hidden w-[23%] min-w-[110px] sm:-left-10 sm:block"
+            className="absolute -bottom-10 left-2 hidden w-[23%] min-w-[110px] sm:block lg:-left-10"
             style={{ transform: "translateZ(60px)" }}
             initial={false}
             animate={play ? { opacity: 1, y: 0, rotate: -5 } : { opacity: 0, y: 50, rotate: 0 }}
@@ -119,10 +126,11 @@ export function ProjectScene({ project, index, play }: { project: Project; index
   });
 
   return (
-    <div className="container-x relative flex min-h-full items-center pb-28 pt-[calc(var(--nav-height)+1rem)] md:pr-[max(var(--gutter),4.5rem)] lg:pb-20 lg:pt-[calc(var(--nav-height)+0.5rem)]">
+    // overflow-x-clip: the window's glow and the phone may overhang the frame, but never widen the scene.
+    <div className="container-x relative flex min-h-full items-center overflow-x-clip pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+1rem)] md:pr-[max(var(--gutter),4.5rem)] lg:pt-[calc(var(--nav-height)+0.5rem)]">
       <div className="mx-auto grid w-full max-w-[1400px] items-center gap-12 lg:grid-cols-12 lg:gap-10">
         <div data-copy-wrap className="order-2 lg:order-1 lg:col-span-5">
-          <motion.p {...fade(0.05)} className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.2em] text-bone-2">
+          <motion.p {...fade(0.05)} className="legible flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.2em] text-bone/80">
             <span className="tabular-nums text-bone">{String(index + 1).padStart(2, "0")}</span>
             <span className="h-px w-6 bg-bone/40" />
             <span className="tabular-nums">{String(featuredProjects.length).padStart(2, "0")}</span>
@@ -133,29 +141,29 @@ export function ProjectScene({ project, index, play }: { project: Project; index
             play={play}
             delay={0.1}
             text={project.title}
-            className="mt-4 font-display text-[clamp(2.8rem,min(6.6vw,11vh),6.8rem)] leading-[0.9] tracking-[-0.03em] text-bone"
+            className="legible mt-4 font-display text-[clamp(2.8rem,min(6.6vw,11vh),6.8rem)] leading-[0.9] tracking-[-0.03em] text-bone"
           />
-          <motion.p {...fade(0.35)} className="mt-4 font-display text-2xl italic leading-snug text-bone/85 md:text-[1.75rem]">
+          <motion.p {...fade(0.35)} className="legible mt-4 font-display text-2xl italic leading-snug text-bone/90 md:text-[1.75rem]">
             {project.tagline}
           </motion.p>
-          <motion.p {...fade(0.45)} className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-bone-2">
+          <motion.p {...fade(0.45)} className="legible mt-5 max-w-[46ch] text-[15px] leading-relaxed text-bone/80">
             {project.description}
           </motion.p>
 
-          <motion.dl {...fade(0.55)} className="mt-7 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/10 pt-5">
+          <motion.dl {...fade(0.55)} className="legible mt-7 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/10 pt-5">
             <div>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone-3">Status</dt>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/70">Status</dt>
               <dd className="mt-1 flex items-center gap-2 text-sm text-bone">
-                <span className={cn("h-1.5 w-1.5 rounded-full", project.status === "live" && "pulse-dot")} style={{ background: hsl(project.hue, 80, 60) }} />
+                <span className={cn("h-1.5 w-1.5 rounded-full bg-glaze", project.status === "live" && "pulse-dot")} />
                 {STATUS[project.status]}
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone-3">Year</dt>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/70">Year</dt>
               <dd className="mt-1 text-sm text-bone">{project.year}</dd>
             </div>
             <div className="min-w-0 flex-1">
-              <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone-3">Built with</dt>
+              <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone/70">Built with</dt>
               <dd className="mt-1 truncate text-sm text-bone">{project.technologies.slice(0, 4).join(" · ")}</dd>
             </div>
           </motion.dl>
@@ -192,7 +200,7 @@ export function ProjectScene({ project, index, play }: { project: Project; index
                 href={project.github}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="inline-flex h-12 items-center gap-2 rounded-full px-3 text-sm text-bone-2 transition-colors hover:text-bone"
+                className="legible inline-flex h-12 items-center gap-2 rounded-full px-3 text-sm text-bone/80 transition-colors hover:text-bone"
               >
                 Code <ArrowUpRight />
               </a>
