@@ -522,7 +522,12 @@ export function SceneDeck() {
       if ((e.target as HTMLElement | null)?.closest("[data-lenis-prevent],[role='dialog']")) return;
       if (modalOpen()) return;
       const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      if (!lock.current && Math.abs(e.deltaY) >= Math.abs(e.deltaX) && canScrollInside(e.target, e.deltaY)) return;
+      if (!lock.current && Math.abs(e.deltaY) >= Math.abs(e.deltaX) && canScrollInside(e.target, e.deltaY)) {
+        // The scene scrolls natively. Reaching its end does not move on: the next move needs a fresh gesture.
+        quietUntil.current = performance.now() + 180;
+        acc = 0;
+        return;
+      }
       e.preventDefault();
       const now = performance.now();
       if (lock.current || now < quietUntil.current) {
@@ -633,7 +638,8 @@ export function SceneDeck() {
   );
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
+    // The deck owns the wheel: Lenis must not cancel it, or scenes taller than the window cannot scroll.
+    <div data-lenis-prevent-wheel className="fixed inset-0 overflow-hidden bg-black">
       {/* Footage, one layer per chapter. */}
       {chapters.map((c) => (
         <div
