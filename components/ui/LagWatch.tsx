@@ -3,9 +3,11 @@
 import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { DockPortal } from "@/components/ui/Dock";
 import { useIntro } from "@/components/ui/Intro";
 import { setLite, useLite } from "@/lib/capability";
 import { useDeck } from "@/lib/deck";
+import { useNoticeTurn } from "@/lib/dock";
 import { ease } from "@/lib/motion";
 
 /**
@@ -16,6 +18,9 @@ import { ease } from "@/lib/motion";
  * It only watches when lag would show: for ten seconds after the opening or
  * a new page, and through every move of the deck until a few seconds after it
  * lands. The rest of the time it costs no frames.
+ *
+ * The offer is a notice in the dock (components/ui/Dock.tsx): it waits its
+ * turn behind Mr. Nimbus's invitation, never beside it.
  */
 export function LagWatch() {
   const { done } = useIntro();
@@ -25,6 +30,7 @@ export function LagWatch() {
   const dismissed = useRef(false);
   const { moving } = useDeck();
   const pathname = usePathname();
+  const turn = useNoticeTurn("lag", offer && !lite);
   /** Watch for the next `ms` (set by the sampler effect; a no-op while it is off). */
   const watch = useRef<(ms: number, exact?: boolean) => void>(() => {});
 
@@ -107,51 +113,53 @@ export function LagWatch() {
 
   return (
     <>
-      <AnimatePresence>
-        {offer && !lite && (
-          <motion.div
-            role="alertdialog"
-            aria-labelledby="lag-title"
-            aria-describedby="lag-body"
-            className="fixed bottom-5 left-5 z-[92] flex max-w-[calc(100vw-7rem)] items-center gap-3 rounded-full border border-white/15 bg-ink-3/92 py-1.5 pl-4 pr-1.5 text-bone shadow-[0_20px_60px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
-            initial={{ opacity: 0, y: 24, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.98 }}
-            transition={{ duration: 0.6, ease: ease.outExpo }}
-          >
-            <p className="min-w-0 text-[13px] leading-tight">
-              <span id="lag-title" className="font-medium">Lagging?</span>{" "}
-              <span id="lag-body" className="hidden text-bone-2 md:inline">
-                Lite mode swaps 4K video for stills.
-              </span>
-            </p>
-            <div className="flex shrink-0 items-center gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setLite(true);
-                  setOffer(false);
-                  setToast("Lite mode on · stills instead of 4K video");
-                }}
-                className="inline-flex h-9 items-center gap-2 rounded-full bg-bone px-3.5 text-[13px] font-medium text-ink"
-              >
-                Switch to lite
-                <kbd className="rounded-md border border-ink/20 px-1.5 font-mono text-[11px]">L</kbd>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  dismissed.current = true;
-                  setOffer(false);
-                }}
-                className="h-9 rounded-full px-3 text-[13px] text-bone-2 hover:text-bone"
-              >
-                Keep 4K
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DockPortal slot="notice">
+        <AnimatePresence>
+          {turn && (
+            <motion.div
+              role="alertdialog"
+              aria-labelledby="lag-title"
+              aria-describedby="lag-body"
+              className="pointer-events-auto flex h-[var(--dock-row)] max-w-full items-center gap-2 rounded-full border border-white/15 bg-ink-3/92 pl-4 pr-1.5 text-bone shadow-[0_20px_60px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.98 }}
+              transition={{ duration: 0.6, ease: ease.outExpo }}
+            >
+              <p className="min-w-0 whitespace-nowrap text-[13px] leading-tight">
+                <span id="lag-title" className="font-medium">Lagging?</span>{" "}
+                <span id="lag-body" className="sr-only text-bone-2 min-[1400px]:not-sr-only">
+                  Lite mode swaps 4K video for stills.
+                </span>
+              </p>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLite(true);
+                    setOffer(false);
+                    setToast("Lite mode on · stills instead of 4K video");
+                  }}
+                  className="inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-full bg-bone px-3.5 text-[13px] font-medium text-ink"
+                >
+                  Switch to lite
+                  <kbd className="hidden rounded-md border border-ink/20 px-1.5 font-mono text-[11px] sm:inline">L</kbd>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    dismissed.current = true;
+                    setOffer(false);
+                  }}
+                  className="h-9 whitespace-nowrap rounded-full px-3 text-[13px] text-bone-2 hover:text-bone"
+                >
+                  Keep 4K
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </DockPortal>
       <AnimatePresence>
         {toast && (
           <motion.div

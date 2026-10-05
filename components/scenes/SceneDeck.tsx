@@ -13,6 +13,7 @@ import { ServicesScene } from "@/components/scenes/ServicesScene";
 import { useIntro } from "@/components/ui/Intro";
 import { conceptProjects, featuredProjects as work } from "@/data/projects";
 import { ConceptsScene } from "@/components/scenes/ConceptsScene";
+import { DockPortal } from "@/components/ui/Dock";
 import { chapterById, chapterHash, chapterHashes, chapters, type Chapter, type ChapterId, type TransitionStyle } from "@/data/scenes";
 import { GOTO_EVENT, getDeck, setDeck, type GotoDetail } from "@/lib/deck";
 import { gsap } from "@/lib/gsap";
@@ -176,20 +177,20 @@ function Emblem({ mood }: { mood: string }) {
     case "wind":
       return (
         <span className="block h-5 w-28 overflow-hidden" aria-hidden>
-          <span className="block h-full w-[200%] bg-[repeating-linear-gradient(90deg,transparent_0_14px,rgb(245_245_247/0.6)_14px_30px,transparent_30px_52px)] bg-[length:52px_1px] bg-[position:0_50%] bg-repeat-x [animation:wind-drift_1.2s_linear_infinite]" />
+          <span className="block h-full w-[200%] bg-[repeating-linear-gradient(90deg,transparent_0_14px,color-mix(in_srgb,var(--color-bone)_60%,transparent)_14px_30px,transparent_30px_52px)] bg-[length:52px_1px] bg-[position:0_50%] bg-repeat-x [animation:wind-drift_1.2s_linear_infinite]" />
         </span>
       );
     case "dusk":
       return (
-        <svg viewBox="0 0 60 30" className="h-7 w-14" aria-hidden>
-          <path d="M4 26 H56" stroke="rgb(245 245 247 / 0.6)" strokeWidth="1" />
+        <svg viewBox="0 0 60 30" className="h-7 w-14 text-bone/60" aria-hidden>
+          <path d="M4 26 H56" stroke="currentColor" strokeWidth="1" />
           <circle cx="30" cy="26" r="12" fill="var(--color-ember)" className="[animation:sun-rise_2.4s_ease-out_infinite]" />
         </svg>
       );
     default:
       return (
-        <svg viewBox="0 0 120 20" className="h-5 w-28" aria-hidden>
-          <path d="M0 10 Q 15 2 30 10 T 60 10 T 90 10 T 120 10" fill="none" stroke="rgb(245 245 247 / 0.7)" strokeWidth="1.5" className="[animation:wave-slide_2s_linear_infinite]" />
+        <svg viewBox="0 0 120 20" className="h-5 w-28 text-bone/70" aria-hidden>
+          <path d="M0 10 Q 15 2 30 10 T 60 10 T 90 10 T 120 10" fill="none" stroke="currentColor" strokeWidth="1.5" className="[animation:wave-slide_2s_linear_infinite]" />
         </svg>
       );
   }
@@ -249,8 +250,10 @@ const FootageLayer = memo(function FootageLayer({
       ) : (
         <>
           <SceneVideo name={c.footage} load={load} play={play} urgent={urgent} onReady={() => onReady(c.id)} onProgress={(p) => onProgress(c.id, p)} />
-          {/* Legibility: a cinematic grade, darker where text sits. */}
-          <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_15%_60%,rgb(0_0_0/0.62),transparent_60%),linear-gradient(to_top,rgb(0_0_0/0.55),transparent_45%),linear-gradient(to_bottom,rgb(0_0_0/0.35),transparent_25%)]" />
+          {/* Legibility: a cinematic grade (the header band, the dock's foot), and the chapter's own
+              scrim behind the side its text sits on (data/scenes.ts). Gradients, never a flat veil. */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,rgb(0_0_0/0.55),transparent_40%),linear-gradient(to_bottom,rgb(0_0_0/0.38),transparent_22%)]" />
+          {c.scrim && <div className="scrim" data-side={c.scrim.side} style={{ ["--s" as string]: c.scrim.strength, ["--reach" as string]: c.scrim.reach ?? 0.7 }} />}
         </>
       )}
     </div>
@@ -283,9 +286,9 @@ function ChapterLoader({ chapter: id, progressOf }: { chapter: ChapterId | null;
           exit={{ opacity: 0 }}
         >
           <div className="relative h-20 w-20">
-            <svg viewBox="0 0 80 80" className="absolute inset-0 -rotate-90" aria-hidden>
-              <circle cx="40" cy="40" r="36" fill="none" stroke="rgb(245 245 247 / 0.12)" strokeWidth="2" />
-              <circle cx="40" cy="40" r="36" fill="none" stroke="#f5f5f7" strokeWidth="2" strokeLinecap="round" strokeDasharray={`${Math.max(0.04, progress) * 226} 226`} className="transition-[stroke-dasharray] duration-300" />
+            <svg viewBox="0 0 80 80" className="absolute inset-0 -rotate-90 text-bone" aria-hidden>
+              <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="2" />
+              <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray={`${Math.max(0.04, progress) * 226} 226`} className="transition-[stroke-dasharray] duration-300" />
             </svg>
             <span className="absolute inset-0 flex items-center justify-center font-mono text-xs tabular-nums text-bone">{Math.round(progress * 100)}%</span>
           </div>
@@ -374,27 +377,30 @@ function ContinuePrompt({ index, play, hidden, onGo }: { index: number; play: bo
   const nextAxis = last ? "y" : STEPS[index + 1].axis;
 
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.button
-          key={`prompt-${index}`}
-          type="button"
-          onClick={() => onGo(last ? 0 : index + 1)}
-          className="deck-prompt absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] py-2.5 pl-5 pr-2.5 text-sm text-bone shadow-[0_10px_40px_-10px_rgb(0_0_0/0.6)] backdrop-blur-md transition-colors hover:bg-white/[0.16] md:bottom-8"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.6, ease: ease.outExpo }}
-        >
-          <span>{last ? "Back to the start" : step.chapter === "work" && nextAxis === "x" ? "Next project" : "Continue"}</span>
-          <span className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-bone text-ink", !last && "[animation:nudge_1.8s_ease-in-out_infinite]")}>
-            <svg viewBox="0 0 16 16" className={cn("h-3.5 w-3.5", last ? "-rotate-90" : nextAxis === "x" ? "" : "rotate-90")} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M3 8h10M9 4l4 4-4 4" />
-            </svg>
-          </span>
-        </motion.button>
-      )}
-    </AnimatePresence>
+    // In the dock's centre slot (components/ui/Dock.tsx), so it never collides with a notice or Mr. Nimbus.
+    <DockPortal slot="center">
+      <AnimatePresence>
+        {show && (
+          <motion.button
+            key={`prompt-${index}`}
+            type="button"
+            onClick={() => onGo(last ? 0 : index + 1)}
+            className="deck-prompt pointer-events-auto flex h-[var(--dock-row)] items-center gap-3 whitespace-nowrap rounded-full border border-white/20 bg-black/35 pl-5 pr-2 text-sm text-bone shadow-[0_10px_40px_-10px_rgb(0_0_0/0.6)] backdrop-blur-md transition-colors hover:bg-black/55"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.6, ease: ease.outExpo }}
+          >
+            <span>{last ? "Back to the start" : step.chapter === "work" && nextAxis === "x" ? "Next project" : "Continue"}</span>
+            <span className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-bone text-ink", !last && "[animation:nudge_1.8s_ease-in-out_infinite]")}>
+              <svg viewBox="0 0 16 16" className={cn("h-3.5 w-3.5", last ? "-rotate-90" : nextAxis === "x" ? "" : "rotate-90")} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M3 8h10M9 4l4 4-4 4" />
+              </svg>
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </DockPortal>
   );
 }
 
@@ -430,7 +436,7 @@ export function SceneDeck() {
   const [mounted, setMounted] = useState<ReadonlySet<number>>(() => new Set([0]));
   /** The opening has played and the browser has been idle: now the next chapter may load. */
   const [warm, setWarm] = useState(false);
-  const [projectCard, setProjectCard] = useState<{ n: number; title: string; hue: number } | null>(null);
+  const [projectCard, setProjectCard] = useState<{ n: number; title: string } | null>(null);
 
   const lock = useRef(false);
   const quietUntil = useRef(0);
@@ -598,8 +604,8 @@ export function SceneDeck() {
 
       // Project to project only: the concepts scene arrives with the ordinary sideways slide.
       if (same && ts.chapter === "work" && !reducedMotion && !lite && work[to - firstStepOf("work")] && work[from - firstStepOf("work")]) {
-        // Between projects: the window swings away in depth, a light sweep in the next
-        // project's colour crosses the frame, its number flashes up, and it swings in.
+        // Between projects: the window swings away in depth, a warm light sweep crosses
+        // the frame, the next project's number flashes up, and it swings in.
         const next = work[to - firstStepOf("work")];
         const stageOut = scOut.querySelector<HTMLElement>("[data-stage-wrap]");
         const copyOut = scOut.querySelector<HTMLElement>("[data-copy-wrap]");
@@ -611,11 +617,11 @@ export function SceneDeck() {
         tl.to(scOut, { autoAlpha: 0, duration: 0.2 }, d * 0.5);
         tl.fromTo(bgIn, { xPercent: 0, scale: 1 }, { xPercent: -dir * 4, scale: 1.08, duration: d * 0.5, ease: "power2.inOut", yoyo: true, repeat: 1 }, 0);
         if (sweep.current) {
-          gsap.set(sweep.current, { autoAlpha: 1, background: `linear-gradient(90deg, transparent, ${`hsl(${next.hue} 90% 60% / 0.55)`}, rgb(255 255 255 / 0.5), ${`hsl(${next.hue} 90% 60% / 0.55)`}, transparent)` });
+          gsap.set(sweep.current, { autoAlpha: 1 });
           tl.fromTo(sweep.current, { xPercent: dir > 0 ? 260 : -160 }, { xPercent: dir > 0 ? -160 : 260, duration: d * 0.75, ease: "power2.inOut" }, d * 0.12);
           tl.set(sweep.current, { autoAlpha: 0 });
         }
-        tl.call(() => setProjectCard({ n: to - firstStepOf("work") + 1, title: next.title, hue: next.hue }), [], d * 0.22);
+        tl.call(() => setProjectCard({ n: to - firstStepOf("work") + 1, title: next.title }), [], d * 0.22);
         tl.call(() => setProjectCard(null), [], d * 0.62);
         tl.set(scIn, { autoAlpha: 1 }, d * 0.6);
         if (stageIn) tl.fromTo(stageIn, { rotateY: dir * 38, xPercent: dir * 45, z: -200, autoAlpha: 0 }, { rotateY: 0, xPercent: 0, z: 0, autoAlpha: 1, duration: d * 0.55, ease: "expo.out" }, d * 0.6);
@@ -942,22 +948,21 @@ export function SceneDeck() {
         {/* The colour break: shown on two frames of the cut. */}
         <div
           data-tint
-          className="absolute -inset-x-[8%] inset-y-0 opacity-0 mix-blend-hue"
-          style={{ background: "linear-gradient(90deg, rgb(255 40 90 / 0.85), rgb(0 230 255 / 0.7) 55%, rgb(255 40 90 / 0.85))" }}
+          className="absolute -inset-x-[8%] inset-y-0 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--color-glaze)_85%,transparent),color-mix(in_srgb,var(--color-peach)_70%,transparent)_55%,color-mix(in_srgb,var(--color-glaze)_85%,transparent))] opacity-0 mix-blend-hue"
         />
         {Array.from({ length: 7 }).map((_, i) => (
           <div
             key={i}
             data-tear
-            className="absolute inset-x-[-20%] opacity-0 mix-blend-screen"
-            style={{
-              background:
-                i % 3 === 0
-                  ? "linear-gradient(90deg, transparent, rgb(255 40 90 / 0.55) 20%, rgb(255 255 255 / 0.35) 50%, rgb(0 230 255 / 0.55) 80%, transparent)"
-                  : i % 3 === 1
-                    ? "linear-gradient(90deg, rgb(0 230 255 / 0.4), transparent 40%, rgb(255 40 90 / 0.45))"
-                    : "rgb(245 245 247 / 0.18)",
-            }}
+            className={cn(
+              "absolute inset-x-[-20%] opacity-0 mix-blend-screen",
+              // Tear bars in the warm palette: glaze, cream and peach.
+              i % 3 === 0
+                ? "bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--color-glaze)_55%,transparent)_20%,color-mix(in_srgb,var(--color-cream)_35%,transparent)_50%,color-mix(in_srgb,var(--color-peach)_55%,transparent)_80%,transparent)]"
+                : i % 3 === 1
+                  ? "bg-[linear-gradient(90deg,color-mix(in_srgb,var(--color-peach)_40%,transparent),transparent_40%,color-mix(in_srgb,var(--color-glaze)_45%,transparent))]"
+                  : "bg-bone/[0.18]",
+            )}
           />
         ))}
         <div className="film-grain absolute -inset-[10%] opacity-40 mix-blend-overlay" />
@@ -1015,8 +1020,12 @@ export function SceneDeck() {
         )}
       </AnimatePresence>
 
-      {/* Between projects: a light sweep and the next project's number. */}
-      <div ref={sweep} aria-hidden className="pointer-events-none absolute inset-y-0 left-0 z-20 w-[45vw] opacity-0 mix-blend-screen" />
+      {/* Between projects: a warm light sweep and the next project's number. */}
+      <div
+        ref={sweep}
+        aria-hidden
+        className="pointer-events-none invisible absolute inset-y-0 left-0 z-20 w-[45vw] bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--color-ember)_55%,transparent),color-mix(in_srgb,var(--color-cream)_50%,transparent),color-mix(in_srgb,var(--color-ember)_55%,transparent),transparent)] opacity-0 mix-blend-screen"
+      />
       <AnimatePresence>
         {projectCard && (
           <motion.div
@@ -1028,10 +1037,7 @@ export function SceneDeck() {
             exit={{ opacity: 0, scale: 1.08 }}
             transition={{ duration: 0.4, ease: ease.outExpo }}
           >
-            <span
-              className="font-display text-[clamp(8rem,26vw,22rem)] leading-none text-transparent"
-              style={{ WebkitTextStroke: `1.5px hsl(${projectCard.hue} 90% 70%)`, textShadow: `0 0 80px hsl(${projectCard.hue} 90% 55% / 0.45)` }}
-            >
+            <span className="font-display text-[clamp(8rem,26vw,22rem)] leading-none text-transparent [-webkit-text-stroke:1.5px_var(--color-peach)] [text-shadow:0_0_80px_color-mix(in_srgb,var(--color-glaze)_45%,transparent)]">
               {String(projectCard.n).padStart(2, "0")}
             </span>
             <span className="-mt-4 font-mono text-xs uppercase tracking-[0.3em] text-bone">{projectCard.title}</span>

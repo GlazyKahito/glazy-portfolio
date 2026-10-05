@@ -53,16 +53,29 @@ export interface Chapter {
   transition: TransitionStyle;
   /** The arrival card's emblem and tint. */
   mood: "sea" | "city" | "stars" | "dawn" | "wind" | "dusk";
+  /**
+   * Legibility: a darkening gradient behind the side the text sits on (wide
+   * screens; below lg it deepens toward the foot, where the copy runs), and
+   * its strength (0–1). Brighter footage needs more. Tuned so body copy keeps
+   * WCAG AA contrast over the brightest frame of the clip. `reach` is how far
+   * across the frame it runs (0–1, default 0.7): a heading that crosses the
+   * sun needs it further.
+   */
+  scrim?: { side: "left" | "right"; strength: number; reach?: number };
 }
 
 export const chapters: Chapter[] = [
   { id: "intro", number: "00", label: "GLAZY", footage: "dusk", depth: true, transition: "zoom", mood: "dusk" },
-  { id: "services", number: "01", label: "What we make", footage: "sea", transition: "glitch", mood: "sea" },
-  { id: "work", number: "02", label: "The work", footage: "citydusk", transition: "iris", mood: "city" },
-  { id: "building", number: "03", label: "In the works", footage: "nightridge", transition: "shutter", mood: "stars" },
-  { id: "about", number: "04", label: "The founder", footage: "bay", transition: "burn", mood: "dawn" },
-  { id: "stack", number: "05", label: "The toolkit", footage: "goldroad", transition: "doors", mood: "wind" },
-  { id: "contact", number: "06", label: "Start a project", footage: "flight", transition: "mosaic", mood: "dusk" },
+  // A bright sunset over the sea: the services copy sits on the right, over the sky.
+  { id: "services", number: "01", label: "What we make", footage: "sea", transition: "glitch", mood: "sea", scrim: { side: "right", strength: 0.72 } },
+  { id: "work", number: "02", label: "The work", footage: "citydusk", transition: "iris", mood: "city", scrim: { side: "left", strength: 0.6 } },
+  { id: "building", number: "03", label: "In the works", footage: "nightridge", transition: "shutter", mood: "stars", scrim: { side: "left", strength: 0.45 } },
+  // The sun sits mid-frame over the bay: the founder's copy runs across it.
+  { id: "about", number: "04", label: "The founder", footage: "bay", transition: "burn", mood: "dawn", scrim: { side: "left", strength: 0.8, reach: 1 } },
+  // Golden hour, the brightest sky of all.
+  { id: "stack", number: "05", label: "The toolkit", footage: "goldroad", transition: "doors", mood: "wind", scrim: { side: "left", strength: 0.78 } },
+  // The horizon glows behind the closing line: the scrim runs nearly across.
+  { id: "contact", number: "06", label: "Start a project", footage: "flight", transition: "mosaic", mood: "dusk", scrim: { side: "left", strength: 0.75, reach: 1.2 } },
 ];
 
 /** Old and friendly hashes, mapped to chapters (deep links, the menu, Mr. Nimbus). */

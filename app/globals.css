@@ -30,6 +30,9 @@
   --color-cream: #ece6d3;
   --color-peach: #ffc9a3;
   --color-ember: #ff8a4c;
+  /* The warm stops between ember and peach in the wordmark's sheen. */
+  --color-coral: #ff7a5c;
+  --color-apricot: #ffd9a8;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
@@ -49,8 +52,21 @@
 @layer base {
   :root {
     color-scheme: dark;
-    --nav-height: 88px;
-    --gutter: clamp(1rem, 4vw, 4rem);
+    /* The header's band, notch included (the viewport is viewport-fit=cover). */
+    --nav-height: calc(88px + env(safe-area-inset-top, 0px));
+    --gutter: max(clamp(1rem, 4vw, 4rem), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+    /*
+     * The dock (components/ui/Dock.tsx): one 48 px row at the foot of the screen,
+     * clear of the home indicator. Scenes keep --dock-clear free at their foot.
+     */
+    --dock-inset: max(1rem, env(safe-area-inset-bottom, 0px));
+    --dock-row: 3rem;
+    --dock-clear: calc(var(--dock-inset) + var(--dock-row) + 2rem);
+  }
+  @media (min-width: 768px) {
+    :root {
+      --dock-inset: max(1.5rem, env(safe-area-inset-bottom, 0px));
+    }
   }
 
   html {
@@ -174,8 +190,8 @@
     var(--color-bone) 0%,
     var(--color-bone) 35%,
     var(--color-glaze) 47%,
-    #ff7a5c 53%,
-    #ffd9a8 58%,
+    var(--color-coral) 53%,
+    var(--color-apricot) 58%,
     var(--color-bone) 70%,
     var(--color-bone) 100%
   );
@@ -187,7 +203,7 @@
 }
 
 @utility glass {
-  background: rgb(12 12 14 / 0.64);
+  background: color-mix(in srgb, var(--color-ink-2) 64%, transparent);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
   border: 1px solid var(--color-line);
@@ -199,6 +215,24 @@
 
 @utility mask-fade-x {
   mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+/* A row that scrolls sideways fades out at whichever end has more to show (set by script). */
+.edge-fade[data-more-end] {
+  mask-image: linear-gradient(to right, #000 calc(100% - 3rem), transparent);
+}
+.edge-fade[data-more-start] {
+  mask-image: linear-gradient(to right, transparent, #000 3rem);
+}
+.edge-fade[data-more-start][data-more-end] {
+  mask-image: linear-gradient(to right, transparent, #000 3rem, #000 calc(100% - 3rem), transparent);
+}
+
+/* Text over footage: a soft shadow under the letters, never a box. */
+@utility legible {
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 0.35),
+    0 2px 18px rgb(0 0 0 / 0.45);
 }
 
 @utility no-scrollbar {
@@ -260,12 +294,88 @@
 /* ------------------------------------------------------------------ */
 /* Scene deck                                                           */
 /* ------------------------------------------------------------------ */
+/*
+ * The dock (components/ui/Dock.tsx). Wide screens: notice | Continue | Mr. Nimbus,
+ * side by side. Narrow screens have no room for a notice beside the prompt, so a
+ * notice takes the prompt's place until it is answered: two columns, the notice
+ * and Mr. Nimbus.
+ */
+.dock-center {
+  transition:
+    opacity 0.3s,
+    visibility 0.3s;
+}
+@media (max-width: 1023.98px) {
+  .dock[data-notice] > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .dock[data-notice] .dock-center {
+    display: none;
+  }
+  .dock[data-notice] .dock-guide {
+    grid-column-start: 2;
+  }
+}
 /* On phones the Continue prompt steps aside while Mr. Nimbus's chat is open. */
 @media (max-width: 640px) {
-  html[data-nimbus="open"] .deck-prompt {
-    /* !important: the prompt's entrance animation writes inline opacity. */
-    opacity: 0 !important;
-    pointer-events: none;
+  html[data-nimbus="open"] .dock-center {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/*
+ * A scene that scrolls inside itself fades its content out under the header and
+ * just above the dock, so text never runs underneath either (a static mask; the
+ * footage behind is a separate layer and stays untouched). At rest, every scene's
+ * padding keeps its content clear of both fades. Scroll padding keeps focused
+ * controls clear of them too. Lite drops the mask: the weakest machines keep the
+ * plain padding.
+ */
+section[data-scene] {
+  scroll-padding-top: calc(var(--nav-height) + 0.5rem);
+  scroll-padding-bottom: var(--dock-clear);
+  mask-image: linear-gradient(
+    to bottom,
+    transparent calc(var(--nav-height) * 0.55),
+    #000 var(--nav-height),
+    #000 calc(100% - var(--dock-clear)),
+    transparent calc(100% - var(--dock-inset) - var(--dock-row) * 0.5)
+  );
+}
+html[data-lite] section[data-scene] {
+  mask-image: none;
+}
+
+/*
+ * Legibility scrims, one per chapter (`scrim` in data/scenes.ts): a local gradient
+ * behind the side the text sits on, never a flat overlay. --s is its strength.
+ * Below lg the copy runs the full width, so the scrim deepens toward the foot instead.
+ */
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --reach: 0.7;
+}
+.scrim[data-side="left"] {
+  background:
+    linear-gradient(to right, rgb(0 0 0 / var(--s)) 0%, rgb(0 0 0 / calc(var(--s) * 0.72)) calc(var(--reach) * 48%), transparent calc(var(--reach) * 100%)),
+    radial-gradient(70% 60% at 0% 55%, rgb(0 0 0 / calc(var(--s) * 0.35)), transparent 75%);
+}
+.scrim[data-side="right"] {
+  background:
+    linear-gradient(to left, rgb(0 0 0 / var(--s)) 0%, rgb(0 0 0 / calc(var(--s) * 0.72)) calc(var(--reach) * 48%), transparent calc(var(--reach) * 100%)),
+    radial-gradient(70% 60% at 100% 55%, rgb(0 0 0 / calc(var(--s) * 0.35)), transparent 75%);
+}
+@media (max-width: 1023.98px) {
+  .scrim[data-side] {
+    background: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / calc(var(--s) * 0.5)) 0%,
+      rgb(0 0 0 / calc(var(--s) * 0.78)) 38%,
+      rgb(0 0 0 / var(--s)) 100%
+    );
   }
 }
 
@@ -283,7 +393,7 @@ html[data-lite] *::after {
   animation: none !important;
 }
 html[data-lite] [class*="backdrop-blur"] {
-  background-color: rgb(14 14 16 / 0.9) !important;
+  background-color: color-mix(in srgb, var(--color-ink-2) 90%, transparent) !important;
 }
 html[data-lite] .glitch-text::before,
 html[data-lite] .glitch-text::after,
@@ -418,7 +528,7 @@ section[data-scene][aria-hidden="true"] * {
   50% { opacity: 1; transform: scale(1.06); }
 }
 
-/* Chapter titles that arrive on a bad signal: red and cyan copies slip and slice. */
+/* Chapter titles that arrive on a bad signal: ember and peach copies slip and slice. */
 .glitch-text {
   position: relative;
 }
@@ -431,12 +541,12 @@ section[data-scene][aria-hidden="true"] * {
   mix-blend-mode: screen;
 }
 .glitch-text::before {
-  color: rgb(255 40 90 / 0.85);
+  color: color-mix(in srgb, var(--color-glaze) 85%, transparent);
   transform: translateX(-0.035em);
   animation: glitch-slice 0.8s steps(1) infinite;
 }
 .glitch-text::after {
-  color: rgb(0 230 255 / 0.85);
+  color: color-mix(in srgb, var(--color-peach) 85%, transparent);
   transform: translateX(0.035em);
   animation: glitch-slice 0.65s steps(1) infinite reverse;
 }
@@ -513,5 +623,15 @@ section[data-scene][aria-hidden="true"] * {
     .reveal-unit {
       transform: none;
     }
+  }
+}
+
+/* 404: the wordmark sets behind the ridge, once (app/not-found.tsx). */
+@keyframes wordmark-set {
+  from {
+    transform: translate3d(0, -52%, 0);
+  }
+  to {
+    transform: none;
   }
 }

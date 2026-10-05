@@ -36,7 +36,7 @@ export function Header() {
   return (
     <>
       <motion.header
-        className="pointer-events-none fixed inset-x-0 top-0 z-[90] flex items-center justify-between px-[var(--gutter)] pt-5"
+        className="pointer-events-none fixed inset-x-0 top-0 z-[90] flex items-center justify-between px-[var(--gutter)] pt-[max(1.25rem,env(safe-area-inset-top))]"
         initial={{ opacity: 0, y: -10 }}
         animate={done ? { opacity: 1, y: 0 } : { opacity: 0, y: -10 }}
         transition={{ duration: 0.9, ease: ease.outExpo, delay: done ? 0.3 : 0 }}
@@ -50,7 +50,8 @@ export function Header() {
             type="button"
             role="switch"
             aria-checked={lite}
-            aria-label="Lite version (press L to switch)"
+            // The visible "4K Lite" leads the name, so speech and sight agree (label in name).
+            aria-label="4K Lite: the lite version, stills instead of video (L)"
             title={lite ? "Lite version is on: still frames instead of 4K video (L)" : "Full 4K video. Switch to the lite version for slower devices (L)"}
             onClick={() => setLite(!lite)}
             className="relative flex h-10 items-center rounded-full border border-white/15 bg-black/30 p-1 font-mono text-[10px] uppercase tracking-[0.16em] text-bone backdrop-blur-md transition-colors hover:bg-black/45"
@@ -98,7 +99,7 @@ export function Header() {
               </Dialog.Overlay>
               <Dialog.Content asChild forceMount>
                 <motion.div
-                  className="fixed inset-0 z-[95] flex flex-col px-[var(--gutter)] pb-8 pt-5 text-bone outline-none"
+                  className="fixed inset-0 z-[95] flex flex-col overflow-y-auto px-[var(--gutter)] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] text-bone outline-none"
                   initial={{ opacity: 0, scale: 1.03 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.02 }}

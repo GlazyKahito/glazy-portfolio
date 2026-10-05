@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { DockPortal } from "@/components/ui/Dock";
 import { useIntro } from "@/components/ui/Intro";
 import { ArrowUpRight } from "@/components/ui/MagneticButton";
 import { useTransition } from "@/components/ui/PageTransition";
@@ -15,6 +16,8 @@ import { site } from "@/data/site";
 import { chapterHash, type ChapterId } from "@/data/scenes";
 import { skillCategories, skillsByCategory } from "@/data/skills";
 import { gotoChapter } from "@/lib/deck";
+import { useNoticeTurn } from "@/lib/dock";
+import { useMediaQuery } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -196,7 +199,7 @@ function followUp(intent: Intent): Pick<Message, "actions" | "replies"> {
 }
 
 /** Mr. Nimbus's portrait (his own photo, cleaned up). */
-function Portrait({ size, tilt = false, twitch = false }: { size: number; tilt?: boolean; twitch?: boolean }) {
+function Portrait({ size, tilt = false, twitch = false, decorative = false }: { size: number; tilt?: boolean; twitch?: boolean; decorative?: boolean }) {
   return (
     <motion.span
       className={cn("relative inline-block shrink-0 rounded-full", twitch && "[animation:nimbus-twitch_7s_ease-in-out_infinite]")}
@@ -206,7 +209,7 @@ function Portrait({ size, tilt = false, twitch = false }: { size: number; tilt?:
     >
       <Image
         src={size > 48 ? "/nimbus/mr-nimbus-512.webp" : "/nimbus/mr-nimbus-160.webp"}
-        alt="Mr. Nimbus, a black-and-white tuxedo cat"
+        alt={decorative ? "" : "Mr. Nimbus, a black-and-white tuxedo cat"}
         width={size}
         height={size}
         className="rounded-full object-cover ring-1 ring-white/20"
@@ -254,7 +257,11 @@ export function Nimbus() {
   const list = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
 
-  // The invitation: once per visit, a little after the opening.
+  // The invitation: once per visit, a little after the opening, on screens wide enough to hold it
+  // beside the Continue prompt. It is a notice in the dock: it waits for its turn (behind the lite
+  // offer, never beside it), and steps aside on its own after a while.
+  const roomy = useMediaQuery("(min-width: 1024px)");
+  const invite = useNoticeTurn("nimbus", bubble && !open && roomy);
   useEffect(() => {
     if (!done) return;
     let seen = false;
@@ -265,6 +272,16 @@ export function Nimbus() {
     const t = window.setTimeout(() => setBubble(true), 7000);
     return () => window.clearTimeout(t);
   }, [done]);
+  useEffect(() => {
+    if (!invite) return;
+    const t = window.setTimeout(() => {
+      setBubble(false);
+      try {
+        window.sessionStorage.setItem("nimbus:invited", "1");
+      } catch {}
+    }, 14000);
+    return () => window.clearTimeout(t);
+  }, [invite]);
 
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" });
@@ -383,17 +400,15 @@ export function Nimbus() {
 
   return (
     <>
-      {/* Launcher and invitation. The invitation is one line beside the launcher, in the
-          strip every scene keeps free at the foot, so it never covers content; it only
-          shows where there is room for it next to the Continue prompt. */}
-      <div className="fixed bottom-5 right-5 z-[92] flex items-center gap-3">
+      {/* The invitation: a notice in the dock (components/ui/Dock.tsx), one line, in its turn. */}
+      <DockPortal slot="notice">
         <AnimatePresence>
-          {bubble && !open && (
+          {invite && (
             <motion.div
-              className="hidden h-12 items-center gap-1 rounded-full border border-white/15 bg-ink-3/90 pl-4 pr-1.5 text-[13px] text-bone shadow-[0_20px_50px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md min-[1180px]:flex"
-              initial={{ opacity: 0, x: 16, scale: 0.96 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 10, scale: 0.97 }}
+              className="pointer-events-auto flex h-[var(--dock-row)] items-center gap-1 whitespace-nowrap rounded-full border border-white/15 bg-ink-3/90 pl-4 pr-1.5 text-[13px] text-bone shadow-[0_20px_50px_-15px_rgb(0_0_0/0.8)] backdrop-blur-md"
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.97 }}
               transition={{ duration: 0.5, ease: ease.outExpo }}
             >
               <span className="mr-2 text-bone-2">Have a doubt?</span>
@@ -413,6 +428,10 @@ export function Nimbus() {
             </motion.div>
           )}
         </AnimatePresence>
+      </DockPortal>
+
+      {/* The launcher: the dock's right-hand slot. */}
+      <DockPortal slot="guide">
         <motion.button
           type="button"
           onClick={() => {
@@ -421,7 +440,7 @@ export function Nimbus() {
           }}
           aria-expanded={open}
           aria-controls="nimbus-panel"
-          className="group flex h-12 items-center gap-2 rounded-full border border-white/15 bg-ink-3/85 px-2 sm:pl-3 sm:pr-4 text-sm text-bone shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-md transition-colors hover:bg-ink-4/90"
+          className="group pointer-events-auto flex h-[var(--dock-row)] items-center gap-2 rounded-full border border-white/15 bg-ink-3/85 px-2 text-sm text-bone shadow-[0_12px_40px_-12px_rgb(0_0_0/0.8)] backdrop-blur-md transition-colors hover:bg-ink-4/90 sm:pl-3 sm:pr-4"
           initial={{ opacity: 0, scale: 0.6, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           whileHover={{ y: -2 }}
@@ -431,17 +450,18 @@ export function Nimbus() {
           <span className="relative flex h-8 w-8 items-center justify-center">
             <span aria-hidden className="absolute -inset-[3px] rounded-full bg-[conic-gradient(from_0deg,var(--color-ember),transparent_30%,var(--color-peach)_55%,transparent_80%,var(--color-ember))] opacity-80 [animation:leader-sweep_5s_linear_infinite] group-hover:opacity-100 group-hover:[animation-duration:1.6s]" />
             <span className="relative rounded-full bg-ink-3 p-px">
-              <Portrait size={30} twitch={!open} />
+              <Portrait size={30} twitch={!open} decorative />
             </span>
-            <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-              <span aria-hidden className="absolute inset-0 animate-ping rounded-full bg-[#28c840] opacity-60" />
-              <span className="relative h-2.5 w-2.5 rounded-full border-2 border-ink-3 bg-[#28c840]" />
+            {/* In: a live dot in the site's own glaze, like every other "live" mark. */}
+            <span aria-hidden className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+              <span className="absolute inset-0 animate-ping rounded-full bg-glaze opacity-60" />
+              <span className="relative h-2.5 w-2.5 rounded-full border-2 border-ink-3 bg-glaze" />
             </span>
           </span>
           <span className="hidden sm:inline">{open ? "Close" : "Mr. Nimbus"}</span>
           <span className="sr-only sm:hidden">{open ? "Close chat" : "Talk to Mr. Nimbus"}</span>
         </motion.button>
-      </div>
+      </DockPortal>
 
       {/* Panel. */}
       <AnimatePresence>
@@ -451,7 +471,7 @@ export function Nimbus() {
             role="dialog"
             aria-label="Mr. Nimbus, site guide"
             data-lenis-prevent
-            className="fixed bottom-20 right-5 z-[92] flex h-[min(560px,calc(100svh-7rem))] w-[min(92vw,380px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-ink-2/95 text-bone shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] backdrop-blur-md"
+            className="fixed bottom-[calc(var(--dock-inset)+var(--dock-row)+0.75rem)] right-[var(--gutter)] z-[93] flex h-[min(560px,calc(100svh-var(--dock-inset)-var(--dock-row)-var(--nav-height)))] w-[min(calc(100vw-2*var(--gutter)),380px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-ink-2/95 text-bone shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] backdrop-blur-md"
             style={{ transformOrigin: "100% 100%" }}
             initial={{ opacity: 0, y: 30, scale: 0.6 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -501,7 +521,7 @@ export function Nimbus() {
                   <p
                     className={cn(
                       "max-w-[85%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed",
-                      m.from === "you" ? "rounded-br-md bg-ember text-white" : "rounded-bl-md bg-white/[0.07] text-bone",
+                      m.from === "you" ? "rounded-br-md bg-ember text-ink" : "rounded-bl-md bg-white/[0.07] text-bone",
                     )}
                   >
                     {m.text}
@@ -553,7 +573,7 @@ export function Nimbus() {
                 autoComplete="off"
                 className="h-11 min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.05] px-4 text-[14px] text-bone placeholder:text-bone-3 focus:border-ember/60 focus:outline-none"
               />
-              <button type="submit" aria-label="Send" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ember text-white disabled:opacity-40" disabled={!input.trim()}>
+              <button type="submit" aria-label="Send" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ember text-ink disabled:opacity-40" disabled={!input.trim()}>
                 <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
                 </svg>
