@@ -38,6 +38,7 @@ npm run typecheck   # tsc --noEmit
 | Loading screen (3D extruded GLAZY lettering filling with glaze; 4K / Lite choice; device check; letterbox opening) | `components/ui/Intro.tsx`, `components/ui/LoaderType3D.tsx` |
 | Project screens assembling like a jigsaw | `components/scenes/PuzzleImage.tsx` |
 | Scene deck (steps, transitions, input lock, progress rail, Continue prompt) | `components/scenes/SceneDeck.tsx` |
+| The dock: one bar at the foot of the screen (a notice, the Continue prompt, Mr. Nimbus) | `components/ui/Dock.tsx`, `lib/dock.ts` |
 | Chapters, footage, transition styles, hash aliases | `data/scenes.ts` |
 | Services and how a project runs | `data/services.ts` |
 | The opening's depth poster (sky, wordmark, ridge, parallax) | `components/scenes/DepthPoster.tsx`, `public/scenes/` |
@@ -52,6 +53,8 @@ npm run typecheck   # tsc --noEmit
 | Viewfinder cursor (`data-cursor-label="…"`) | `components/ui/Cursor.tsx` |
 | Project detail page | `components/projects/ProjectDetail.tsx`, `app/projects/[slug]/page.tsx` |
 | Content types | `lib/types.ts` |
+| Colour tokens as plain values (favicon, Open Graph card, logo, theme colour) | `lib/palette.ts` |
+| 404 (the opening's poster after sunset; static) | `app/not-found.tsx` |
 
 ## Conventions
 
@@ -61,7 +64,10 @@ npm run typecheck   # tsc --noEmit
 - The deck mounts only the scene on screen, its neighbours and the scenes already visited; the rest render a plain stub (heading and links) until a move or a jump mounts them. Scene components must work when mounted late.
 - Scene entrances (`Rise`, `RevealWords`) are CSS transitions on transform and opacity (`.rise`, `.reveal-unit` in `globals.css`). Keep new loops and entrances on transform and opacity, and let frame loops sleep when idle.
 - Custom font-size utilities are `text-display-xl|lg|md|sm`; `lib/utils.ts` teaches tailwind-merge about them. Add new ones in both places.
-- Colour tokens: `ink*` backgrounds, `bone*` text, `line*` borders, `glaze` accent. Do not introduce new hex colours in components; add a token.
+- Colour tokens: `ink*` backgrounds, `bone*` text, `line*` borders, `glaze` accent. Do not introduce new hex colours in components; add a token (and mirror it in `lib/palette.ts` if an image generator needs it).
+- One warm palette. A project's `hue` never reaches the screen as is: tints go through `tint()` / `warmHue()` in `lib/utils.ts`, which fold any hue into the ember-to-amber band. Accents that are not per project use `glaze`, `ember`, `peach` and `cream`.
+- Anything that floats at the foot of the screen lives in the dock: render it with `<DockPortal slot="notice" | "center" | "guide">`. Notices (the lite offer, Mr. Nimbus's invitation) take turns through `useNoticeTurn`, so two never show at once; on narrow screens a notice takes the Continue prompt's place. Every scene ends with `pb-[var(--dock-clear)]`, so the dock never covers the end of a scene, and scenes that scroll fade out under the header and above the dock (`section[data-scene]` mask in `globals.css`).
+- Legibility over footage: each chapter sets a `scrim` (the side its text sits on, and a strength) in `data/scenes.ts`. Text over footage uses `bone`/`cream` at 75% or more (never `bone-2`/`bone-3`, which are for solid dark pages) and the `legible` text shadow; frosted panels are `bg-black/45` or darker. Accent words in headings are peach italics. Body copy keeps WCAG AA over the brightest frame.
 - Images use `next/image`; configured qualities are `[75, 80, 82, 85]` in `next.config.ts`.
 - `/video` and `/scenes` are cached as immutable: a new cut or plate gets a new file name.
 - New footage: encode a seamless loop (last second cross-faded into the first), H.264 4K, no audio, `+faststart`, plus a poster frame, named `<name>-2160.mp4` / `<name>-poster.jpg`; add it to `footage` in `data/scenes.ts` with its source and licence.
