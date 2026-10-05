@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { profile } from "@/data/profile";
 import { site } from "@/data/site";
+import { palette } from "@/lib/palette";
 
 export const alt = "GLAZY — a freelance web and SaaS agency by Krutik Mhatre";
 export const size = { width: 1200, height: 630 };
@@ -25,12 +26,12 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: 64,
-          background: "linear-gradient(160deg, #060505 0%, #120c0a 55%, #3a1a10 100%)",
-          color: "#f5f5f7",
+          background: `linear-gradient(160deg, ${palette.ink} 0%, ${palette.duskMid} 55%, ${palette.dusk} 100%)`,
+          color: palette.bone,
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 4, color: "#a1a1a6" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, letterSpacing: 4, color: palette.bone2 }}>
           <span>FREELANCE WEB &amp; SAAS AGENCY · EST. {site.founded}</span>
           <span>{profile.location.toUpperCase()}</span>
         </div>
@@ -40,7 +41,7 @@ export default function OpenGraphImage() {
               key={i}
               d={l.d}
               transform={`translate(${l.x} 0)`}
-              stroke="#f5f5f7"
+              stroke={palette.bone}
               strokeWidth="9"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -48,8 +49,8 @@ export default function OpenGraphImage() {
           ))}
         </svg>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <span style={{ fontSize: 34, color: "#f5f5f7" }}>{site.tagline.charAt(0).toUpperCase() + site.tagline.slice(1)}</span>
-          <span style={{ fontSize: 22, letterSpacing: 4, color: "#ff8a4c" }}>FOUNDED BY {profile.name.toUpperCase()}</span>
+          <span style={{ fontSize: 34, color: palette.bone }}>{site.tagline.charAt(0).toUpperCase() + site.tagline.slice(1)}</span>
+          <span style={{ fontSize: 22, letterSpacing: 4, color: palette.ember }}>FOUNDED BY {profile.name.toUpperCase()}</span>
         </div>
       </div>
     ),

@@ -355,11 +355,11 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                   <div
                     className={cn(
                       "w-full max-w-[560px] rounded-xl border px-5 py-4 text-left",
-                      serious ? "border-[#ffb35c]/60 bg-[#1a1208]/90" : "border-line-strong bg-ink/70",
+                      serious ? "border-ember/60 bg-ink-3/90" : "border-line-strong bg-ink/70",
                     )}
                   >
-                    <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[#ffc98f]">
-                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[#ffb35c]" />
+                    <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-peach">
+                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-ember" />
                       Heads up: your device may not show this site correctly
                     </p>
                     <ul className="mt-2 flex flex-col gap-1 text-sm leading-relaxed text-bone-2">
@@ -372,7 +372,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                         <button
                           type="button"
                           onClick={() => setAcknowledged(true)}
-                          className="rounded-full bg-bone px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-ink transition-colors hover:bg-glaze hover:text-bone"
+                          className="rounded-full bg-bone px-4 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-ink transition-colors hover:bg-glaze"
                         >
                           Continue anyway
                         </button>

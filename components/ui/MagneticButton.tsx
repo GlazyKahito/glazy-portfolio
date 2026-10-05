@@ -61,9 +61,9 @@ export function MagneticButton({
   const classes = cn(
     "group relative inline-flex items-center justify-center gap-3 overflow-hidden rounded-full font-mono uppercase tracking-[0.18em] transition-colors duration-500",
     size === "md" ? "h-12 px-6 text-[11px]" : "h-14 px-8 text-xs",
-    variant === "primary" && "bg-bone text-ink hover:bg-glaze hover:text-bone",
+    variant === "primary" && "bg-bone text-ink hover:bg-glaze",
     variant === "ghost" && "border border-line-strong text-bone hover:border-bone",
-    variant === "glaze" && "bg-glaze text-bone hover:bg-bone hover:text-ink",
+    variant === "glaze" && "bg-glaze text-ink hover:bg-bone",
     className,
   );
 

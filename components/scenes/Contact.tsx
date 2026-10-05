@@ -9,7 +9,6 @@ import { footage } from "@/data/scenes";
 import { profile } from "@/data/profile";
 import { site } from "@/data/site";
 import { setLite, useLite } from "@/lib/capability";
-import { gotoChapter } from "@/lib/deck";
 import { cn } from "@/lib/utils";
 
 export function CopyEmail() {
@@ -46,10 +45,10 @@ function Socials() {
               className={cn(panel, "group flex items-center justify-between px-5 py-4 transition-colors hover:bg-white/[0.08]")}
             >
               <span>
-                <span className="block font-mono text-[10px] uppercase tracking-[0.2em] text-bone-2">{s.label}</span>
+                <span className="block font-mono text-[10px] uppercase tracking-[0.2em] text-bone/75">{s.label}</span>
                 <span className="mt-1 block text-base text-bone">{s.handle}</span>
               </span>
-              <ArrowUpRight className="h-4 w-4 text-bone-2 transition-transform duration-500 ease-out-expo group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-bone" />
+              <ArrowUpRight className="h-4 w-4 text-bone/75 transition-transform duration-500 ease-out-expo group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-bone" />
             </a>
           </li>
         );
@@ -67,26 +66,27 @@ function LiteToggle() {
   );
 }
 
-function Footer({ onTop }: { onTop?: () => void }) {
+/**
+ * The colophon. Its phrases wrap as whole phrases (never a name split over two
+ * lines). In the deck, the dock's prompt already offers the way back to the start.
+ */
+function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="flex flex-col gap-4 border-t border-white/15 pt-5 font-mono text-[10px] uppercase tracking-[0.18em] text-bone-2 sm:text-[11px] md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-4">
-        <span className="block w-14 text-bone">
+    <footer className="flex flex-col gap-4 border-t border-white/15 pt-5 font-mono text-[10px] uppercase tracking-[0.18em] text-bone/75 sm:text-[11px] lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-start gap-4 lg:items-center">
+        <span className="mt-0.5 block w-14 shrink-0 text-bone lg:mt-0">
           <Wordmark strokeWidth={10} />
         </span>
-        <span>
-          © {year} {site.name}, a freelance web &amp; SaaS agency · Founded by {profile.name}
-        </span>
+        <p className="flex flex-wrap gap-x-[1ch]">
+          <span className="whitespace-nowrap">© {year} {site.name},</span>
+          <span className="whitespace-nowrap">a freelance web &amp; SaaS agency</span>
+          <span className="whitespace-nowrap">· Founded by {profile.name}</span>
+        </p>
       </div>
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-        <span>Footage: Mixkit ({Object.keys(footage).length} clips)</span>
+        <span className="whitespace-nowrap">Footage: Mixkit ({Object.keys(footage).length} clips)</span>
         <LiteToggle />
-        {onTop && (
-          <button type="button" onClick={onTop} className="hover:text-bone">
-            Back to the start ↑
-          </button>
-        )}
       </div>
     </footer>
   );
@@ -95,7 +95,7 @@ function Footer({ onTop }: { onTop?: () => void }) {
 /** 06 Say hello — the last scene of the home deck. */
 export function ContactScene({ play }: { play: boolean }) {
   return (
-    <div className="container-x relative flex min-h-full flex-col justify-end pb-24 pt-[calc(var(--nav-height)+1.5rem)]">
+    <div className="container-x relative flex min-h-full flex-col justify-end pb-[var(--dock-clear)] pt-[calc(var(--nav-height)+1.5rem)]">
       <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-10">
         <div>
           <Kicker number="06" label="Say hello" play={play} />
@@ -105,9 +105,9 @@ export function ContactScene({ play }: { play: boolean }) {
             delay={0.1}
             text="Let's build something."
             accent={["something."]}
-            className="mt-5 font-display text-[clamp(3rem,min(9vw,14vh),9.5rem)] leading-[0.86] tracking-[-0.035em] text-bone"
+            className="legible mt-5 font-display text-[clamp(3rem,min(9vw,14vh),9.5rem)] leading-[0.86] tracking-[-0.035em] text-bone"
           />
-          <Rise play={play} delay={0.5} as="p" className="mt-6 max-w-xl text-lg leading-relaxed text-bone/85">
+          <Rise play={play} delay={0.5} as="p" className="legible mt-6 max-w-xl text-lg leading-relaxed text-bone/90">
             Send a brief, an idea, or a hello. Every message is read, and every brief gets a reply.
           </Rise>
           <Rise play={play} delay={0.65} className="mt-8 flex flex-wrap gap-3">
@@ -123,8 +123,8 @@ export function ContactScene({ play }: { play: boolean }) {
         <Rise play={play} delay={0.8}>
           <Socials />
         </Rise>
-        <Rise play={play} delay={0.9}>
-          <Footer onTop={() => gotoChapter("intro")} />
+        <Rise play={play} delay={0.9} className="legible">
+          <Footer />
         </Rise>
       </div>
     </div>
@@ -134,11 +134,11 @@ export function ContactScene({ play }: { play: boolean }) {
 /** The same ending for project pages, in normal page flow. */
 export function ContactFooter() {
   return (
-    <section aria-labelledby="contact-title" className="container-x relative pb-8 pt-24 md:pt-32">
+    <section aria-labelledby="contact-title" className="container-x relative pb-[var(--dock-clear)] pt-24 md:pt-32">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-10">
         <div>
           <h2 id="contact-title" className="font-display text-[clamp(3rem,7vw,7rem)] leading-[0.9] tracking-[-0.03em] text-bone">
-            Let&apos;s build <span className="italic text-bone-2">something.</span>
+            Let&apos;s build <span className="italic text-peach">something.</span>
           </h2>
           <div className="mt-8 flex flex-wrap gap-3">
             <a

@@ -38,3 +38,18 @@ export function prettyUrl(href: string) {
 export function hsl(hue: number, s = 70, l = 60, a = 1) {
   return `hsl(${hue} ${s}% ${l}% / ${a})`;
 }
+
+/**
+ * One warm palette: a project's hue folded into the dusk band, from ember red
+ * (8°) to amber (42°). Hues already in the band keep their place; any other
+ * (a blue, a green, a violet) lands somewhere in it, the same place every
+ * time, so per-project tints keep some variety without leaving the palette.
+ * The data keeps each project's own hue.
+ */
+export function warmHue(hue: number) {
+  const h = ((Math.round(hue) % 360) + 360) % 360;
+  return h >= 8 && h <= 42 ? h : 8 + ((h * 7) % 35);
+}
+
+/** A project's tint, always inside the warm band (see `warmHue`). */
+export const tint = (hue: number, s = 70, l = 60, a = 1) => hsl(warmHue(hue), s, l, a);
