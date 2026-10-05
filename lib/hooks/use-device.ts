@@ -2,48 +2,24 @@
 
 import { useSyncExternalStore } from "react";
 
-export type DeviceTier = "high" | "mid" | "low";
-
 export interface DeviceProfile {
-  tier: DeviceTier;
   reducedMotion: boolean;
   touch: boolean;
-  webgl: boolean;
   /** True on the server and during hydration. Treat as "unknown, be conservative". */
   pending: boolean;
 }
 
 const SERVER_PROFILE: DeviceProfile = {
-  tier: "mid",
   reducedMotion: false,
   touch: false,
-  webgl: false,
   pending: true,
 };
 
-function detectWebGL(): boolean {
-  try {
-    const canvas = document.createElement("canvas");
-    return !!(canvas.getContext("webgl2") || canvas.getContext("webgl"));
-  } catch {
-    return false;
-  }
-}
-
+/** Two media queries: cheap enough to run during hydration (no WebGL probing here; see lib/capability.ts). */
 function detect(): DeviceProfile {
-  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const touch = window.matchMedia("(hover: none), (pointer: coarse)").matches;
-  const webgl = detectWebGL();
-  const cores = nav.hardwareConcurrency ?? 4;
-  const memory = nav.deviceMemory ?? 4;
-  const saveData = nav.connection?.saveData ?? false;
-
-  let tier: DeviceTier = "high";
-  if (!webgl || saveData || cores <= 2 || memory <= 2) tier = "low";
-  else if (cores <= 4 || memory <= 4 || (touch && window.innerWidth < 900)) tier = "mid";
-
-  return { tier, reducedMotion, touch, webgl, pending: false };
+  return { reducedMotion, touch, pending: false };
 }
 
 let cached: DeviceProfile | null = null;
@@ -98,4 +74,14 @@ export function useMounted() {
     () => true,
     () => false,
   );
+}
+
+/** Run once the browser is idle (or after `timeout` ms at the latest). Returns a cancel function. */
+export function onIdle(cb: () => void, timeout = 1200): () => void {
+  if (typeof window.requestIdleCallback === "function") {
+    const id = window.requestIdleCallback(cb, { timeout });
+    return () => window.cancelIdleCallback(id);
+  }
+  const id = window.setTimeout(cb, Math.min(timeout, 200));
+  return () => window.clearTimeout(id);
 }

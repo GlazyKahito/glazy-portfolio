@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Cursor } from "@/components/ui/Cursor";
 import { LagWatch } from "@/components/ui/LagWatch";
-import { Nimbus } from "@/components/ui/Nimbus";
+import { LazyNimbus } from "@/components/ui/LazyNimbus";
 import { Providers } from "@/components/ui/Providers";
 import { Header } from "@/components/navigation/Header";
 import { site } from "@/data/site";
@@ -95,10 +95,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body>
-        {/* Lite mode is applied before the first paint, so a weak machine never starts on the heavy version. */}
+        {/* Lite mode is applied before the first paint, so a weak machine never starts on the heavy version.
+            So is deck mode on the home page (no scrollbar gutter that vanishes on hydration). */}
         <script
           dangerouslySetInnerHTML={{
-            __html: "try{if(localStorage.getItem('glazy:lite')==='1')document.documentElement.dataset.lite='true'}catch(e){}",
+            __html:
+              "try{if(localStorage.getItem('glazy:lite')==='1')document.documentElement.dataset.lite='true'}catch(e){}if(location.pathname==='/')document.documentElement.classList.add('deck-mode')",
           }}
         />
         <Providers>
@@ -114,7 +116,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Cursor />
           <LagWatch />
-          <Nimbus />
+          <LazyNimbus />
         </Providers>
       </body>
     </html>

@@ -1,7 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { flushSync } from "react-dom";
 import { AboutScene, BuildingScene, ExperienceScene, IntroScene, StackScene } from "@/components/scenes/ChapterScenes";
 import { ContactScene } from "@/components/scenes/Contact";
 import { DepthPoster } from "@/components/scenes/DepthPoster";
@@ -12,11 +13,11 @@ import { ServicesScene } from "@/components/scenes/ServicesScene";
 import { useIntro } from "@/components/ui/Intro";
 import { conceptProjects, featuredProjects as work } from "@/data/projects";
 import { ConceptsScene } from "@/components/scenes/ConceptsScene";
-import { chapterById, chapterHash, chapterHashes, chapters, type ChapterId, type TransitionStyle } from "@/data/scenes";
+import { chapterById, chapterHash, chapterHashes, chapters, type Chapter, type ChapterId, type TransitionStyle } from "@/data/scenes";
 import { GOTO_EVENT, getDeck, setDeck, type GotoDetail } from "@/lib/deck";
 import { gsap } from "@/lib/gsap";
 import { useLite } from "@/lib/capability";
-import { useDevice } from "@/lib/hooks/use-device";
+import { onIdle, useDevice } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -32,28 +33,62 @@ interface Step {
   /** Short label for the progress rail. */
   label: string;
   render: (play: boolean) => ReactNode;
+  /** Plain markup for the scene before it is mounted: its heading and links, for crawlers and no-JS. */
+  stub: () => ReactNode;
 }
 
+const heading = (text: string) =>
+  function Heading() {
+    return <h2>{text}</h2>;
+  };
+
 const STEPS: Step[] = [
-  { key: "intro", chapter: "intro", axis: "y", label: "GLAZY", render: (p) => <IntroScene play={p} /> },
-  { key: "services", chapter: "services", axis: "y", label: "What we make", render: (p) => <ServicesScene play={p} /> },
+  { key: "intro", chapter: "intro", axis: "y", label: "GLAZY", render: (p) => <IntroScene play={p} />, stub: heading("GLAZY") },
+  { key: "services", chapter: "services", axis: "y", label: "What we make", render: (p) => <ServicesScene play={p} />, stub: heading("What we make") },
   ...work.map<Step>((project, i) => ({
     key: `work-${project.slug}`,
     chapter: "work",
     axis: i === 0 ? "y" : "x",
     label: project.title,
     render: (p) => <ProjectScene project={project} index={i} play={p} />,
+    stub: () => (
+      <>
+        <h2>{project.title}</h2>
+        <p>{project.tagline}</p>
+        {project.caseStudy !== false && <a href={`/projects/${project.slug}`}>Open case study</a>}
+      </>
+    ),
   })),
   ...(conceptProjects.length
-    ? [{ key: "work-concepts", chapter: "work", axis: "x", label: "Concepts", render: (p) => <ConceptsScene play={p} /> } satisfies Step]
+    ? [
+        {
+          key: "work-concepts",
+          chapter: "work",
+          axis: "x",
+          label: "Concepts",
+          render: (p) => <ConceptsScene play={p} />,
+          stub: () => (
+            <>
+              <h2>Concepts</h2>
+              <ul>
+                {conceptProjects.map((p) => (
+                  <li key={p.slug}>
+                    <a href={`/projects/${p.slug}`}>{p.title}</a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ),
+        } satisfies Step,
+      ]
     : []),
-  { key: "building", chapter: "building", axis: "y", label: "In the works", render: (p) => <BuildingScene play={p} /> },
-  { key: "about", chapter: "about", axis: "y", label: "The founder", render: (p) => <AboutScene play={p} /> },
-  { key: "experience", chapter: "about", axis: "x", label: "Experience", render: (p) => <ExperienceScene play={p} /> },
-  { key: "recruit", chapter: "about", axis: "x", label: "For recruiters", render: (p) => <RecruiterScene play={p} /> },
-  { key: "stack", chapter: "stack", axis: "y", label: "The toolkit", render: (p) => <StackScene play={p} /> },
-  { key: "start", chapter: "contact", axis: "y", label: "Start a project", render: (p) => <StartScene play={p} /> },
-  { key: "contact", chapter: "contact", axis: "x", label: "Say hello", render: (p) => <ContactScene play={p} /> },
+  { key: "building", chapter: "building", axis: "y", label: "In the works", render: (p) => <BuildingScene play={p} />, stub: heading("In the works") },
+  { key: "about", chapter: "about", axis: "y", label: "The founder", render: (p) => <AboutScene play={p} />, stub: heading("The founder") },
+  { key: "experience", chapter: "about", axis: "x", label: "Experience", render: (p) => <ExperienceScene play={p} />, stub: heading("Experience and education") },
+  { key: "recruit", chapter: "about", axis: "x", label: "For recruiters", render: (p) => <RecruiterScene play={p} />, stub: heading("For recruiters") },
+  { key: "stack", chapter: "stack", axis: "y", label: "The toolkit", render: (p) => <StackScene play={p} />, stub: heading("The toolkit") },
+  { key: "start", chapter: "contact", axis: "y", label: "Start a project", render: (p) => <StartScene play={p} />, stub: heading("Start a project") },
+  { key: "contact", chapter: "contact", axis: "x", label: "Say hello", render: (p) => <ContactScene play={p} />, stub: heading("Say hello") },
 ];
 
 const N = STEPS.length;
@@ -96,11 +131,14 @@ function blindsClip(n: number, p: number, fromRight = false) {
 
 const MOSAIC = { cols: 16, rows: 9 };
 
+/** State update that mounts scene i (a no-op when it already is). */
+const mountUpdate = (i: number) => (m: ReadonlySet<number>) => (m.has(i) ? m : new Set(m).add(i));
+
 /** Put the transition overlays away once a move has finished. */
 function resetFx(glitch: HTMLElement | null, burn: HTMLElement | null, flash: HTMLElement | null, mosaic: HTMLElement | null) {
   if (glitch) {
     gsap.set(glitch, { autoAlpha: 0 });
-    glitch.querySelectorAll<HTMLElement>("[data-tear]").forEach((t) => (t.style.opacity = "0"));
+    glitch.querySelectorAll<HTMLElement>("[data-tear],[data-tint]").forEach((t) => (t.style.opacity = "0"));
   }
   if (burn) gsap.set(burn, { autoAlpha: 0 });
   if (flash) gsap.set(flash, { autoAlpha: 0 });
@@ -158,6 +196,209 @@ function Emblem({ mood }: { mood: string }) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Pieces that change on their own, so the deck does not re-render     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A scene's content. Only the current scene, its neighbours and the scenes
+ * already visited are mounted; the rest are plain markup (their heading and
+ * links) until the visitor is about to reach them. Memoised: a move only
+ * re-renders the scenes whose `play` or `mounted` changed.
+ */
+const SceneBody = memo(function SceneBody({ i, mounted, play }: { i: number; mounted: boolean; play: boolean }) {
+  const s = STEPS[i];
+  if (mounted) return s.render(play);
+  return (
+    <div data-stub className="sr-only">
+      {s.stub()}
+    </div>
+  );
+});
+
+/** One chapter's footage layer (or the opening's depth poster). Memoised for the same reason. */
+const FootageLayer = memo(function FootageLayer({
+  chapter: c,
+  load,
+  play,
+  urgent,
+  active,
+  reveal,
+  register,
+  onReady,
+  onProgress,
+}: {
+  chapter: Chapter;
+  load: boolean;
+  play: boolean;
+  urgent: boolean;
+  active: boolean;
+  reveal: boolean;
+  register: (c: ChapterId, el: HTMLDivElement | null) => void;
+  onReady: (c: ChapterId) => void;
+  onProgress: (c: ChapterId, p: number) => void;
+}) {
+  return (
+    <div
+      ref={(el) => register(c.id, el)}
+      aria-hidden
+      className="absolute inset-0 will-change-transform"
+      style={{ visibility: c.id === "intro" ? "visible" : "hidden" }}
+    >
+      {c.depth ? (
+        <DepthPoster active={active} reveal={reveal} onReady={() => onReady(c.id)} />
+      ) : (
+        <>
+          <SceneVideo name={c.footage} load={load} play={play} urgent={urgent} onReady={() => onReady(c.id)} onProgress={(p) => onProgress(c.id, p)} />
+          {/* Legibility: a cinematic grade, darker where text sits. */}
+          <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_15%_60%,rgb(0_0_0/0.62),transparent_60%),linear-gradient(to_top,rgb(0_0_0/0.55),transparent_45%),linear-gradient(to_bottom,rgb(0_0_0/0.35),transparent_25%)]" />
+        </>
+      )}
+    </div>
+  );
+});
+
+/** The chapter's loader, shown only while its footage is not ready yet. It polls its own progress. */
+function ChapterLoader({ chapter: id, progressOf }: { chapter: ChapterId | null; progressOf: (c: ChapterId) => number }) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    if (!id) return;
+    const tick = () => setProgress(progressOf(id));
+    const first = window.setTimeout(tick, 0);
+    const t = window.setInterval(tick, 150);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(t);
+    };
+  }, [id, progressOf]);
+  const c = id ? chapterById(id) : null;
+  return (
+    <AnimatePresence>
+      {c && (
+        <motion.div
+          key="loader"
+          role="status"
+          className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black/70 backdrop-blur-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="relative h-20 w-20">
+            <svg viewBox="0 0 80 80" className="absolute inset-0 -rotate-90" aria-hidden>
+              <circle cx="40" cy="40" r="36" fill="none" stroke="rgb(245 245 247 / 0.12)" strokeWidth="2" />
+              <circle cx="40" cy="40" r="36" fill="none" stroke="#f5f5f7" strokeWidth="2" strokeLinecap="round" strokeDasharray={`${Math.max(0.04, progress) * 226} 226`} className="transition-[stroke-dasharray] duration-300" />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center font-mono text-xs tabular-nums text-bone">{Math.round(progress * 100)}%</span>
+          </div>
+          <div className="text-center">
+            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-bone-2">Loading chapter {c.number}</p>
+            <p className="mt-2 font-display text-3xl text-bone">{c.depth ? "4K poster" : "4K footage"}</p>
+          </div>
+          <Emblem mood={c.mood} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/** Progress rail: how far you are, and where. Never what comes next. */
+function Rail({ index, arrived, onGo, visited }: { index: number; arrived: boolean; onGo: (i: number) => void; visited: { c: Chapter; i: number }[] }) {
+  const [hover, setHover] = useState(false);
+  // The label shows while moving and for a moment after arriving, then steps aside (hover brings it back).
+  const [hold, setHold] = useState({ index, on: true });
+  if (hold.index !== index) setHold({ index, on: true });
+  useEffect(() => {
+    if (!hold.on || !arrived) return;
+    const t = window.setTimeout(() => setHold((h) => ({ ...h, on: false })), 2600);
+    return () => window.clearTimeout(t);
+  }, [hold.on, arrived, index]);
+  const show = !arrived || hold.on || hover;
+
+  const step = STEPS[index];
+  const chapter = chapterById(step.chapter);
+  const label = step.chapter === "work" ? `${chapter.number} ${chapter.label} · ${step.label}` : `${chapter.number} ${step.label}`;
+
+  return (
+    <nav
+      aria-label="Progress"
+      onPointerEnter={() => setHover(true)}
+      onPointerLeave={() => setHover(false)}
+      className="pointer-events-none absolute right-[max(1rem,calc(var(--gutter)-1.5rem))] top-1/2 z-10 hidden h-[46vh] -translate-y-1/2 md:block"
+    >
+      <div aria-hidden className="pointer-events-auto absolute -inset-x-3 inset-y-0" />
+      <div className="relative h-full w-px bg-white/15">
+        <div data-progress-fill className="absolute inset-x-0 top-0 h-full origin-top bg-bone" style={{ transform: `scaleY(0)` }} />
+        {visited.map(({ c, i }) => (
+          <button
+            key={c.id}
+            type="button"
+            aria-label={`Back to ${c.label}`}
+            onClick={() => onGo(i)}
+            className="pointer-events-auto absolute left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-bone/70 bg-black/60 transition-transform hover:scale-125"
+            style={{ top: `${(i / (N - 1)) * 100}%` }}
+          />
+        ))}
+        {/* The label travels with a transform: a full-height track moved by a share of its own height. */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          initial={false}
+          animate={{ y: `${(index / (N - 1)) * 100}%` }}
+          transition={{ duration: DURATION, ease: ease.inOutQuart }}
+        >
+          <motion.div
+            className="absolute right-4 top-0 whitespace-nowrap rounded-full border border-white/10 bg-black/45 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-bone backdrop-blur-xl"
+            initial={false}
+            animate={{ opacity: show ? 1 : 0, x: show ? 0 : 6 }}
+            transition={{ duration: 0.5 }}
+            style={{ translateY: "-50%" }}
+          >
+            {label}
+          </motion.div>
+        </motion.div>
+      </div>
+    </nav>
+  );
+}
+
+/** Continue: appears once the scene has loaded and played in. */
+function ContinuePrompt({ index, play, hidden, onGo }: { index: number; play: boolean; hidden: boolean; onGo: (i: number) => void }) {
+  const [shownAt, setShownAt] = useState(-1);
+  useEffect(() => {
+    if (!play) return;
+    const t = window.setTimeout(() => setShownAt(index), 1500);
+    return () => window.clearTimeout(t);
+  }, [play, index]);
+  const show = play && shownAt === index && !hidden;
+  const step = STEPS[index];
+  const last = index === N - 1;
+  const nextAxis = last ? "y" : STEPS[index + 1].axis;
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.button
+          key={`prompt-${index}`}
+          type="button"
+          onClick={() => onGo(last ? 0 : index + 1)}
+          className="deck-prompt absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] py-2.5 pl-5 pr-2.5 text-sm text-bone shadow-[0_10px_40px_-10px_rgb(0_0_0/0.6)] backdrop-blur-md transition-colors hover:bg-white/[0.16] md:bottom-8"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.6, ease: ease.outExpo }}
+        >
+          <span>{last ? "Back to the start" : step.chapter === "work" && nextAxis === "x" ? "Next project" : "Continue"}</span>
+          <span className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-bone text-ink", !last && "[animation:nudge_1.8s_ease-in-out_infinite]")}>
+            <svg viewBox="0 0 16 16" className={cn("h-3.5 w-3.5", last ? "-rotate-90" : nextAxis === "x" ? "" : "rotate-90")} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M3 8h10M9 4l4 4-4 4" />
+            </svg>
+          </span>
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Deck                                                                 */
 /* ------------------------------------------------------------------ */
 
@@ -170,8 +411,11 @@ function Emblem({ mood }: { mood: string }) {
  *   skipped and the next scene is never glimpsed early.
  * - Chapters arrive with their own transition (iris, rise, zoom, doors,
  *   wipe) and their own title card; projects slide in sideways.
- * - Footage loads a chapter ahead. If a chapter's 4K footage is not ready
- *   when you get there, its loader holds the door until it is.
+ * - Only what is needed is mounted and loaded: the scene on screen, the next
+ *   one (once the opening has played and the browser is idle), and the ones
+ *   already visited. A jump (rail, menu, link) mounts its target first.
+ * - Footage loads a chapter ahead, after the opening. If a chapter's 4K
+ *   footage is not ready when you get there, its loader holds the door until it is.
  */
 export function SceneDeck() {
   const { done } = useIntro();
@@ -179,33 +423,28 @@ export function SceneDeck() {
   const lite = useLite();
   const [index, setIndex] = useState(0);
   const [arrived, setArrived] = useState(true);
-  const [prompt, setPrompt] = useState(false);
-  const [loader, setLoader] = useState<{ chapter: ChapterId; progress: number } | null>(null);
+  const [waiting, setWaiting] = useState<ChapterId | null>(null);
   const [card, setCard] = useState<ChapterId | null>(null);
-  const [ready, setReady] = useState<Partial<Record<ChapterId, boolean>>>({});
-  const [extraLoad, setExtraLoad] = useState<Set<ChapterId>>(() => new Set(["intro", "services"]));
+  const [extraLoad, setExtraLoad] = useState<ReadonlySet<ChapterId>>(() => new Set());
   const [visitedSteps, setVisitedSteps] = useState<number[]>([0]);
+  const [mounted, setMounted] = useState<ReadonlySet<number>>(() => new Set([0]));
+  /** The opening has played and the browser has been idle: now the next chapter may load. */
+  const [warm, setWarm] = useState(false);
+  const [projectCard, setProjectCard] = useState<{ n: number; title: string; hue: number } | null>(null);
 
   const lock = useRef(false);
   const quietUntil = useRef(0);
   const indexRef = useRef(0);
-  const readyRef = useRef(ready);
+  const readyRef = useRef<Partial<Record<ChapterId, boolean>>>({});
   const bgRefs = useRef<Partial<Record<ChapterId, HTMLDivElement | null>>>({});
   const sceneRefs = useRef<(HTMLElement | null)[]>([]);
-  const progressFill = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const sweep = useRef<HTMLDivElement>(null);
   const glitchFx = useRef<HTMLDivElement>(null);
   const burnFx = useRef<HTMLDivElement>(null);
   const flashFx = useRef<HTMLDivElement>(null);
   const mosaicFx = useRef<HTMLDivElement>(null);
-  const [railHold, setRailHold] = useState(true);
-  const [railHover, setRailHover] = useState(false);
-  const [projectCard, setProjectCard] = useState<{ n: number; title: string; hue: number } | null>(null);
   const loaderProgress = useRef<Partial<Record<ChapterId, number>>>({});
-
-  useEffect(() => {
-    readyRef.current = ready;
-  }, [ready]);
 
   const step = STEPS[index];
   const chapter = chapterById(step.chapter);
@@ -214,16 +453,53 @@ export function SceneDeck() {
   /* Footage bookkeeping ------------------------------------------------ */
 
   const markReady = useCallback((c: ChapterId) => {
-    setReady((r) => (r[c] ? r : { ...r, [c]: true }));
+    readyRef.current[c] = true;
     if (c === "intro") setDeck({ assets: { loaded: 1, total: 1, label: "The ridge at dusk" } });
   }, []);
+  const onProgress = useCallback((c: ChapterId, p: number) => {
+    loaderProgress.current[c] = p;
+  }, []);
+  const progressOf = useCallback((c: ChapterId) => loaderProgress.current[c] ?? 0, []);
+  const registerBg = useCallback((c: ChapterId, el: HTMLDivElement | null) => {
+    bgRefs.current[c] = el;
+  }, []);
 
-  // Footage loads for the current chapter and its neighbours (and stays loaded once fetched).
-  const near = useMemo(() => {
+  // Footage loads for the chapter on screen and, once warm, the next one; chapters stay loaded once fetched.
+  const loadable = useMemo(() => {
     const ci = chapters.findIndex((c) => c.id === STEPS[index].chapter);
-    return new Set([chapters[ci - 1]?.id, chapters[ci].id, chapters[ci + 1]?.id].filter(Boolean) as ChapterId[]);
-  }, [index]);
-  const loadable = useMemo(() => new Set([...near, ...extraLoad]), [near, extraLoad]);
+    const ids = new Set<ChapterId>(extraLoad);
+    ids.add(chapters[ci].id);
+    if (warm && chapters[ci + 1]) ids.add(chapters[ci + 1].id);
+    return ids;
+  }, [index, warm, extraLoad]);
+
+  // Warm up once the opening has played in and the main thread is idle.
+  useEffect(() => {
+    if (!done || warm) return;
+    let cancel = () => {};
+    const t = window.setTimeout(() => {
+      cancel = onIdle(() => setWarm(true), 2500);
+    }, 2600);
+    return () => {
+      window.clearTimeout(t);
+      cancel();
+    };
+  }, [done, warm]);
+
+  /* Mounting ------------------------------------------------------------- */
+
+  /** Mount a scene now (before a move to it), if it is still a stub. */
+  const ensureMounted = useCallback((i: number) => {
+    if (sceneRefs.current[i]?.querySelector(":scope > [data-stub]")) flushSync(() => setMounted(mountUpdate(i)));
+  }, []);
+
+  // Once warm and settled, mount the neighbours in idle time (one per idle period, interruptible).
+  useEffect(() => {
+    if (!warm || !arrived) return;
+    const next = [index + 1, index - 1].find((i) => i >= 0 && i < N && !mounted.has(i));
+    if (next === undefined) return;
+    return onIdle(() => startTransition(() => setMounted(mountUpdate(next))), 2000);
+  }, [warm, arrived, index, mounted]);
 
   /* Transitions ---------------------------------------------------------- */
 
@@ -231,16 +507,15 @@ export function SceneDeck() {
     (c: ChapterId) =>
       new Promise<void>((resolve) => {
         if (readyRef.current[c]) return resolve();
-        setExtraLoad((s) => new Set(s).add(c));
-        setLoader({ chapter: c, progress: loaderProgress.current[c] ?? 0 });
+        setExtraLoad((s) => (s.has(c) ? s : new Set(s).add(c)));
+        setWaiting(c);
         const start = performance.now();
         const poll = () => {
           if (readyRef.current[c] || performance.now() - start > 15000) {
-            setLoader(null);
+            setWaiting(null);
             resolve();
             return;
           }
-          setLoader({ chapter: c, progress: loaderProgress.current[c] ?? 0 });
           window.setTimeout(poll, 120);
         };
         poll();
@@ -254,12 +529,13 @@ export function SceneDeck() {
       if (lock.current || to === from || to < 0 || to >= N) return;
       lock.current = true;
       setDeck({ moving: true });
-      setPrompt(false);
 
       const fs = STEPS[from];
       const ts = STEPS[to];
       const dir = to > from ? 1 : -1;
       const same = fs.chapter === ts.chapter;
+      // The arriving scene exists before anything moves (a jump may land on a scene not mounted yet).
+      ensureMounted(to);
       await waitForFootage(ts.chapter);
 
       const bgOut = bgRefs.current[fs.chapter]!;
@@ -294,7 +570,6 @@ export function SceneDeck() {
           });
           gsap.set(scOut, { autoAlpha: 0, clearProps: "transform,filter" });
           resetFx(glitchFx.current, burnFx.current, flashFx.current, mosaicFx.current);
-          setRailHold(true);
           indexRef.current = to;
           setIndex(to);
           setArrived(true);
@@ -362,6 +637,7 @@ export function SceneDeck() {
         const plan = glitchPlan();
         const fx = glitchFx.current;
         const tears = fx ? [...fx.querySelectorAll<HTMLElement>("[data-tear]")] : [];
+        const tint = fx?.querySelector<HTMLElement>("[data-tint]") ?? null;
         const frames = 16;
         const start = d * 0.12;
         const span = d * 0.62;
@@ -375,8 +651,11 @@ export function SceneDeck() {
               bgIn.style.clipPath = last ? "inset(0% 0% 0% 0%)" : bandsClip(plan.order.slice(0, shown).map((i) => plan.bands[i]));
               bgIn.style.transform = last ? "" : `translate3d(${rand(-2.5, 2.5)}%, 0, 0) scale(1.02)`;
               bgOut.style.transform = last ? "" : `translate3d(${rand(-1.5, 1.5)}%, 0, 0)`;
-              // Colour breaks on two frames only.
-              bgIn.style.filter = f === 5 || f === 11 ? `hue-rotate(${rand(-70, 70)}deg) saturate(2) contrast(1.25)` : "";
+              // Colour breaks on two frames only: a tinted layer over the cut, never a filter on the footage.
+              if (tint) {
+                tint.style.opacity = f === 5 || f === 11 ? "0.85" : "0";
+                if (f === 5 || f === 11) tint.style.transform = `translate3d(${rand(-6, 6)}%, 0, 0)`;
+              }
               tears.forEach((t) => {
                 const on = !last && Math.random() < 0.7;
                 t.style.opacity = on ? "1" : "0";
@@ -499,9 +778,10 @@ export function SceneDeck() {
       }
 
       // Progress rail.
-      if (progressFill.current) tl.to(progressFill.current, { scaleY: to / (N - 1), ease: "expo.inOut" }, 0);
+      const fill = rootRef.current?.querySelector<HTMLElement>("[data-progress-fill]");
+      if (fill) tl.to(fill, { scaleY: to / (N - 1), ease: "expo.inOut" }, 0);
     },
-    [reducedMotion, lite, waitForFootage],
+    [reducedMotion, lite, waitForFootage, ensureMounted],
   );
 
   /* Input ------------------------------------------------------------- */
@@ -604,71 +884,36 @@ export function SceneDeck() {
     }
   }, [done, go]);
 
-  // The Continue prompt appears once the scene has arrived and played in.
-  useEffect(() => {
-    if (!play) return;
-    const t = window.setTimeout(() => setPrompt(true), 1500);
-    return () => window.clearTimeout(t);
-  }, [play, index]);
-
-  // Page scroll belongs to the deck while it is mounted.
+  // Page scroll belongs to the deck while it is mounted (app/page.tsx also sets this before first paint).
   useEffect(() => {
     const html = document.documentElement;
     html.classList.add("deck-mode");
     return () => html.classList.remove("deck-mode");
   }, []);
 
-  // The rail's label shows while moving and for a moment after arriving, then steps aside (hover brings it back).
-  useEffect(() => {
-    if (!railHold || !arrived) return;
-    const t = window.setTimeout(() => setRailHold(false), 2600);
-    return () => window.clearTimeout(t);
-  }, [railHold, arrived, index]);
-  const showRailLabel = !arrived || railHold || railHover;
-
-  const last = index === N - 1;
-  const nextAxis = last ? "y" : STEPS[index + 1].axis;
-  const railLabel = step.chapter === "work" ? `${chapter.number} ${chapter.label} · ${step.label}` : `${chapter.number} ${step.label}`;
-  const loaderChapter = loader ? chapterById(loader.chapter) : null;
-  const cardChapter = card ? chapterById(card) : null;
-
   const visitedChapterStarts = useMemo(
     () => chapters.map((c) => ({ c, i: firstStepOf(c.id) })).filter(({ i }) => visitedSteps.includes(i)),
     [visitedSteps],
   );
+  const cardChapter = card ? chapterById(card) : null;
 
   return (
     // The deck owns the wheel: Lenis must not cancel it, or scenes taller than the window cannot scroll.
-    <div data-lenis-prevent-wheel className="fixed inset-0 overflow-hidden bg-black">
+    <div ref={rootRef} data-lenis-prevent-wheel className="fixed inset-0 overflow-hidden bg-black">
       {/* Footage, one layer per chapter. */}
       {chapters.map((c) => (
-        <div
+        <FootageLayer
           key={c.id}
-          ref={(el) => {
-            bgRefs.current[c.id] = el;
-          }}
-          aria-hidden
-          className="absolute inset-0 will-change-transform"
-          style={{ visibility: c.id === "intro" ? "visible" : "hidden" }}
-        >
-          {c.depth ? (
-            <DepthPoster active={step.chapter === c.id} reveal={done} onReady={() => markReady(c.id)} />
-          ) : (
-            <>
-              <SceneVideo
-                name={c.footage}
-                load={loadable.has(c.id)}
-                play={card !== null ? card === c.id : step.chapter === c.id}
-                onReady={() => markReady(c.id)}
-                onProgress={(p) => {
-                  loaderProgress.current[c.id] = p;
-                }}
-              />
-              {/* Legibility: a cinematic grade, darker where text sits. */}
-              <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_15%_60%,rgb(0_0_0/0.62),transparent_60%),linear-gradient(to_top,rgb(0_0_0/0.55),transparent_45%),linear-gradient(to_bottom,rgb(0_0_0/0.35),transparent_25%)]" />
-            </>
-          )}
-        </div>
+          chapter={c}
+          load={loadable.has(c.id)}
+          play={card !== null ? card === c.id : step.chapter === c.id}
+          urgent={waiting === c.id || step.chapter === c.id}
+          active={step.chapter === c.id}
+          reveal={done}
+          register={registerBg}
+          onReady={markReady}
+          onProgress={onProgress}
+        />
       ))}
 
       {/* Scenes. Only the current one is visible, focusable and announced. */}
@@ -687,13 +932,19 @@ export function SceneDeck() {
           className="no-scrollbar absolute inset-0 overflow-y-auto overflow-x-hidden outline-none [perspective:1800px]"
           style={{ visibility: i === 0 ? "visible" : "hidden" }}
         >
-          {s.render(i === index && play)}
+          <SceneBody i={i} mounted={mounted.has(i)} play={i === index && play} />
         </section>
       ))}
 
       {/* Transition overlays: a bad signal (glitch), a film burn, and a mosaic grid. Hidden between moves. */}
       <div ref={glitchFx} aria-hidden className="pointer-events-none invisible absolute inset-0 z-[19] overflow-hidden opacity-0">
         <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgb(255_255_255/0.07)_0_1px,transparent_1px_3px)] mix-blend-overlay" />
+        {/* The colour break: shown on two frames of the cut. */}
+        <div
+          data-tint
+          className="absolute -inset-x-[8%] inset-y-0 opacity-0 mix-blend-hue"
+          style={{ background: "linear-gradient(90deg, rgb(255 40 90 / 0.85), rgb(0 230 255 / 0.7) 55%, rgb(255 40 90 / 0.85))" }}
+        />
         {Array.from({ length: 7 }).map((_, i) => (
           <div
             key={i}
@@ -789,89 +1040,15 @@ export function SceneDeck() {
       </AnimatePresence>
 
       {/* The chapter's loader, only if its footage is not ready yet. */}
-      <AnimatePresence>
-        {loaderChapter && loader && (
-          <motion.div
-            key="loader"
-            role="status"
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-6 bg-black/70 backdrop-blur-xl"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="relative h-20 w-20">
-              <svg viewBox="0 0 80 80" className="absolute inset-0 -rotate-90" aria-hidden>
-                <circle cx="40" cy="40" r="36" fill="none" stroke="rgb(245 245 247 / 0.12)" strokeWidth="2" />
-                <circle cx="40" cy="40" r="36" fill="none" stroke="#f5f5f7" strokeWidth="2" strokeLinecap="round" strokeDasharray={`${Math.max(0.04, loader.progress) * 226} 226`} className="transition-[stroke-dasharray] duration-300" />
-              </svg>
-              <span className="absolute inset-0 flex items-center justify-center font-mono text-xs tabular-nums text-bone">{Math.round(loader.progress * 100)}%</span>
-            </div>
-            <div className="text-center">
-              <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-bone-2">Loading chapter {loaderChapter.number}</p>
-              <p className="mt-2 font-display text-3xl text-bone">{loaderChapter.depth ? "4K poster" : "4K footage"}</p>
-            </div>
-            <Emblem mood={loaderChapter.mood} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ChapterLoader chapter={waiting} progressOf={progressOf} />
 
-      {/* Progress rail: how far you are, and where. Never what comes next. */}
-      <nav
-        aria-label="Progress"
-        onPointerEnter={() => setRailHover(true)}
-        onPointerLeave={() => setRailHover(false)}
-        className="pointer-events-none absolute right-[max(1rem,calc(var(--gutter)-1.5rem))] top-1/2 z-10 hidden h-[46vh] -translate-y-1/2 md:block"
-      >
-        <div aria-hidden className="pointer-events-auto absolute -inset-x-3 inset-y-0" />
-        <div className="relative h-full w-px bg-white/15">
-          <div ref={progressFill} className="absolute inset-x-0 top-0 h-full origin-top bg-bone" style={{ transform: `scaleY(0)` }} />
-          {visitedChapterStarts.map(({ c, i }) => (
-            <button
-              key={c.id}
-              type="button"
-              aria-label={`Back to ${c.label}`}
-              onClick={() => go(i)}
-              className="pointer-events-auto absolute left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-bone/70 bg-black/60 transition-transform hover:scale-125"
-              style={{ top: `${(i / (N - 1)) * 100}%` }}
-            />
-          ))}
-          <motion.div
-            className="absolute right-4 whitespace-nowrap rounded-full border border-white/10 bg-black/45 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-bone backdrop-blur-xl"
-            animate={{ top: `${(index / (N - 1)) * 100}%`, opacity: showRailLabel ? 1 : 0, x: showRailLabel ? 0 : 6 }}
-            transition={{ top: { duration: DURATION, ease: ease.inOutQuart }, opacity: { duration: 0.5 }, x: { duration: 0.5 } }}
-            style={{ translateY: "-50%" }}
-          >
-            {railLabel}
-          </motion.div>
-        </div>
-      </nav>
+      <Rail index={index} arrived={arrived} onGo={go} visited={visitedChapterStarts} />
       {/* Mobile: a thin bar along the top. */}
       <div aria-hidden className="absolute inset-x-0 top-0 z-10 h-[2px] bg-white/10 md:hidden">
         <motion.div className="h-full origin-left bg-bone" animate={{ scaleX: index / (N - 1) }} transition={{ duration: DURATION, ease: ease.inOutQuart }} />
       </div>
 
-      {/* Continue: appears once the scene has loaded and played in. */}
-      <AnimatePresence>
-        {prompt && !loader && (
-          <motion.button
-            key={`prompt-${index}`}
-            type="button"
-            onClick={() => go(last ? 0 : index + 1)}
-            className="deck-prompt absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/20 bg-white/[0.08] py-2.5 pl-5 pr-2.5 text-sm text-bone shadow-[0_10px_40px_-10px_rgb(0_0_0/0.6)] backdrop-blur-md transition-colors hover:bg-white/[0.16] md:bottom-8"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.6, ease: ease.outExpo }}
-          >
-            <span>{last ? "Back to the start" : step.chapter === "work" && nextAxis === "x" ? "Next project" : "Continue"}</span>
-            <span className={cn("flex h-8 w-8 items-center justify-center rounded-full bg-bone text-ink", !last && "[animation:nudge_1.8s_ease-in-out_infinite]")}>
-              <svg viewBox="0 0 16 16" className={cn("h-3.5 w-3.5", last ? "-rotate-90" : nextAxis === "x" ? "" : "rotate-90")} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M3 8h10M9 4l4 4-4 4" />
-              </svg>
-            </span>
-          </motion.button>
-        )}
-      </AnimatePresence>
+      <ContinuePrompt index={index} play={play} hidden={waiting !== null} onGo={go} />
 
       <p className="sr-only" aria-live="polite">
         {arrived ? `${chapter.label}${step.chapter === "work" ? `: ${step.label}` : ""}` : ""}

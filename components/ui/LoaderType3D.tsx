@@ -4,10 +4,13 @@ import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { useDevice } from "@/lib/hooks/use-device";
 
-/** Slices of the extrusion, back to front. More slices, smoother sides. */
-const DEPTH = 42;
-/** Depth of each slice, in em of the type size. */
-const STEP = 0.0048;
+/**
+ * Slices of the extrusion, back to front. Each slice is its own 3D layer for the GPU, so there are
+ * few of them; a hairline stroke in the slice's own colour closes the steps between them.
+ */
+const DEPTH = 12;
+/** Depth of each slice, in em of the type size (the same total depth as before: 0.2 em). */
+const STEP = 0.0168;
 
 /** Extrusion colour: lit ember near the face, falling to near-black at the back. */
 const shade = (i: number) => {
@@ -69,7 +72,11 @@ export function LoaderType3D({ progress, settle, flat = false }: { progress: num
         {Array.from({ length: flat ? 0 : DEPTH }, (_, k) => {
           const i = DEPTH - k;
           return (
-            <p key={i} className={`absolute inset-0 ${type}`} style={{ color: shade(i), transform: `translateZ(${(-i * STEP).toFixed(4)}em)` }}>
+            <p
+              key={i}
+              className={`absolute inset-0 ${type}`}
+              style={{ color: shade(i), WebkitTextStroke: `0.007em ${shade(i)}`, transform: `translateZ(${(-i * STEP).toFixed(4)}em)` }}
+            >
               GLAZY
             </p>
           );

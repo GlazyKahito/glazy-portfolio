@@ -71,59 +71,102 @@ function layout(widths: number[], size: number): Point[] {
   return pts;
 }
 
-export function OrbitSystem({ selected, onSelect }: { selected: Skill | null; onSelect: (s: Skill | null) => void }) {
+/**
+ * The toolkit as a slowly turning disc of chips. It turns only while the
+ * scene is on screen (`play`), and stops while the pointer rests on it; the
+ * chips are placed once on mount so they are in place as the scene arrives.
+ * The disc's size comes from a ResizeObserver, never from reading layout
+ * every frame.
+ */
+export function OrbitSystem({ selected, onSelect, play = true }: { selected: Skill | null; onSelect: (s: Skill | null) => void; play?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const { reducedMotion } = useDevice();
   const paused = useRef(false);
   const time = useRef(0);
-  const cache = useRef<{ size: number; points: Point[] } | null>(null);
+  /** Starts the frame loop again (set by the effect below). */
+  const resume = useRef<() => void>(() => {});
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
     let raf = 0;
-    let last = performance.now();
-    const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
-      if (!paused.current && !reducedMotion) time.current += dt;
-      const el = containerRef.current;
-      if (el) {
-        const size = el.clientWidth;
-        if (!cache.current || Math.abs(cache.current.size - size) > 2) {
-          const widths = skills.map((s) => chipRefs.current.get(s.name)?.offsetWidth ?? 90);
-          cache.current = { size, points: layout(widths, size) };
-        }
-        const { points } = cache.current;
-        const c = size / 2;
-        const radius = size * 0.48;
-        const theta = time.current * 0.07;
-        const cosT = Math.cos(theta);
-        const sinT = Math.sin(theta);
-        skills.forEach((skill, i) => {
-          const chip = chipRefs.current.get(skill.name);
-          const p = points[i];
-          if (!chip || !p) return;
-          const x = p.x * cosT - p.y * sinT;
-          const y = p.x * sinT + p.y * cosT;
-          // Depth cue: chips toward the bottom of the disc are nearer the viewer.
-          const depth = (y / radius + 1) / 2;
-          const scale = 0.84 + depth * 0.24;
-          chip.style.transform = `translate(-50%, -50%) translate3d(${c + x}px, ${c + y}px, 0) rotateX(${-TILT}deg) scale(${scale})`;
-          chip.style.opacity = String(0.7 + depth * 0.3);
-          chip.style.zIndex = String(Math.round(depth * 100));
-        });
+    let last = 0;
+    let size = el.clientWidth;
+    let points: Point[] | null = null;
+    const turning = play && !reducedMotion;
+
+    const draw = () => {
+      if (!size) return;
+      if (!points) {
+        const widths = skills.map((s) => chipRefs.current.get(s.name)?.offsetWidth ?? 90);
+        points = layout(widths, size);
       }
+      const c = size / 2;
+      const radius = size * 0.48;
+      const theta = time.current * 0.07;
+      const cosT = Math.cos(theta);
+      const sinT = Math.sin(theta);
+      skills.forEach((skill, i) => {
+        const chip = chipRefs.current.get(skill.name);
+        const p = points![i];
+        if (!chip || !p) return;
+        const x = p.x * cosT - p.y * sinT;
+        const y = p.x * sinT + p.y * cosT;
+        // Depth cue: chips toward the bottom of the disc are nearer the viewer.
+        const depth = (y / radius + 1) / 2;
+        const scale = 0.84 + depth * 0.24;
+        chip.style.transform = `translate(-50%, -50%) translate3d(${c + x}px, ${c + y}px, 0) rotateX(${-TILT}deg) scale(${scale})`;
+        chip.style.opacity = String(0.7 + depth * 0.3);
+        chip.style.zIndex = String(Math.round(depth * 100));
+      });
+    };
+
+    const tick = (now: number) => {
+      if (paused.current) {
+        raf = 0;
+        return;
+      }
+      const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+      last = now;
+      time.current += dt;
+      draw();
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [reducedMotion]);
+    const start = () => {
+      if (!turning || raf) return;
+      last = 0;
+      raf = requestAnimationFrame(tick);
+    };
+    resume.current = start;
+
+    const ro = new ResizeObserver(() => {
+      const next = el.clientWidth;
+      if (Math.abs(next - size) <= 2 && points) return;
+      size = next;
+      points = null;
+      draw();
+    });
+    ro.observe(el);
+    draw();
+    start();
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+      resume.current = () => {};
+    };
+  }, [play, reducedMotion]);
 
   return (
     <div
       className="relative mx-auto aspect-square w-full max-w-[min(680px,72vh)] [perspective:2000px]"
-      onPointerEnter={() => (paused.current = true)}
-      onPointerLeave={() => (paused.current = false)}
+      onPointerEnter={() => {
+        paused.current = true;
+      }}
+      onPointerLeave={() => {
+        paused.current = false;
+        resume.current();
+      }}
     >
       <div
         ref={containerRef}

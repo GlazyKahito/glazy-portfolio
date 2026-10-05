@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowUpRight } from "@/components/ui/MagneticButton";
 import { RevealWords } from "@/components/ui/Reveal";
 import { CompactStack, OrbitSystem, SkillDetail } from "@/components/scenes/Stack";
@@ -19,16 +19,15 @@ import { cn, hsl } from "@/lib/utils";
 /* Shared pieces                                                        */
 /* ------------------------------------------------------------------ */
 
-/** Fade-and-rise that plays when the scene has arrived. */
+/**
+ * Fade-and-rise that plays when the scene has arrived. A CSS transition on
+ * transform and opacity (`.rise` in globals.css), switched by an attribute:
+ * the compositor plays it, and there is nothing to hydrate.
+ */
 export function Rise({ play, delay = 0, className, children, as = "div" }: { play: boolean; delay?: number; className?: string; children: ReactNode; as?: "div" | "p" | "ul" | "li" }) {
-  const Tag = motion[as];
+  const Tag = as;
   return (
-    <Tag
-      className={className}
-      initial={false}
-      animate={play ? { opacity: 1, y: 0 } : { opacity: 0, y: 22 }}
-      transition={{ duration: 1, ease: ease.outExpo, delay: play ? delay : 0 }}
-    >
+    <Tag className={cn("rise", className)} data-on={play ? "" : undefined} style={delay ? ({ "--d": `${delay}s` } as CSSProperties) : undefined}>
       {children}
     </Tag>
   );
@@ -84,8 +83,12 @@ export function PillLink({ children, className, ...rest }: React.AnchorHTMLAttri
 function LocalTime() {
   const [time, setTime] = useState("");
   useEffect(() => {
-    const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false });
-    const tick = () => setTime(fmt.format(new Date()));
+    // India keeps one offset all year (UTC+5:30, no daylight saving), so the clock needs no time-zone
+    // formatter: building one loads the time-zone data, a long task right as the opening hydrates.
+    const tick = () => {
+      const ist = new Date(Date.now() + 330 * 60_000);
+      setTime(`${String(ist.getUTCHours()).padStart(2, "0")}:${String(ist.getUTCMinutes()).padStart(2, "0")}`);
+    };
     tick();
     const id = window.setInterval(tick, 15000);
     return () => window.clearInterval(id);
@@ -180,7 +183,7 @@ export function BuildingScene({ play }: { play: boolean }) {
             <Rise key={item.id} play={play} delay={0.45 + i * 0.12} className={cn(panel, "p-6 md:p-8")}>
               <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-bone-2">
                 <span className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-glaze [animation:pulse-dot_2.4s_ease-out_infinite]" />
+                  <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-glaze" />
                   {STATUS[item.status]}
                 </span>
                 {item.startedAt && <span>Since {item.startedAt}</span>}
@@ -351,7 +354,7 @@ export function StackScene({ play }: { play: boolean }) {
           </Rise>
         </div>
         <Rise play={play} delay={0.3} className="lg:col-span-8">
-          {wide ? <OrbitSystem selected={selected} onSelect={setSelected} /> : <CompactStack selected={selected} onSelect={setSelected} />}
+          {wide ? <OrbitSystem selected={selected} onSelect={setSelected} play={play} /> : <CompactStack selected={selected} onSelect={setSelected} />}
         </Rise>
       </div>
     </div>

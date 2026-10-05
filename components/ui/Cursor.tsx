@@ -30,6 +30,12 @@ export function Cursor() {
     // Current bracket box (left, top, right, bottom), eased toward the goal.
     const box = { l: px - 14, t: py - 14, r: px + 14, b: py + 14 };
     let raf = 0;
+    /** The loop runs while something moves: for a moment after any input, then until the brackets settle. */
+    let activeUntil = 0;
+    const wake = () => {
+      activeUntil = performance.now() + 1500;
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
 
     const selector = "[data-cursor], a, button, [role='button'], summary, label, input, textarea, select, iframe";
     const onMove = (e: PointerEvent) => {
@@ -40,18 +46,27 @@ export function Cursor() {
       hidden = !!el && ["INPUT", "TEXTAREA", "SELECT", "IFRAME"].includes(el.tagName);
       target = hidden ? null : el;
       text = el?.dataset.cursorLabel ?? "";
+      wake();
     };
     const onLeave = () => {
       visible = false;
       if (root.current) root.current.style.opacity = "0";
     };
-    const onDown = () => (pressed = true);
-    const onUp = () => (pressed = false);
+    const onDown = () => {
+      pressed = true;
+      wake();
+    };
+    const onUp = () => {
+      pressed = false;
+      wake();
+    };
 
-    const tick = () => {
+    const tick = (now: number) => {
       let goal: { l: number; t: number; r: number; b: number };
       const lbl = text;
-      if (target && target.isConnected) {
+      // A target that has been hidden (a scene moving away under a still pointer) lets go.
+      if (target && (!target.isConnected || (typeof target.checkVisibility === "function" && !target.checkVisibility({ visibilityProperty: true, opacityProperty: true })))) target = null;
+      if (target) {
         const r = target.getBoundingClientRect();
         const pad = 6;
         goal = { l: r.left - pad, t: r.top - pad, r: r.right + pad, b: r.bottom + pad };
@@ -79,21 +94,30 @@ export function Cursor() {
         label.current.style.opacity = lbl ? "1" : "0";
       }
       // Only show the brackets while they frame something.
-      const framing = visible && !hidden && !!target && target.isConnected;
+      const framing = visible && !hidden && !!target;
       if (root.current) root.current.style.opacity = framing ? "1" : "0";
-      raf = requestAnimationFrame(tick);
+      const settled = Math.abs(goal.l - box.l) + Math.abs(goal.t - box.t) + Math.abs(goal.r - box.r) + Math.abs(goal.b - box.b) < 0.4;
+      // Idle: the pointer is still and the brackets have arrived. Input (or a scroll) wakes the loop.
+      raf = settled && now > activeUntil ? 0 : requestAnimationFrame(tick);
     };
 
+    const opts = { passive: true, capture: true } as const;
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("pointerup", onUp, { passive: true });
+    // Things can move under a still pointer: scrolling, the wheel or keys moving the deck.
+    window.addEventListener("wheel", wake, opts);
+    window.addEventListener("scroll", wake, opts);
+    window.addEventListener("keydown", wake, opts);
     html.addEventListener("mouseleave", onLeave);
-    raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("wheel", wake, opts);
+      window.removeEventListener("scroll", wake, opts);
+      window.removeEventListener("keydown", wake, opts);
       html.removeEventListener("mouseleave", onLeave);
     };
   }, [enabled]);
