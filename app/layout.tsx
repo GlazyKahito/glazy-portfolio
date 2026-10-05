@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { Cursor } from "@/components/ui/Cursor";
+import { Dock } from "@/components/ui/Dock";
 import { LagWatch } from "@/components/ui/LagWatch";
 import { LazyNimbus } from "@/components/ui/LazyNimbus";
 import { Providers } from "@/components/ui/Providers";
 import { Header } from "@/components/navigation/Header";
 import { site } from "@/data/site";
+import { palette } from "@/lib/palette";
 import "./globals.css";
 
 /*
@@ -81,10 +83,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#060505",
+  themeColor: palette.ink,
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
+  // Full bleed on phones with a notch or a home indicator; the header and the dock keep to the safe area.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -114,6 +118,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main id="main" className="relative z-[1]">
             {children}
           </main>
+          <Dock />
           <Cursor />
           <LagWatch />
           <LazyNimbus />
