@@ -8,7 +8,8 @@ import { ContactScene } from "@/components/scenes/Contact";
 import { DepthPoster } from "@/components/scenes/DepthPoster";
 import { RecruiterScene, StartScene } from "@/components/scenes/HireScenes";
 import { ProjectScene } from "@/components/scenes/ProjectScene";
-import { SceneVideo } from "@/components/scenes/SceneVideo";
+import { PUZZLE_DONE } from "@/components/scenes/PuzzleImage";
+import { prefetchClip, SceneVideo } from "@/components/scenes/SceneVideo";
 import { ServicesScene } from "@/components/scenes/ServicesScene";
 import { useIntro } from "@/components/ui/Intro";
 import { conceptProjects, featuredProjects as work } from "@/data/projects";
@@ -135,15 +136,91 @@ const MOSAIC = { cols: 16, rows: 9 };
 /** State update that mounts scene i (a no-op when it already is). */
 const mountUpdate = (i: number) => (m: ReadonlySet<number>) => (m.has(i) ? m : new Set(m).add(i));
 
-/** Put the transition overlays away once a move has finished. */
+/** Put the transition overlays away once a move has finished (opacity only: they keep their rasterised tiles). */
 function resetFx(glitch: HTMLElement | null, burn: HTMLElement | null, flash: HTMLElement | null, mosaic: HTMLElement | null) {
   if (glitch) {
-    gsap.set(glitch, { autoAlpha: 0 });
+    gsap.set(glitch, { opacity: 0 });
     glitch.querySelectorAll<HTMLElement>("[data-tear],[data-tint]").forEach((t) => (t.style.opacity = "0"));
   }
-  if (burn) gsap.set(burn, { autoAlpha: 0 });
+  if (burn) gsap.set(burn, { opacity: 0, clearProps: "transform" });
   if (flash) gsap.set(flash, { autoAlpha: 0 });
   if (mosaic) gsap.set([...mosaic.children], { autoAlpha: 0 });
+}
+
+/* ------------------------------------------------------------------ */
+/* Getting a move ready while the screen is still                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * How much of a chapter's footage is in the page: nothing (the layer is not
+ * displayed), its poster, or its poster and its 4K clip.
+ */
+type Stage = 0 | 1 | 2;
+
+const chapterIndex = (c: ChapterId) => chapters.findIndex((x) => x.id === c);
+
+/**
+ * How long a scene's entrance plays after it arrives (ms). Work done for the
+ * next move (warming a clip, rasterising layers) waits for it, so it never
+ * stalls a frame of the entrance.
+ */
+const settleMs = (i: number) => (STEPS[i].chapter === "work" ? (PUZZLE_DONE + 1.2) * 1000 : 1800);
+
+const frames = (n: number) =>
+  new Promise<void>((resolve) => {
+    const tick = () => (n-- <= 0 ? resolve() : requestAnimationFrame(tick));
+    requestAnimationFrame(tick);
+  });
+
+/** Wait for an event, or give up after `ms`. */
+const eventOrTimeout = (el: EventTarget, type: string, ms: number) =>
+  new Promise<void>((resolve) => {
+    const done = () => {
+      el.removeEventListener(type, done);
+      window.clearTimeout(t);
+      resolve();
+    };
+    const t = window.setTimeout(done, ms);
+    el.addEventListener(type, done);
+  });
+
+/** A clip that has been mounted but has not decoded its first frame yet (its decoder is being set up). */
+const warming = (v: HTMLVideoElement | null | undefined) => !!v && v.readyState < 2 && !v.error;
+
+/**
+ * Pre-rasterisation. When a layer first becomes visible the GPU has to
+ * rasterise it (text, images, gradients) in that very frame; on integrated
+ * graphics that can take a few hundred milliseconds, a frozen frame in the
+ * middle of a move. So the layers a move will show are drawn ahead of time,
+ * while the screen is still, at 0.2% opacity (less than one 8-bit step:
+ * nothing shows) for a few frames, then put back to 0. Composited layers keep
+ * their tiles (as long as their opacity is composited: `will-change: opacity`),
+ * so the move shows them without rasterising anything. A layer hidden with
+ * `visibility` or `display` drops its tiles, which is why the deck hides the
+ * layers near the visitor with opacity alone.
+ *
+ * `inner` elements are shown at full opacity inside the faint layer while it
+ * is drawn (a card's title, the glitch's tear bars), so they are rasterised too.
+ * Returns a function that puts everything back at once (a move starting mid-way).
+ */
+function prime(targets: { el: HTMLElement; inner?: HTMLElement[] }[]): { done: Promise<void>; restore: () => void } {
+  const saved = targets.flatMap(({ el, inner = [] }) => [el, ...inner]).map((n) => ({ n, opacity: n.style.opacity, transition: n.style.transition }));
+  for (const { el, inner = [] } of targets) {
+    for (const n of [el, ...inner]) n.style.transition = "none";
+    el.style.opacity = "0.002";
+    for (const n of inner) n.style.opacity = "1";
+  }
+  let restored = false;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+    // Back at once (no transition), so whatever plays next starts from where it should.
+    for (const { n, opacity } of saved) n.style.opacity = opacity;
+    for (const { n } of saved) void getComputedStyle(n).opacity;
+    for (const { n, transition } of saved) n.style.transition = transition;
+  };
+  // Four frames: the frame that draws the layers cannot be shown before their tiles are rasterised.
+  return { done: frames(4).then(restore), restore };
 }
 
 /* ------------------------------------------------------------------ */
@@ -216,10 +293,14 @@ const SceneBody = memo(function SceneBody({ i, mounted, play }: { i: number; mou
   );
 });
 
-/** One chapter's footage layer (or the opening's depth poster). Memoised for the same reason. */
+/**
+ * One chapter's footage layer (or the opening's depth poster). Memoised for the same reason.
+ * Layers near the visitor stay displayed and are hidden with opacity (they keep their tiles);
+ * the others are not displayed at all, so they hold no GPU memory.
+ */
 const FootageLayer = memo(function FootageLayer({
   chapter: c,
-  load,
+  stage,
   play,
   urgent,
   active,
@@ -229,7 +310,7 @@ const FootageLayer = memo(function FootageLayer({
   onProgress,
 }: {
   chapter: Chapter;
-  load: boolean;
+  stage: Stage;
   play: boolean;
   urgent: boolean;
   active: boolean;
@@ -238,12 +319,13 @@ const FootageLayer = memo(function FootageLayer({
   onReady: (c: ChapterId) => void;
   onProgress: (c: ChapterId, p: number) => void;
 }) {
+  const load = stage === 2 ? true : stage === 1 ? "poster" : false;
   return (
     <div
       ref={(el) => register(c.id, el)}
       aria-hidden
-      className="absolute inset-0 will-change-transform"
-      style={{ visibility: c.id === "intro" ? "visible" : "hidden" }}
+      className="absolute inset-0 [will-change:transform,opacity]"
+      style={{ opacity: c.id === "intro" ? 1 : 0, display: stage ? undefined : "none" }}
     >
       {c.depth ? (
         <DepthPoster active={active} reveal={reveal} onReady={() => onReady(c.id)} />
@@ -302,6 +384,53 @@ function ChapterLoader({ chapter: id, progressOf }: { chapter: ChapterId | null;
     </AnimatePresence>
   );
 }
+
+/**
+ * A chapter's arrival card. The cards of the chapters either side of the
+ * visitor stay mounted, invisible and rasterised ahead of time, so a move
+ * shows one without drawing it from scratch. CSS transitions on opacity and
+ * transform (`.deck-card` in globals.css): in, the card fades up and its
+ * title settles from slightly larger; out, the card fades as it grows.
+ */
+const ChapterCard = memo(function ChapterCard({
+  chapter: c,
+  on,
+  glitch,
+  register,
+}: {
+  chapter: Chapter;
+  on: boolean;
+  glitch: boolean;
+  register: (c: ChapterId, el: HTMLDivElement | null) => void;
+}) {
+  // The emblem starts from the top each time the card shows.
+  const [shows, setShows] = useState(0);
+  const [wasOn, setWasOn] = useState(on);
+  if (on !== wasOn) {
+    setWasOn(on);
+    if (on) setShows((n) => n + 1);
+  }
+  return (
+    <div
+      ref={(el) => register(c.id, el)}
+      aria-hidden
+      data-on={on ? "" : undefined}
+      className="deck-card pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center"
+    >
+      <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-bone/80">Chapter {c.number}</p>
+      <p
+        data-text={c.label}
+        data-card-title
+        className={cn("deck-card-title mt-4 font-display text-[clamp(3.5rem,10vw,9rem)] leading-[0.9] text-bone [text-shadow:0_4px_60px_rgb(0_0_0/0.5)]", glitch && "glitch-text")}
+      >
+        {c.label}
+      </p>
+      <div className="mt-8">
+        <Emblem key={shows} mood={c.mood} />
+      </div>
+    </div>
+  );
+});
 
 /** Progress rail: how far you are, and where. Never what comes next. */
 function Rail({ index, arrived, onGo, visited }: { index: number; arrived: boolean; onGo: (i: number) => void; visited: { c: Chapter; i: number }[] }) {
@@ -420,8 +549,15 @@ function ContinuePrompt({ index, play, hidden, onGo }: { index: number; play: bo
  * - Only what is needed is mounted and loaded: the scene on screen, the next
  *   one (once the opening has played and the browser is idle), and the ones
  *   already visited. A jump (rail, menu, link) mounts its target first.
- * - Footage loads a chapter ahead, after the opening. If a chapter's 4K
- *   footage is not ready when you get there, its loader holds the door until it is.
+ * - A move never makes the GPU start anything new. While a scene is settled
+ *   (its entrance has played), the deck fetches the next chapter's 4K clip,
+ *   warms it (mounted and paused: its decoder exists and its first frame is
+ *   decoded), and rasterises every layer the next move either way will show.
+ *   Only one clip plays at a time. A move made before that shows the poster
+ *   and the clip fades in once the scene has settled; a jump to a chapter
+ *   that is not loaded waits behind its loader until the 4K clip is ready.
+ * - Layers near the visitor are hidden with opacity, never `visibility`, so
+ *   they keep their rasterised tiles; chapters further away are let go.
  */
 export function SceneDeck() {
   const { done } = useIntro();
@@ -431,7 +567,14 @@ export function SceneDeck() {
   const [arrived, setArrived] = useState(true);
   const [waiting, setWaiting] = useState<ChapterId | null>(null);
   const [card, setCard] = useState<ChapterId | null>(null);
-  const [extraLoad, setExtraLoad] = useState<ReadonlySet<ChapterId>>(() => new Set());
+  /** How much of each chapter's footage is in the page (see `Stage`). The opening's poster is there from the start. */
+  const [stage, setStage] = useState<Readonly<Partial<Record<ChapterId, Stage>>>>({ intro: 2 });
+  /** The chapter whose clip plays: the one on screen, or in a move the arriving one once its clip is warm. */
+  const [playing, setPlaying] = useState<ChapterId>("intro");
+  /** Where a move is going: a jump's destination is near the visitor while it travels. */
+  const [target, setTarget] = useState<number | null>(null);
+  /** Bumped each time a piece of the idle preparation finishes, so the next one is scheduled. */
+  const [prepared, setPrepared] = useState(0);
   const [visitedSteps, setVisitedSteps] = useState<number[]>([0]);
   const [mounted, setMounted] = useState<ReadonlySet<number>>(() => new Set([0]));
   /** The opening has played and the browser has been idle: now the next chapter may load. */
@@ -451,10 +594,26 @@ export function SceneDeck() {
   const flashFx = useRef<HTMLDivElement>(null);
   const mosaicFx = useRef<HTMLDivElement>(null);
   const loaderProgress = useRef<Partial<Record<ChapterId, number>>>({});
+  const cardRefs = useRef<Partial<Record<ChapterId, HTMLDivElement | null>>>({});
+  /** The same as `stage`, for callbacks and idle work. */
+  const stageRef = useRef<Partial<Record<ChapterId, Stage>>>({ intro: 2 });
+  /** Layers rasterised ahead of time whose content has not changed since. */
+  const primed = useRef(new WeakSet<HTMLElement>());
+  /** Puts back an idle pre-rasterisation still in progress (a move is starting). */
+  const priming = useRef<(() => void) | null>(null);
+  /** When the scene on screen arrived (its entrance plays from then). */
+  const arrivedAt = useRef(0);
 
   const step = STEPS[index];
   const chapter = chapterById(step.chapter);
   const play = done && arrived;
+  const stills = lite || reducedMotion;
+  const here = chapterIndex(step.chapter);
+  const there = target === null ? -1 : chapterIndex(STEPS[target].chapter);
+  /** Scenes kept paintable (hidden with opacity, so their tiles survive): on screen, either side, and a move's destination. */
+  const nearStep = (i: number) => Math.abs(i - index) <= 1 || i === target;
+  /** Chapters whose arrival card is ready: either side of the one on screen, that one (its card may still be fading), and a move's destination. */
+  const nearCard = (k: number) => Math.abs(k - here) <= 1 || k === there;
 
   /* Footage bookkeeping ------------------------------------------------ */
 
@@ -469,15 +628,21 @@ export function SceneDeck() {
   const registerBg = useCallback((c: ChapterId, el: HTMLDivElement | null) => {
     bgRefs.current[c] = el;
   }, []);
+  const registerCard = useCallback((c: ChapterId, el: HTMLDivElement | null) => {
+    cardRefs.current[c] = el;
+  }, []);
 
-  // Footage loads for the chapter on screen and, once warm, the next one; chapters stay loaded once fetched.
-  const loadable = useMemo(() => {
-    const ci = chapters.findIndex((c) => c.id === STEPS[index].chapter);
-    const ids = new Set<ChapterId>(extraLoad);
-    ids.add(chapters[ci].id);
-    if (warm && chapters[ci + 1]) ids.add(chapters[ci + 1].id);
-    return ids;
-  }, [index, warm, extraLoad]);
+  /** Set how much of a chapter's footage is in the page. Its layer's tiles are redrawn when that changes. */
+  const setStageOf = useCallback((c: ChapterId, s: Stage) => {
+    if ((stageRef.current[c] ?? 0) === s) return;
+    stageRef.current = { ...stageRef.current, [c]: s };
+    setStage(stageRef.current);
+    const bg = bgRefs.current[c];
+    if (bg) primed.current.delete(bg);
+  }, []);
+
+  /** The clip mounted in a chapter's layer, if any. */
+  const clipOf = useCallback((c: ChapterId) => bgRefs.current[c]?.querySelector("video") ?? null, []);
 
   // Warm up once the opening has played in and the main thread is idle.
   useEffect(() => {
@@ -494,39 +659,200 @@ export function SceneDeck() {
 
   /* Mounting ------------------------------------------------------------- */
 
+  const isStub = useCallback((i: number) => !!sceneRefs.current[i]?.querySelector(":scope > [data-stub]"), []);
+
   /** Mount a scene now (before a move to it), if it is still a stub. */
-  const ensureMounted = useCallback((i: number) => {
-    if (sceneRefs.current[i]?.querySelector(":scope > [data-stub]")) flushSync(() => setMounted(mountUpdate(i)));
+  const ensureMounted = useCallback(
+    (i: number) => {
+      if (isStub(i)) flushSync(() => setMounted(mountUpdate(i)));
+    },
+    [isStub],
+  );
+
+  /* Getting the next move ready ------------------------------------------ */
+
+  /** The transition a move from step `from` to step `to` plays. */
+  const styleOf = useCallback(
+    (from: number, to: number): TransitionStyle | "fade" => {
+      const fs = STEPS[from];
+      const ts = STEPS[to];
+      // Chapter changes use the arriving chapter's style (or, going back, the departing one's, reversed).
+      // Reduced motion: a plain crossfade, with no glitches, flashes or blinds.
+      // Lite (weak machines) gets the same short crossfade: nothing full-screen to clip, filter or blend.
+      if (fs.chapter === ts.chapter) return "slide";
+      if (reducedMotion || lite) return "fade";
+      return chapterById(to > from ? ts.chapter : fs.chapter).transition;
+    },
+    [reducedMotion, lite],
+  );
+
+  /**
+   * The layers a move from `from` to `to` will show that are costly to draw: for a new chapter, its
+   * footage, its card and the transition's overlay. (The arriving scene itself shows next to nothing
+   * in a move: its content waits, invisible, for its entrance.)
+   */
+  const layersFor = useCallback(
+    (from: number, to: number) => {
+      const out: { el: HTMLElement; inner?: HTMLElement[] }[] = [];
+      const ts = STEPS[to];
+      if (STEPS[from].chapter !== ts.chapter) {
+        const bg = bgRefs.current[ts.chapter];
+        if (bg && (stageRef.current[ts.chapter] ?? 0) > 0) out.push({ el: bg });
+        const cardEl = cardRefs.current[ts.chapter];
+        if (cardEl) out.push({ el: cardEl, inner: [...cardEl.querySelectorAll<HTMLElement>("[data-card-title]")] });
+        const style = styleOf(from, to);
+        const glitch = glitchFx.current;
+        if (style === "glitch" && glitch) out.push({ el: glitch, inner: [...glitch.querySelectorAll<HTMLElement>("[data-tear],[data-tint]")] });
+        if (style === "burn" && burnFx.current) out.push({ el: burnFx.current });
+      }
+      return out.filter(({ el }) => !primed.current.has(el));
+    },
+    [styleOf],
+  );
+
+  /** Rasterise layers ahead of time (see `prime`), once their images have decoded. */
+  const primeLayers = useCallback(async (layers: { el: HTMLElement; inner?: HTMLElement[] }[], alive: () => boolean, waitMs: number) => {
+    const imgs = layers.flatMap(({ el }) => [...el.querySelectorAll("img")]);
+    await Promise.race([Promise.all(imgs.map((img) => img.decode().catch(() => {}))), new Promise((r) => window.setTimeout(r, waitMs))]);
+    if (!alive()) return;
+    const p = prime(layers);
+    priming.current = p.restore;
+    await p.done;
+    if (priming.current === p.restore) priming.current = null;
+    if (alive()) layers.forEach(({ el }) => primed.current.add(el));
   }, []);
 
-  // Once warm and settled, mount the neighbours in idle time (one per idle period, interruptible).
+  /**
+   * Fetch a chapter's clip, then mount it paused: the browser sets up its
+   * decoder and decodes the first frame now, while nothing moves, so the move
+   * to it only has to start it. (The fetch first, so the decoding happens at
+   * once rather than whenever the network delivers.)
+   */
+  const warmClip = useCallback(
+    async (c: ChapterId, alive: () => boolean) => {
+      if (!stills) await prefetchClip(chapterById(c).footage);
+      if (!alive()) return;
+      setStageOf(c, 2);
+      if (stills) return;
+      for (let n = 0; n < 30 && !clipOf(c); n++) await frames(1);
+      const v = clipOf(c);
+      if (warming(v)) await eventOrTimeout(v!, "loadeddata", 6000);
+    },
+    [stills, setStageOf, clipOf],
+  );
+
+  // While a scene is settled, get the next move ready, one piece per idle period: the clip on
+  // screen (if the visitor arrived before it was warm), the next chapter's clip, the scenes either
+  // side mounted, chapters two or more away let go, then every layer a move either way will show
+  // rasterised. A move cancels whatever is still to do; it all resumes once the next scene settles.
   useEffect(() => {
-    if (!warm || !arrived) return;
-    const next = [index + 1, index - 1].find((i) => i >= 0 && i < N && !mounted.has(i));
-    if (next === undefined) return;
-    return onIdle(() => startTransition(() => setMounted(mountUpdate(next))), 2000);
-  }, [warm, arrived, index, mounted]);
+    if (!warm || !arrived || waiting) return;
+    let alive = true;
+    const isAlive = () => alive;
+    const i = index;
+    const k = chapterIndex(STEPS[i].chapter);
+    const at = (n: number) => stageRef.current[chapters[n]?.id] ?? 0;
+    const job = (): (() => Promise<void>) | null => {
+      if (!chapters[k].depth && at(k) < 2) return () => warmClip(chapters[k].id, isAlive);
+      if (chapters[k + 1] && at(k + 1) < 2) return () => warmClip(chapters[k + 1].id, isAlive);
+      for (const j of [i + 1, i - 1]) {
+        if (j >= 0 && j < N && isStub(j))
+          return async () => {
+            startTransition(() => setMounted(mountUpdate(j)));
+            await frames(2);
+          };
+      }
+      const far = chapters.filter((c, n) => Math.abs(n - k) > 1 && (stageRef.current[c.id] ?? 0) > 0);
+      if (far.length) return async () => far.forEach((c) => setStageOf(c.id, 0));
+      for (const j of [i + 1, i - 1]) {
+        if (j < 0 || j >= N) continue;
+        const layers = layersFor(i, j);
+        if (layers.length) return () => primeLayers(layers, isAlive, 3000);
+      }
+      return null;
+    };
+    const next = job();
+    if (!next) return;
+    let cancelIdle = () => {};
+    const t = window.setTimeout(
+      () => {
+        cancelIdle = onIdle(() => {
+          void next().then(() => {
+            if (alive) setPrepared((n) => n + 1);
+          });
+        }, 1500);
+      },
+      Math.max(0, arrivedAt.current + settleMs(i) - performance.now()),
+    );
+    return () => {
+      alive = false;
+      window.clearTimeout(t);
+      cancelIdle();
+      priming.current?.();
+    };
+  }, [warm, arrived, waiting, index, prepared, isStub, layersFor, primeLayers, warmClip, setStageOf]);
 
   /* Transitions ---------------------------------------------------------- */
 
-  const waitForFootage = useCallback(
-    (c: ChapterId) =>
-      new Promise<void>((resolve) => {
-        if (readyRef.current[c]) return resolve();
-        setExtraLoad((s) => (s.has(c) ? s : new Set(s).add(c)));
-        setWaiting(c);
-        const start = performance.now();
-        const poll = () => {
-          if (readyRef.current[c] || performance.now() - start > 15000) {
-            setWaiting(null);
-            resolve();
-            return;
-          }
-          window.setTimeout(poll, 120);
-        };
-        poll();
-      }),
-    [],
+  /** Show the loader while a promise takes longer than a moment. */
+  const holdDoor = useCallback(async (c: ChapterId, p: Promise<unknown>, after: number) => {
+    const t = window.setTimeout(() => setWaiting(c), after);
+    await p;
+    window.clearTimeout(t);
+    setWaiting(null);
+  }, []);
+
+  /**
+   * Before a move: the arriving chapter's footage. Next door, its poster at least (the clip is warm
+   * already, or waits until the scene settles). Further away (a jump), the loader holds the door until
+   * its 4K clip is ready.
+   */
+  const footageFor = useCallback(
+    async (from: ChapterId, c: ChapterId) => {
+      const ch = chapterById(c);
+      if (ch.depth || stills || Math.abs(chapterIndex(c) - chapterIndex(from)) <= 1) {
+        // Stills (and the opening's depth poster) are all there is: stage 2 is the poster.
+        if ((stageRef.current[c] ?? 0) < 1) flushSync(() => setStageOf(c, ch.depth || stills ? 2 : 1));
+        if (ch.depth && !readyRef.current[c])
+          await holdDoor(
+            c,
+            new Promise<void>((resolve) => {
+              const start = performance.now();
+              const poll = () => (readyRef.current[c] || performance.now() - start > 15000 ? resolve() : window.setTimeout(poll, 120));
+              poll();
+            }),
+            0,
+          );
+        const imgs = [...(bgRefs.current[c]?.querySelectorAll("img") ?? [])];
+        if (imgs.length) await holdDoor(c, Promise.race([Promise.all(imgs.map((img) => img.decode().catch(() => {}))), new Promise((r) => window.setTimeout(r, 10000))]), 400);
+      } else {
+        if ((stageRef.current[c] ?? 0) < 2) flushSync(() => setStageOf(c, 2));
+        let v = clipOf(c);
+        for (let n = 0; n < 30 && !v; n++) {
+          await frames(1);
+          v = clipOf(c);
+        }
+        const clip = v;
+        if (clip && clip.readyState < 4 && !clip.error)
+          await holdDoor(
+            c,
+            new Promise<void>((resolve) => {
+              // Ready as before: it can play through, or it has a first frame and a moment's more data.
+              const end = window.setTimeout(resolve, 15000);
+              const done = () => {
+                window.clearTimeout(end);
+                resolve();
+              };
+              clip.addEventListener("canplaythrough", done, { once: true });
+              clip.addEventListener("error", done, { once: true });
+              if (clip.readyState >= 2) window.setTimeout(done, 1200);
+              else clip.addEventListener("loadeddata", () => window.setTimeout(done, 1200), { once: true });
+            }),
+            0,
+          );
+      }
+    },
+    [stills, setStageOf, clipOf, holdDoor],
   );
 
   const go = useCallback(
@@ -535,35 +861,50 @@ export function SceneDeck() {
       if (lock.current || to === from || to < 0 || to >= N) return;
       lock.current = true;
       setDeck({ moving: true });
+      // Idle preparation stops here; nothing it started may finish mid-move.
+      priming.current?.();
 
       const fs = STEPS[from];
       const ts = STEPS[to];
       const dir = to > from ? 1 : -1;
       const same = fs.chapter === ts.chapter;
-      // The arriving scene exists before anything moves (a jump may land on a scene not mounted yet).
+      // The arriving scene exists before anything moves (a jump may land on a scene not mounted yet),
+      // and so do its layers (a jump's destination, its footage layer and its card are near from now on).
       ensureMounted(to);
-      await waitForFootage(ts.chapter);
+      flushSync(() => setTarget(to));
+      if (!same) await footageFor(fs.chapter, ts.chapter);
+      // A clip still setting up its decoder (warmed just now) finishes before anything moves.
+      for (const el of Object.values(bgRefs.current)) {
+        const v = el?.querySelector("video");
+        if (warming(v)) await eventOrTimeout(v!, "loadeddata", 1500);
+      }
 
       const bgOut = bgRefs.current[fs.chapter]!;
       const bgIn = bgRefs.current[ts.chapter]!;
       const scOut = sceneRefs.current[from]!;
       const scIn = sceneRefs.current[to]!;
       const axis = dir > 0 ? ts.axis : fs.axis;
-      // Chapter changes use the arriving chapter's style (or, going back, the departing one's, reversed).
-      // Reduced motion: a plain crossfade, with no glitches, flashes or blinds.
-      // Lite (weak machines) gets the same short crossfade: nothing full-screen to clip, filter or blend.
-      const style: TransitionStyle | "fade" = same ? "slide" : reducedMotion || lite ? "fade" : chapterById(dir > 0 ? ts.chapter : fs.chapter).transition;
+      const style = styleOf(from, to);
       const d = reducedMotion ? 0.5 : lite ? 0.8 : DURATION;
+
+      // Anything this move shows that was not rasterised while the screen was still is rasterised now,
+      // before the first frame moves: a beat of stillness rather than a stall mid-move.
+      const late = layersFor(from, to);
+      if (late.length) await primeLayers(late, () => true, 600);
 
       setArrived(false);
       if (!same) {
         setCard(ts.chapter);
         window.setTimeout(() => setCard(null), d * 1000 * 0.72);
+        // The arriving clip starts now if it is warm (the departing one pauses: one clip plays at a time);
+        // if it is not, the departing clip plays on and the poster arrives.
+        if ((clipOf(ts.chapter)?.readyState ?? 0) >= 2) setPlaying(ts.chapter);
       }
+      document.documentElement.dataset.moving = "";
 
-      // Layering: the moving layer on top.
-      Object.values(bgRefs.current).forEach((el) => el && gsap.set(el, { zIndex: 0, autoAlpha: el === bgOut || el === bgIn ? 1 : 0 }));
-      gsap.set(scIn, { autoAlpha: 0, x: 0, y: 0, zIndex: 3 });
+      // Layering: the moving layer on top. Opacity, never visibility: near layers keep their tiles.
+      Object.values(bgRefs.current).forEach((el) => el && gsap.set(el, { zIndex: 0, opacity: el === bgOut || el === bgIn ? 1 : 0 }));
+      gsap.set(scIn, { opacity: 0, x: 0, y: 0, zIndex: 3 });
       gsap.set(scOut, { zIndex: 2 });
 
       const tl = gsap.timeline({
@@ -572,15 +913,21 @@ export function SceneDeck() {
           Object.values(bgRefs.current).forEach((el) => {
             if (!el) return;
             gsap.set(el, { clearProps: "transform,clipPath,filter,zIndex,opacity" });
-            gsap.set(el, { autoAlpha: el === bgIn ? 1 : 0 });
+            gsap.set(el, { opacity: el === bgIn ? 1 : 0 });
           });
-          gsap.set(scOut, { autoAlpha: 0, clearProps: "transform,filter" });
+          gsap.set(scOut, { opacity: 0, clearProps: "transform,filter" });
           resetFx(glitchFx.current, burnFx.current, flashFx.current, mosaicFx.current);
+          delete document.documentElement.dataset.moving;
           indexRef.current = to;
+          arrivedAt.current = performance.now();
           setIndex(to);
+          setTarget(null);
+          setPlaying(ts.chapter);
           setArrived(true);
           setVisitedSteps((v) => (v.includes(to) ? v : [...v, to]));
-          setExtraLoad((s) => (s.has(fs.chapter) ? s : new Set(s).add(fs.chapter)));
+          // The chapters either side get their posters (a fetch, nothing for the GPU yet); clips wait for the scene to settle.
+          const k = chapterIndex(ts.chapter);
+          for (const n of [k - 1, k + 1]) if (chapters[n] && (stageRef.current[chapters[n].id] ?? 0) < 1) setStageOf(chapters[n].id, 1);
           const d2 = getDeck();
           setDeck({
             chapter: ts.chapter,
@@ -597,9 +944,9 @@ export function SceneDeck() {
 
       // Outgoing content always leaves quickly, in the direction of travel.
       // Transform and opacity only: the GPU moves these without repainting (no full-screen blur).
-      tl.to(scOut, { autoAlpha: 0, [axis]: `${-dir * (axis === "x" ? 8 : 6)}${axis === "x" ? "vw" : "vh"}`, scale: 0.985, duration: d * 0.45, ease: "power3.in" }, 0);
+      tl.to(scOut, { opacity: 0, [axis]: `${-dir * (axis === "x" ? 8 : 6)}${axis === "x" ? "vw" : "vh"}`, scale: 0.985, duration: d * 0.45, ease: "power3.in" }, 0);
       // Incoming content fades up at the end; its own entrance plays once it has arrived.
-      tl.fromTo(scIn, { autoAlpha: 0 }, { autoAlpha: 1, duration: d * 0.25, ease: "power2.out" }, d * 0.75);
+      tl.fromTo(scIn, { opacity: 0 }, { opacity: 1, duration: d * 0.25, ease: "power2.out" }, d * 0.75);
       if (axis === "x" && same) tl.fromTo(scIn, { x: `${dir * 8}vw` }, { x: 0, duration: d * 0.5, ease: "expo.out" }, d * 0.5);
 
       // Project to project only: the concepts scene arrives with the ordinary sideways slide.
@@ -611,10 +958,10 @@ export function SceneDeck() {
         const copyOut = scOut.querySelector<HTMLElement>("[data-copy-wrap]");
         const stageIn = scIn.querySelector<HTMLElement>("[data-stage-wrap]");
         tl.clear();
-        gsap.set(scIn, { autoAlpha: 0, x: 0 });
-        if (stageOut) tl.to(stageOut, { rotateY: -dir * 38, xPercent: -dir * 45, z: -200, autoAlpha: 0, duration: d * 0.5, ease: "power3.in" }, 0);
-        if (copyOut) tl.to(copyOut, { x: `${-dir * 6}vw`, autoAlpha: 0, duration: d * 0.4, ease: "power3.in" }, 0);
-        tl.to(scOut, { autoAlpha: 0, duration: 0.2 }, d * 0.5);
+        gsap.set(scIn, { opacity: 0, x: 0 });
+        if (stageOut) tl.to(stageOut, { rotateY: -dir * 38, xPercent: -dir * 45, z: -200, opacity: 0, duration: d * 0.5, ease: "power3.in" }, 0);
+        if (copyOut) tl.to(copyOut, { x: `${-dir * 6}vw`, opacity: 0, duration: d * 0.4, ease: "power3.in" }, 0);
+        tl.to(scOut, { opacity: 0, duration: 0.2 }, d * 0.5);
         tl.fromTo(bgIn, { xPercent: 0, scale: 1 }, { xPercent: -dir * 4, scale: 1.08, duration: d * 0.5, ease: "power2.inOut", yoyo: true, repeat: 1 }, 0);
         if (sweep.current) {
           gsap.set(sweep.current, { autoAlpha: 1 });
@@ -623,8 +970,8 @@ export function SceneDeck() {
         }
         tl.call(() => setProjectCard({ n: to - firstStepOf("work") + 1, title: next.title }), [], d * 0.22);
         tl.call(() => setProjectCard(null), [], d * 0.62);
-        tl.set(scIn, { autoAlpha: 1 }, d * 0.6);
-        if (stageIn) tl.fromTo(stageIn, { rotateY: dir * 38, xPercent: dir * 45, z: -200, autoAlpha: 0 }, { rotateY: 0, xPercent: 0, z: 0, autoAlpha: 1, duration: d * 0.55, ease: "expo.out" }, d * 0.6);
+        tl.set(scIn, { opacity: 1 }, d * 0.6);
+        if (stageIn) tl.fromTo(stageIn, { rotateY: dir * 38, xPercent: dir * 45, z: -200, opacity: 0 }, { rotateY: 0, xPercent: 0, z: 0, opacity: 1, duration: d * 0.55, ease: "expo.out" }, d * 0.6);
         tl.add(() => {
           [stageOut, copyOut, stageIn].forEach((el) => el && gsap.set(el, { clearProps: "transform,filter,opacity,visibility" }));
         }, d * 1.2);
@@ -634,7 +981,7 @@ export function SceneDeck() {
       } else if (style === "fade") {
         gsap.set(bgIn, { zIndex: 2 });
         gsap.set(bgOut, { zIndex: 1 });
-        tl.fromTo(bgIn, { autoAlpha: 0 }, { autoAlpha: 1, ease: "power2.inOut" }, 0);
+        tl.fromTo(bgIn, { opacity: 0 }, { opacity: 1, ease: "power2.inOut" }, 0);
       } else if (style === "glitch") {
         // A bad signal: the next place tears in through random bands that only ever add up (no strobing),
         // both frames jitter sideways, RGB tear bars and scanlines run over the cut. Same both ways.
@@ -644,14 +991,16 @@ export function SceneDeck() {
         const fx = glitchFx.current;
         const tears = fx ? [...fx.querySelectorAll<HTMLElement>("[data-tear]")] : [];
         const tint = fx?.querySelector<HTMLElement>("[data-tint]") ?? null;
-        const frames = 16;
+        // Tear bars move and stretch by transform alone (CSS gives them a fixed 5% height), so a cut repaints nothing.
+        const fxHeight = fx?.clientHeight || window.innerHeight;
+        const cuts = 16;
         const start = d * 0.12;
         const span = d * 0.62;
-        if (fx) tl.set(fx, { autoAlpha: 1 }, start);
-        for (let f = 0; f <= frames; f++) {
-          const p = f / frames;
+        if (fx) tl.set(fx, { opacity: 1 }, start);
+        for (let f = 0; f <= cuts; f++) {
+          const p = f / cuts;
           const shown = Math.round(plan.bands.length * (p * p * (3 - 2 * p)));
-          const last = f === frames;
+          const last = f === cuts;
           tl.call(
             () => {
               bgIn.style.clipPath = last ? "inset(0% 0% 0% 0%)" : bandsClip(plan.order.slice(0, shown).map((i) => plan.bands[i]));
@@ -665,16 +1014,15 @@ export function SceneDeck() {
               tears.forEach((t) => {
                 const on = !last && Math.random() < 0.7;
                 t.style.opacity = on ? "1" : "0";
-                t.style.top = `${rand(0, 98)}%`;
-                t.style.height = `${rand(0.3, 5)}%`;
-                t.style.transform = `translate3d(${rand(-18, 18)}%, 0, 0)`;
+                // Anywhere down the frame, 0.3–5% of it tall.
+                t.style.transform = `translate3d(${rand(-18, 18)}%, ${((rand(0, 98) / 100) * fxHeight).toFixed(1)}px, 0) scaleY(${(rand(0.3, 5) / 5).toFixed(3)})`;
               });
             },
             [],
             start + span * p,
           );
         }
-        if (fx) tl.to(fx, { autoAlpha: 0, duration: 0.25 }, start + span);
+        if (fx) tl.to(fx, { opacity: 0, duration: 0.25 }, start + span);
       } else if (style === "shutter") {
         // Vertical blinds: forward they open on the next place left to right; back, they close right to left.
         const blinds = { p: 0 };
@@ -693,7 +1041,7 @@ export function SceneDeck() {
         // Film burn: a light leak blooms over the frame, burns it out to warm white, and the next place
         // develops through it. Opacity and transforms only: a flat warm layer does the burning, so the
         // 4K footage underneath is never filtered.
-        gsap.set(bgIn, { zIndex: 2, autoAlpha: 0 });
+        gsap.set(bgIn, { zIndex: 2, opacity: 0 });
         gsap.set(bgOut, { zIndex: 1 });
         const burn = burnFx.current;
         const flash = flashFx.current;
@@ -702,22 +1050,22 @@ export function SceneDeck() {
           tl.to(flash, { autoAlpha: 0, duration: d * 0.58, ease: "power2.out" }, d * 0.46);
         }
         if (burn) {
-          tl.fromTo(burn, { autoAlpha: 0, scale: 0.35, xPercent: 18 }, { autoAlpha: 1, scale: 2.4, xPercent: -6, duration: d * 0.5, ease: "power2.in" }, 0);
-          tl.to(burn, { autoAlpha: 0, scale: 3.4, xPercent: -14, duration: d * 0.5, ease: "power2.out" }, d * 0.5);
+          tl.fromTo(burn, { opacity: 0, scale: 0.35, xPercent: 18 }, { opacity: 1, scale: 2.4, xPercent: -6, duration: d * 0.5, ease: "power2.in" }, 0);
+          tl.to(burn, { opacity: 0, scale: 3.4, xPercent: -14, duration: d * 0.5, ease: "power2.out" }, d * 0.5);
         }
-        tl.fromTo(bgIn, { autoAlpha: 0, scale: 1.08 }, { autoAlpha: 1, scale: 1, duration: d * 0.55, ease: "power2.out" }, d * 0.42);
+        tl.fromTo(bgIn, { opacity: 0, scale: 1.08 }, { opacity: 1, scale: 1, duration: d * 0.55, ease: "power2.out" }, d * 0.42);
       } else if (style === "mosaic") {
         // Mosaic: the frame breaks into blocks that go dark in a random order, then the next place
         // comes back block by block.
         const cells = mosaicFx.current ? [...mosaicFx.current.children] : [];
-        gsap.set(bgIn, { zIndex: 2, autoAlpha: 0 });
+        gsap.set(bgIn, { zIndex: 2, opacity: 0 });
         gsap.set(bgOut, { zIndex: 1 });
         if (cells.length) {
           tl.fromTo(cells, { autoAlpha: 0, scale: 0.4 }, { autoAlpha: 1, scale: 1.02, duration: d * 0.16, ease: "power2.out", stagger: { amount: d * 0.32, from: "random" } }, 0);
-          tl.set(bgIn, { autoAlpha: 1 }, d * 0.5);
+          tl.set(bgIn, { opacity: 1 }, d * 0.5);
           tl.to(cells, { autoAlpha: 0, scale: 0.4, duration: d * 0.16, ease: "power2.in", stagger: { amount: d * 0.32, from: "random" } }, d * 0.52);
         } else {
-          tl.to(bgIn, { autoAlpha: 1 }, d * 0.5);
+          tl.to(bgIn, { opacity: 1 }, d * 0.5);
         }
       } else if (dir > 0) {
         gsap.set(bgIn, { zIndex: 2 });
@@ -732,8 +1080,8 @@ export function SceneDeck() {
             tl.to(bgOut, { yPercent: -30, scale: 0.95 }, 0);
             break;
           case "zoom":
-            tl.fromTo(bgIn, { autoAlpha: 0, scale: 1.35 }, { autoAlpha: 1, scale: 1 }, 0);
-            tl.to(bgOut, { scale: 1.6, autoAlpha: 0 }, 0);
+            tl.fromTo(bgIn, { opacity: 0, scale: 1.35 }, { opacity: 1, scale: 1 }, 0);
+            tl.to(bgOut, { scale: 1.6, opacity: 0 }, 0);
             break;
           case "doors":
             tl.fromTo(bgIn, { clipPath: "inset(50% 0% 50% 0%)", scale: 1.15 }, { clipPath: "inset(0% 0% 0% 0%)", scale: 1 }, 0);
@@ -766,8 +1114,8 @@ export function SceneDeck() {
             tl.fromTo(bgIn, { yPercent: -30, scale: 0.95 }, { yPercent: 0, scale: 1 }, 0);
             break;
           case "zoom":
-            tl.to(bgOut, { autoAlpha: 0, scale: 1.35 }, 0);
-            tl.fromTo(bgIn, { scale: 1.6, autoAlpha: 0 }, { scale: 1, autoAlpha: 1 }, 0);
+            tl.to(bgOut, { opacity: 0, scale: 1.35 }, 0);
+            tl.fromTo(bgIn, { scale: 1.6, opacity: 0 }, { scale: 1, opacity: 1 }, 0);
             break;
           case "doors":
             tl.to(bgOut, { clipPath: "inset(50% 0% 50% 0%)", scale: 1.15 }, 0);
@@ -787,7 +1135,7 @@ export function SceneDeck() {
       const fill = rootRef.current?.querySelector<HTMLElement>("[data-progress-fill]");
       if (fill) tl.to(fill, { scaleY: to / (N - 1), ease: "expo.inOut" }, 0);
     },
-    [reducedMotion, lite, waitForFootage, ensureMounted],
+    [reducedMotion, lite, ensureMounted, footageFor, styleOf, layersFor, primeLayers, clipOf, setStageOf],
   );
 
   /* Input ------------------------------------------------------------- */
@@ -901,7 +1249,6 @@ export function SceneDeck() {
     () => chapters.map((c) => ({ c, i: firstStepOf(c.id) })).filter(({ i }) => visitedSteps.includes(i)),
     [visitedSteps],
   );
-  const cardChapter = card ? chapterById(card) : null;
 
   return (
     // The deck owns the wheel: Lenis must not cancel it, or scenes taller than the window cannot scroll.
@@ -911,8 +1258,8 @@ export function SceneDeck() {
         <FootageLayer
           key={c.id}
           chapter={c}
-          load={loadable.has(c.id)}
-          play={card !== null ? card === c.id : step.chapter === c.id}
+          stage={stage[c.id] ?? 0}
+          play={playing === c.id}
           urgent={waiting === c.id || step.chapter === c.id}
           active={step.chapter === c.id}
           reveal={done}
@@ -922,7 +1269,8 @@ export function SceneDeck() {
         />
       ))}
 
-      {/* Scenes. Only the current one is visible, focusable and announced. */}
+      {/* Scenes. Only the current one is visible, focusable and announced. The one leaving keeps
+          playing until it has gone (its content holds still while it fades, so nothing redraws). */}
       {STEPS.map((s, i) => (
         <section
           key={s.key}
@@ -936,14 +1284,15 @@ export function SceneDeck() {
           aria-hidden={i !== index}
           inert={i !== index}
           className="no-scrollbar absolute inset-0 overflow-y-auto overflow-x-hidden outline-none [perspective:1800px]"
-          style={{ visibility: i === 0 ? "visible" : "hidden" }}
+          style={{ opacity: i === 0 ? 1 : 0, visibility: nearStep(i) ? undefined : "hidden" }}
         >
-          <SceneBody i={i} mounted={mounted.has(i)} play={i === index && play} />
+          <SceneBody i={i} mounted={mounted.has(i)} play={i === index && done} />
         </section>
       ))}
 
-      {/* Transition overlays: a bad signal (glitch), a film burn, and a mosaic grid. Hidden between moves. */}
-      <div ref={glitchFx} aria-hidden className="pointer-events-none invisible absolute inset-0 z-[19] overflow-hidden opacity-0">
+      {/* Transition overlays: a bad signal (glitch), a film burn, and a mosaic grid. Transparent between moves
+          (rasterised ahead of time; see `.deck-fx` in globals.css). */}
+      <div ref={glitchFx} aria-hidden data-fx="glitch" className="deck-fx pointer-events-none absolute inset-0 z-[19] overflow-hidden opacity-0">
         <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgb(255_255_255/0.07)_0_1px,transparent_1px_3px)] mix-blend-overlay" />
         {/* The colour break: shown on two frames of the cut. */}
         <div
@@ -971,7 +1320,8 @@ export function SceneDeck() {
       <div
         ref={burnFx}
         aria-hidden
-        className="pointer-events-none invisible absolute inset-0 z-[19] origin-[78%_30%] opacity-0 mix-blend-screen"
+        data-fx="burn"
+        className="deck-fx pointer-events-none absolute inset-0 z-[19] origin-[78%_30%] opacity-0 mix-blend-screen"
         style={{
           background:
             "radial-gradient(55% 50% at 78% 30%, rgb(255 250 240) 0%, rgb(255 205 150 / 0.95) 20%, rgb(255 120 50 / 0.8) 40%, rgb(170 40 15 / 0.4) 58%, transparent 74%)",
@@ -980,6 +1330,7 @@ export function SceneDeck() {
       <div
         ref={mosaicFx}
         aria-hidden
+        data-fx="mosaic"
         className="pointer-events-none absolute inset-0 z-[19] grid"
         style={{ gridTemplateColumns: `repeat(${MOSAIC.cols}, 1fr)`, gridTemplateRows: `repeat(${MOSAIC.rows}, 1fr)` }}
       >
@@ -988,37 +1339,13 @@ export function SceneDeck() {
         ))}
       </div>
 
-      {/* The chapter's own arrival card. */}
-      <AnimatePresence>
-        {cardChapter && (
-          <motion.div
-            key={cardChapter.id}
-            aria-hidden
-            className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.04 }}
-            transition={{ duration: 0.45, ease: ease.outQuart }}
-          >
-            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-bone/80">Chapter {cardChapter.number}</p>
-            <motion.p
-              data-text={cardChapter.label}
-              className={cn(
-                "mt-4 font-display text-[clamp(3.5rem,10vw,9rem)] leading-[0.9] text-bone [text-shadow:0_4px_60px_rgb(0_0_0/0.5)]",
-                cardChapter.transition === "glitch" && !reducedMotion && !lite && "glitch-text",
-              )}
-              initial={{ opacity: 0, scale: 1.08, y: 14 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: ease.outExpo }}
-            >
-              {cardChapter.label}
-            </motion.p>
-            <div className="mt-8">
-              <Emblem mood={cardChapter.mood} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* The chapters' own arrival cards: the ones a move either way would show are ready. */}
+      {chapters.map(
+        (c, k) =>
+          (nearCard(k) || card === c.id) && (
+            <ChapterCard key={c.id} chapter={c} on={card === c.id} glitch={c.transition === "glitch" && !reducedMotion && !lite} register={registerCard} />
+          ),
+      )}
 
       {/* Between projects: a warm light sweep and the next project's number. */}
       <div

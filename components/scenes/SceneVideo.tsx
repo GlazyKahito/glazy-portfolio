@@ -7,8 +7,11 @@ import { useDevice } from "@/lib/hooks/use-device";
 
 interface SceneVideoProps {
   name: FootageName;
-  /** Start fetching the footage (the scene is current or next). */
-  load: boolean;
+  /**
+   * What to load: `true` the poster and the 4K clip, `"poster"` the poster
+   * only (the clip comes later), `false` nothing.
+   */
+  load: boolean | "poster";
   /** Play it (the scene is on screen). */
   play: boolean;
   /** Show the poster before the footage is wanted (a page header, rather than a deck chapter). */
@@ -29,14 +32,48 @@ function pickResolution(): "2160" {
   return "2160";
 }
 
+/** The 4K clip's address. */
+export const clipUrl = (name: FootageName) => `/video/${name}-${pickResolution()}.mp4`;
+
+const fetched = new Map<string, Promise<void>>();
+
+/**
+ * Download a clip into the HTTP cache without creating a player (no decoder,
+ * no GPU work). The deck fetches the next chapter's clip this way first, so
+ * that when it later creates the player, the first frame decodes at once,
+ * at a moment it chooses, instead of whenever the network delivers it.
+ * Resolves when the file is cached (or on any error: the player will fetch it itself).
+ */
+export function prefetchClip(name: FootageName): Promise<void> {
+  const url = clipUrl(name);
+  let p = fetched.get(url);
+  if (!p) {
+    p = (async () => {
+      try {
+        const res = await fetch(url, { priority: "low" } as RequestInit);
+        const reader = res.body?.getReader();
+        if (!reader) return;
+        // Read to the end and drop the bytes: the cache keeps the file, the page keeps nothing.
+        for (;;) if ((await reader.read()).done) break;
+      } catch {
+        /* the player fetches it itself */
+      }
+    })();
+    fetched.set(url, p);
+  }
+  return p;
+}
+
 /**
  * Full-bleed looping footage for a scene. The poster (a real frame of the
  * clip) is always there first, so nothing is ever blank; the 4K video fades
- * in over it once it can play. Only the visitor's own choices (lite mode, or
+ * in over it once it plays. Only the visitor's own choices (lite mode, or
  * their system's reduce-motion setting) keep the still.
  *
  * Nothing is fetched until it is wanted: a chapter that is not near renders
  * no poster and no video (so the server never asks the browser to preload them).
+ * Mounting the video creates its decoder and decodes the first frame (a
+ * moment of GPU work), so the deck mounts it only while the screen is settled.
  */
 export function SceneVideo({ name, load, play, poster = false, urgent = false, onReady, onProgress }: SceneVideoProps) {
   const video = useRef<HTMLVideoElement>(null);
@@ -47,6 +84,7 @@ export function SceneVideo({ name, load, play, poster = false, urgent = false, o
   const stills = lite || reducedMotion;
   const readyFired = useRef(false);
   const f = footage[name];
+  const clip = load === true && !stills;
 
   const ready = () => {
     if (readyFired.current) return;
@@ -56,10 +94,10 @@ export function SceneVideo({ name, load, play, poster = false, urgent = false, o
 
   // Decide the resolution once, on the client, when the footage is first needed.
   useEffect(() => {
-    if (!load || pending || stills || res) return;
+    if (!clip || pending || res) return;
     const id = requestAnimationFrame(() => setRes(pickResolution()));
     return () => cancelAnimationFrame(id);
-  }, [load, pending, stills, res]);
+  }, [clip, pending, res]);
 
   // Stills only: the poster is the scene; report ready once it has loaded.
   useEffect(() => {
@@ -71,25 +109,29 @@ export function SceneVideo({ name, load, play, poster = false, urgent = false, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, pending, stills, name]);
 
-  // Play only while on screen.
+  const mounted = clip && !!res;
+  // A clip taken out (the deck keeps only the chapters near the visitor) fades in again when it returns.
+  if (!mounted && playing) setPlaying(false);
+
+  // Play only while wanted. A clip mounted while its scene is already on screen starts at once.
   useEffect(() => {
     const v = video.current;
-    if (!v || !res) return;
+    if (!v || !mounted) return;
     if (play) v.play().catch(() => {});
     else v.pause();
-  }, [play, res]);
+  }, [play, mounted]);
 
   // Buffering progress for the scene loader.
   useEffect(() => {
     const v = video.current;
-    if (!v || !res) return;
+    if (!v || !mounted) return;
     const onProg = () => {
       if (!v.duration || !v.buffered.length) return;
       onProgress?.(Math.min(1, v.buffered.end(v.buffered.length - 1) / Math.min(v.duration, 4)));
     };
     v.addEventListener("progress", onProg);
     return () => v.removeEventListener("progress", onProg);
-  }, [res, onProgress]);
+  }, [mounted, onProgress]);
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
@@ -104,12 +146,12 @@ export function SceneVideo({ name, load, play, poster = false, urgent = false, o
           fetchPriority={urgent || poster ? "auto" : "low"}
         />
       )}
-      {res && !stills && (
+      {mounted && (
         <video
           ref={video}
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
           style={{ opacity: playing ? 1 : 0 }}
-          src={`/video/${name}-${res}.mp4`}
+          src={clipUrl(name)}
           poster={`/video/${name}-poster.jpg`}
           muted
           loop

@@ -417,6 +417,87 @@ section[data-scene][aria-hidden="true"] * {
   animation-play-state: paused !important;
 }
 
+/*
+ * Moves (components/scenes/SceneDeck.tsx). While the screen is still, the
+ * deck draws the layers the next move will show at 0.2% opacity, so the GPU
+ * rasterises them before they are needed. A layer keeps its tiles only while
+ * its opacity is composited, so these are composited for good and hidden with
+ * opacity, never visibility. (Not the scenes: a composited opacity on a scene
+ * would stop its frosted panels from blurring the footage behind them.)
+ */
+
+/* A project's copy and screen swing away on layers of their own, already rasterised. */
+[data-copy-wrap],
+[data-stage-wrap] {
+  will-change: transform;
+}
+
+/* Arrival cards. In, the card fades up and its title settles from a little larger; out, the card fades as it grows. */
+.deck-card {
+  opacity: 0;
+  transform: scale(1.04);
+  will-change: opacity, transform;
+  transition:
+    opacity 0.45s --theme(--ease-out-quart),
+    transform 0.45s --theme(--ease-out-quart);
+}
+.deck-card[data-on] {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.45s --theme(--ease-out-quart);
+}
+.deck-card-title {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0) scale(1.08);
+  will-change: opacity, transform;
+  /* Back to the start once the card has faded out. */
+  transition:
+    opacity 0s 0.45s,
+    transform 0s 0.45s;
+}
+.deck-card[data-on] .deck-card-title {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.9s --theme(--ease-out-expo),
+    transform 0.9s --theme(--ease-out-expo);
+}
+/* A hidden card's loops wait (its emblem starts again each time it shows). */
+.deck-card:not([data-on]) *,
+.deck-card:not([data-on]) *::before,
+.deck-card:not([data-on]) *::after {
+  animation-play-state: paused !important;
+}
+/* The bad-signal title's slices are layers of their own: a cut moves a clip instead of repainting the letters. */
+.deck-card .glitch-text::before,
+.deck-card .glitch-text::after {
+  will-change: transform;
+}
+
+/* Overlays: composited, and transparent between moves. */
+.deck-fx {
+  will-change: opacity;
+}
+/*
+ * The glitch is a stacking context of its own, so its layers blend over
+ * nothing but each other: plain blending looks the same as screen, overlay
+ * and hue here, without a render pass per layer. Tear bars are 5% of the
+ * frame tall, and placed and stretched by transform alone.
+ */
+[data-fx="glitch"] > * {
+  mix-blend-mode: normal;
+  will-change: transform, opacity;
+}
+[data-fx="glitch"] > [data-tear] {
+  top: 0;
+  height: 5%;
+  transform-origin: 50% 0;
+}
+/* The mosaic's blocks are flat colour: layers of their own while a move runs, so it repaints nothing. */
+html[data-moving] [data-fx="mosaic"] > * {
+  will-change: transform, opacity;
+}
+
 @keyframes phone-scroll {
   0%, 12% { object-position: 50% 0%; }
   88%, 100% { object-position: 50% 100%; }
