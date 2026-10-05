@@ -5,11 +5,13 @@ import { site } from "@/data/site";
 
 export default function HomePage() {
   const sameAs = profile.socials.filter((s) => s.href.startsWith("http")).map((s) => s.href);
-  const jsonLd = {
-    "@context": "https://schema.org",
+  const organization = {
     "@type": "Organization",
+    "@id": `${site.url}/#organization`,
     name: site.name,
     url: site.url,
+    // A square logo (public/logo-512.png, drawn from the wordmark).
+    logo: { "@type": "ImageObject", url: `${site.url}/logo-512.png`, width: 512, height: 512 },
     description: site.description,
     email: `mailto:${profile.email}`,
     foundingDate: site.founded,
@@ -24,6 +26,17 @@ export default function HomePage() {
     },
     makesOffer: services.map((s) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: s.title, description: s.body } })),
   };
+  const website = {
+    "@type": "WebSite",
+    "@id": `${site.url}/#website`,
+    url: site.url,
+    name: site.name,
+    alternateName: site.title,
+    description: site.description,
+    inLanguage: "en-IN",
+    publisher: { "@id": `${site.url}/#organization` },
+  };
+  const jsonLd = { "@context": "https://schema.org", "@graph": [organization, website] };
 
   return (
     <>

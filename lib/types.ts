@@ -66,6 +66,8 @@ export interface Project {
   results?: string[];
   /** Where the project came from (internship brief, coursework, personal). */
   context?: string;
+  /** When the case study last changed (ISO date). The sitemap's lastModified; bump it with the content. */
+  updated?: string;
 }
 
 export type InProgressStatus = "building" | "exploring" | "planning" | "shipping";
