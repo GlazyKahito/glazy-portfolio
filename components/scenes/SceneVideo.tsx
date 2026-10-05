@@ -11,6 +11,10 @@ interface SceneVideoProps {
   load: boolean;
   /** Play it (the scene is on screen). */
   play: boolean;
+  /** Show the poster before the footage is wanted (a page header, rather than a deck chapter). */
+  poster?: boolean;
+  /** Someone is waiting for this one: fetch its poster at normal priority, not low. */
+  urgent?: boolean;
   /** Called once the footage can play through (or the poster is shown instead). */
   onReady?: () => void;
   /** Called with 0..1 while buffering. */
@@ -30,8 +34,11 @@ function pickResolution(): "2160" {
  * clip) is always there first, so nothing is ever blank; the 4K video fades
  * in over it once it can play. Only the visitor's own choices (lite mode, or
  * their system's reduce-motion setting) keep the still.
+ *
+ * Nothing is fetched until it is wanted: a chapter that is not near renders
+ * no poster and no video (so the server never asks the browser to preload them).
  */
-export function SceneVideo({ name, load, play, onReady, onProgress }: SceneVideoProps) {
+export function SceneVideo({ name, load, play, poster = false, urgent = false, onReady, onProgress }: SceneVideoProps) {
   const video = useRef<HTMLVideoElement>(null);
   const [res, setRes] = useState<"2160" | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -86,14 +93,17 @@ export function SceneVideo({ name, load, play, onReady, onProgress }: SceneVideo
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-black">
-      {/* eslint-disable-next-line @next/next/no-img-element -- a full-bleed poster that must paint instantly, not an optimised thumbnail */}
-      <img
-        src={`/video/${name}-poster.jpg`}
-        alt=""
-        aria-hidden
-        className="absolute inset-0 h-full w-full object-cover"
-        decoding="async"
-      />
+      {(load || poster) && (
+        // eslint-disable-next-line @next/next/no-img-element -- a full-bleed poster that must paint instantly, not an optimised thumbnail
+        <img
+          src={`/video/${name}-poster.jpg`}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover"
+          decoding="async"
+          fetchPriority={urgent || poster ? "auto" : "low"}
+        />
+      )}
       {res && !stills && (
         <video
           ref={video}

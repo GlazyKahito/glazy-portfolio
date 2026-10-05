@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, type Variants } from "motion/react";
-import type { ReactNode } from "react";
-import { ease, fadeUp, lineReveal, stagger, viewportOnce } from "@/lib/motion";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { ease, fadeUp, lineReveal, viewportOnce } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 /**
@@ -89,22 +89,43 @@ interface RevealWordsProps {
   by?: "char" | "word";
 }
 
-/*
- * A title-sequence reveal: each letter (or word) rises out of a soft blur,
- * slightly rotated back in depth, and settles. Opacity, transform and filter
- * only, so it stays on the compositor.
- */
-const unitVariants: Variants = {
-  hidden: { opacity: 0, y: "0.55em", rotateX: -55, filter: "blur(10px)", transition: instant },
-  visible: {
-    opacity: 1,
-    y: "0em",
-    rotateX: 0,
-    filter: "blur(0px)",
-    transition: { duration: 1.1, ease: ease.outExpo },
-  },
-};
+/** For the uncontrolled modes: true once on screen (or, with `immediate`, one painted frame after mounting). */
+function useAutoReveal(ref: RefObject<HTMLElement | null>, enabled: boolean, immediate: boolean) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!enabled || !el) return;
+    if (immediate) {
+      // Two frames: the hidden state is painted first, so the transition has somewhere to start from.
+      let inner = 0;
+      const outer = requestAnimationFrame(() => {
+        inner = requestAnimationFrame(() => setOn(true));
+      });
+      return () => {
+        cancelAnimationFrame(outer);
+        cancelAnimationFrame(inner);
+      };
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        setOn(true);
+        io.disconnect();
+      },
+      { threshold: viewportOnce.amount },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref, enabled, immediate]);
+  return on;
+}
 
+/*
+ * A title-sequence reveal: each letter (or word) rises, rotated back in depth,
+ * and settles, one after another. Plain spans and CSS transitions on transform
+ * and opacity (`.reveal-unit` in globals.css), so the compositor plays it: a
+ * heading's letters cost no script per frame and nothing to hydrate.
+ */
 export function RevealWords({
   text,
   id,
@@ -119,48 +140,54 @@ export function RevealWords({
   highlight = [],
   by = "char",
 }: RevealWordsProps) {
-  const Tag = motion[as];
-  const words = text.split(" ");
+  const Tag = as;
+  const ref = useRef<HTMLElement>(null);
+  const controlled = play !== undefined;
+  const auto = useAutoReveal(ref, !controlled, immediate);
+  const on = controlled ? play : auto;
   const accents = new Set(accent.map((w) => w.toLowerCase()));
   const highlights = new Set(highlight.map((w) => w.toLowerCase()));
   const step = staggerDelay ?? (by === "char" ? 0.018 : 0.04);
 
-  const control =
-    play !== undefined
-      ? { initial: false as const, animate: play ? "visible" : "hidden" }
-      : immediate
-        ? { initial: "hidden", animate: "visible" }
-        : { initial: "hidden", whileInView: "visible", viewport: viewportOnce };
+  // Each unit's place in the sequence, counted across the whole line.
+  const words: { word: string; start: number; cls: string }[] = [];
+  let count = 0;
+  for (const word of text.split(" ")) {
+    const clean = word.replace(/[^\w']/g, "").toLowerCase();
+    const isAccent = accents.has(clean) || accents.has(word.toLowerCase());
+    const isHighlight = highlights.has(clean);
+    words.push({
+      word,
+      start: count,
+      cls: cn("reveal-unit [transform-style:preserve-3d]", isAccent && "font-serif italic text-bone-2", isHighlight && "text-glaze", wordClassName),
+    });
+    count += by === "word" ? 1 : Array.from(word).length;
+  }
+  const at = (n: number) => ({ "--d": `${(delay + n * step).toFixed(3)}s` }) as CSSProperties;
 
   return (
-    <Tag id={id} className={cn("flex flex-wrap [perspective:900px]", className)} variants={stagger(step, delay)} {...control}>
+    <Tag
+      ref={ref as RefObject<HTMLHeadingElement & HTMLParagraphElement & HTMLSpanElement>}
+      id={id}
+      data-reveal={on ? "" : undefined}
+      className={cn("flex flex-wrap [perspective:900px]", className)}
+    >
       <span className="sr-only">{text}</span>
-      {words.map((word, i) => {
-        const clean = word.replace(/[^\w']/g, "").toLowerCase();
-        const isAccent = accents.has(clean) || accents.has(word.toLowerCase());
-        const isHighlight = highlights.has(clean);
-        const cls = cn(
-          "inline-block [transform-style:preserve-3d]",
-          isAccent && "font-serif italic text-bone-2",
-          isHighlight && "text-glaze",
-          wordClassName,
-        );
-        return (
-          <span key={i} className="mr-[0.26em] inline-block whitespace-nowrap pb-[0.08em]" aria-hidden>
-            {by === "word" ? (
-              <motion.span className={cls} variants={unitVariants}>
-                {word}
-              </motion.span>
-            ) : (
-              Array.from(word).map((ch, j) => (
-                <motion.span key={j} className={cls} variants={unitVariants}>
-                  {ch}
-                </motion.span>
-              ))
-            )}
-          </span>
-        );
-      })}
+      {words.map(({ word, start, cls }, i) => (
+        <span key={i} className="mr-[0.26em] inline-block whitespace-nowrap pb-[0.08em]" aria-hidden>
+          {by === "word" ? (
+            <span className={cls} style={at(start)}>
+              {word}
+            </span>
+          ) : (
+            Array.from(word).map((ch, j) => (
+              <span key={j} className={cls} style={at(start + j)}>
+                {ch}
+              </span>
+            ))
+          )}
+        </span>
+      ))}
     </Tag>
   );
 }

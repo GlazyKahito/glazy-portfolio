@@ -264,32 +264,39 @@ export function DepthPoster({ active, reveal, onReady }: DepthPosterProps) {
           </div>
         </div>
 
-        {/* Haze settling on the ridge line, between the letters and the mountains. */}
-        <div
-          className={cn("absolute inset-x-0 h-[18%] opacity-70 mix-blend-screen", !still && "[animation:haze-drift_48s_linear_infinite_alternate]")}
-          style={{
-            top: `${RIDGE * 100 - 9}%`,
-            backgroundImage:
-              "radial-gradient(40% 60% at 20% 60%, rgb(255 176 140 / 0.35), transparent 70%), radial-gradient(35% 50% at 60% 50%, rgb(255 150 120 / 0.28), transparent 70%), radial-gradient(30% 55% at 85% 65%, rgb(255 190 150 / 0.3), transparent 70%)",
-            backgroundSize: "200% 100%",
-          }}
-        />
+        {/* Haze settling on the ridge line, between the letters and the mountains. A double-width
+            layer slides under a fixed window (a transform), so the drift never repaints. */}
+        <div className="absolute inset-x-0 h-[18%] overflow-hidden opacity-70 mix-blend-screen" style={{ top: `${RIDGE * 100 - 9}%` }}>
+          <div
+            className={cn("absolute inset-y-0 left-0 w-[200%]", !still && "[animation:haze-pan_48s_linear_infinite_alternate]")}
+            style={{
+              backgroundImage:
+                "radial-gradient(40% 60% at 20% 60%, rgb(255 176 140 / 0.35), transparent 70%), radial-gradient(35% 50% at 60% 50%, rgb(255 150 120 / 0.28), transparent 70%), radial-gradient(30% 55% at 85% 65%, rgb(255 190 150 / 0.3), transparent 70%)",
+            }}
+          />
+        </div>
 
         {/* Near: the ridge and the lake. */}
         <div className={cn("absolute inset-0", drift)} style={{ ["--dolly" as string]: "1.5%" }}>
           <div ref={ridge} className="absolute inset-0 will-change-transform" style={{ transform: "scale(1.05)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element -- layered poster planes must align pixel for pixel */}
             <img ref={ridgeImg} {...src("ridge")} sizes="100vw" alt="" className="h-full w-full object-cover" fetchPriority="high" decoding="async" onLoad={checkReady} onError={checkReady} />
-            {/* Light moving on the water. */}
+            {/* Light moving on the water: the ripple pattern slides up two periods and repeats (a transform, no repaint). */}
             <div
-              className={cn("absolute inset-x-0 bottom-0 h-[46%] opacity-60 mix-blend-screen", !still && "[animation:glint_7s_linear_infinite]")}
+              className="absolute inset-x-0 bottom-0 h-[46%] overflow-hidden opacity-60 mix-blend-screen"
               style={{
-                backgroundImage:
-                  "repeating-linear-gradient(180deg, transparent 0 11px, rgb(255 178 130 / 0.07) 11px 12px, transparent 12px 23px, rgb(255 200 160 / 0.05) 23px 24px, transparent 24px 32px)",
                 maskImage: "radial-gradient(60% 80% at 55% 20%, black, transparent 75%)",
                 WebkitMaskImage: "radial-gradient(60% 80% at 55% 20%, black, transparent 75%)",
               }}
-            />
+            >
+              <div
+                className={cn("absolute inset-x-0 top-0 h-[calc(100%+64px)]", !still && "[animation:glint_7s_linear_infinite]")}
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(180deg, transparent 0 11px, rgb(255 178 130 / 0.07) 11px 12px, transparent 12px 23px, rgb(255 200 160 / 0.05) 23px 24px, transparent 24px 32px)",
+                }}
+              />
+            </div>
           </div>
         </div>
 

@@ -1,15 +1,21 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useIntro } from "@/components/ui/Intro";
 import { setLite, useLite } from "@/lib/capability";
+import { useDeck } from "@/lib/deck";
 import { ease } from "@/lib/motion";
 
 /**
  * Watches the frame rate. If the site is struggling on this device, a small
  * note offers the lite version (stills instead of 4K video). The L key
  * toggles lite mode anywhere, and a brief toast confirms the switch.
+ *
+ * It only watches when lag would show: for ten seconds after the opening or
+ * a new page, and through every move of the deck until a few seconds after it
+ * lands. The rest of the time it costs no frames.
  */
 export function LagWatch() {
   const { done } = useIntro();
@@ -17,6 +23,10 @@ export function LagWatch() {
   const [offer, setOffer] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const dismissed = useRef(false);
+  const { moving } = useDeck();
+  const pathname = usePathname();
+  /** Watch for the next `ms` (set by the sampler effect; a no-op while it is off). */
+  const watch = useRef<(ms: number, exact?: boolean) => void>(() => {});
 
   // Keyboard shortcut: L.
   useEffect(() => {
@@ -38,13 +48,16 @@ export function LagWatch() {
     return () => window.clearTimeout(t);
   }, [toast]);
 
-  // Frame-rate watch: after the opening, sample in 2 s windows; two slow windows in a row trigger the offer.
+  // Frame-rate watch: sample in 2 s windows while watching; two slow windows in a row trigger the offer.
   useEffect(() => {
     if (!done || lite || dismissed.current) return;
     let raf = 0;
     let frames = 0;
-    let start = performance.now();
+    let start = 0;
     let slow = 0;
+    let until = 0;
+    // One offer per visit: once made (and taken, or turned down), the watch stops for good.
+    let offered = false;
     const tick = (now: number) => {
       frames++;
       const elapsed = now - start;
@@ -55,22 +68,42 @@ export function LagWatch() {
         frames = 0;
         start = now;
         if (slow >= 2) {
+          raf = 0;
+          offered = true;
           setOffer(true);
           return;
         }
       }
+      raf = now < until ? requestAnimationFrame(tick) : 0;
+    };
+    watch.current = (ms, exact = false) => {
+      if (offered || dismissed.current) return;
+      const end = performance.now() + ms;
+      until = exact ? end : Math.max(until, end);
+      if (raf) return;
+      frames = 0;
+      start = performance.now();
       raf = requestAnimationFrame(tick);
     };
     // Give the first scene a moment to settle before judging.
-    const t = window.setTimeout(() => {
-      start = performance.now();
-      raf = requestAnimationFrame(tick);
-    }, 2500);
+    const t = window.setTimeout(() => watch.current(10000), 2500);
     return () => {
       window.clearTimeout(t);
       cancelAnimationFrame(raf);
+      watch.current = () => {};
     };
   }, [done, lite]);
+
+  // Watch every move of the deck, until a few seconds after it lands.
+  useEffect(() => {
+    if (moving) watch.current(20000);
+    else watch.current(4000, true);
+  }, [moving]);
+
+  // And the first seconds of every page.
+  useEffect(() => {
+    watch.current(10000);
+  }, [pathname]);
 
   return (
     <>

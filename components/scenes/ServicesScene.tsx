@@ -19,14 +19,15 @@ const word: Variants = {
   exit: { transition: { staggerChildren: 0.018 } },
 };
 const letter: Variants = {
-  hidden: { y: "105%", opacity: 0, filter: "blur(14px)" },
-  show: { y: "0%", opacity: 1, filter: "blur(0px)", transition: { duration: 1, ease: ease.outExpo } },
-  exit: { y: "-35%", opacity: 0, filter: "blur(10px)", transition: { duration: 0.32, ease: ease.inOutQuart } },
+  // Transform and opacity only: blurring 30vh glyphs letter by letter costs a repaint every frame.
+  hidden: { y: "105%", opacity: 0 },
+  show: { y: "0%", opacity: 1, transition: { duration: 1, ease: ease.outExpo } },
+  exit: { y: "-35%", opacity: 0, transition: { duration: 0.32, ease: ease.inOutQuart } },
 };
 const copy: Variants = {
-  hidden: { opacity: 0, y: 14, filter: "blur(6px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.8, ease: ease.outExpo, delay: 0.2 } },
-  exit: { opacity: 0, y: -8, filter: "blur(6px)", transition: { duration: 0.25 } },
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: ease.outExpo, delay: 0.2 } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.25 } },
 };
 
 /** Every word set to the same height where there is room; long words shrink to fit their column (cqw). */

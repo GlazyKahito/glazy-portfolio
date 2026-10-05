@@ -14,16 +14,24 @@ import {
   type ReactNode,
 } from "react";
 import { LoaderType3D } from "@/components/ui/LoaderType3D";
-import { useDevice, useMounted } from "@/lib/hooks/use-device";
+import { useDevice } from "@/lib/hooks/use-device";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { inspectGpu, setLite, useLite } from "@/lib/capability";
+import { inspectGpuAsync, setLite, useLite, type GpuReport } from "@/lib/capability";
 import { getDeck } from "@/lib/deck";
 
 /** Shortest time the countdown runs, even on a warm cache (s). */
 const MIN_LOAD = 2.4;
 /** Give up waiting for the footage and continue on its poster frame (s). */
 const FOOTAGE_TIMEOUT = 20;
+/**
+ * The opening frame, developing behind the lettering: a 48 px still of the scene. Scaled up it is
+ * already soft, so nothing full-screen needs a blur filter, and it is inline, so it costs no
+ * request next to the opening's own planes.
+ */
+const DEVELOPING =
+  "data:image/jpeg;base64,/9j/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAbADADASIAAhEBAxEB/8QAGAAAAwEBAAAAAAAAAAAAAAAABAUGAgP/xAAoEAABBAEBBwQDAAAAAAAAAAABAAIDBBESBQYHITFBURMUMnEiYZH/xAAXAQEBAQEAAAAAAAAAAAAAAAADBAEC/8QAHBEBAAICAwEAAAAAAAAAAAAAAQADAhESIUFR/9oADAMBAAIRAxEAPwCOhaCmdaIHCnY7+jng4Rce3fSxpYXInlKcXH1ldWrA4TOCpkdFH1t6yzOquSO2Cjo9+BH1qOx9oks+Sga/srmUl1FMdypF3EGJvSq8j9lLbPEO85zvRhjaD8cjJCHha+TWys9kiySTPchGRkO+QwhQtgnyr0kI6jKJ7W9wiY7TRyIH8Shrj5W2uPlE4RsbNR0/28w/ONrggLGzax5xgtP2ucb3dMlb1O8rjSPTFUyOyf/Z";
+
 /** The lettering turning to face the camera. */
 const TITLE_HOLD = 1.6;
 const OPENING = 2.6;
@@ -81,7 +89,6 @@ export function IntroProvider({ children }: { children: ReactNode }) {
   const lenis = useLenis();
   const { pending } = useDevice();
   const lite = useLite();
-  const mounted = useMounted();
 
   const [show, setShow] = useState<boolean>(isHome);
   const [done, setDone] = useState(!isHome);
@@ -92,7 +99,21 @@ export function IntroProvider({ children }: { children: ReactNode }) {
   const finishedRef = useRef(false);
   const timers = useRef<number[]>([]);
 
-  const report = mounted ? inspectGpu() : null;
+  // The device check runs after the first paint, off the main thread where it can (lib/capability.ts).
+  const [report, setReport] = useState<GpuReport | null>(null);
+  useEffect(() => {
+    if (!show) return;
+    let alive = true;
+    const raf = requestAnimationFrame(() => {
+      inspectGpuAsync().then((r) => {
+        if (alive) setReport(r);
+      });
+    });
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+    };
+  }, [show]);
   const serious = !!report && report.serious;
 
   const finish = useCallback(() => {
@@ -164,7 +185,8 @@ export function IntroProvider({ children }: { children: ReactNode }) {
   }, [show, reduce, phase, pending, lite]);
 
   // 2 + 3. Title, then opening. Waits for the visitor if the device check found a real problem.
-  const blocked = serious && !acknowledged;
+  // It also waits for the device check, so a weak machine is always asked first.
+  const blocked = !report || (serious && !acknowledged);
   useEffect(() => {
     if (!show || reduce || phase !== "loading" || progress < 1 || blocked) return;
     const t1 = window.setTimeout(() => setPhase("title"), 250);
@@ -244,12 +266,12 @@ export function IntroProvider({ children }: { children: ReactNode }) {
             />
             {/* The scene develops behind the lettering, like a print in the darkroom. */}
             <motion.div aria-hidden className="absolute inset-0 overflow-hidden" initial={false} animate={{ opacity: opening ? 0 : 1 }} transition={{ duration: 0.8 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element -- decorative, already in cache for the opening scene */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- an inline 48 px still, scaled up soft */}
               <img
-                src="/scenes/glazy-poster.jpg"
+                src={DEVELOPING}
                 alt=""
                 className="absolute inset-0 h-full w-full scale-110 object-cover"
-                style={{ opacity: 0.06 + progress * 0.22, filter: `blur(${30 - progress * 18}px) saturate(${0.4 + progress * 0.8})`, transition: "opacity 0.4s, filter 0.4s" }}
+                style={{ opacity: 0.06 + progress * 0.22, transition: "opacity 0.4s" }}
               />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_15%,rgb(0_0_0/0.8)_75%)]" />
             </motion.div>
@@ -258,24 +280,25 @@ export function IntroProvider({ children }: { children: ReactNode }) {
               aria-hidden
               className="absolute inset-0 flex items-center justify-center pb-[6vh]"
               initial={false}
-              animate={opening ? { opacity: 0, scale: 1.08, filter: "blur(10px)" } : { opacity: 1, scale: 1, filter: "blur(0px)" }}
+              animate={opening ? { opacity: 0, scale: 1.12 } : { opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, ease: ease.outQuart }}
             >
               <LoaderType3D progress={progress} settle={titled} flat={lite || serious} />
             </motion.div>
             <div aria-hidden className="film-grain pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay" />
+            {/* The letterbox bars open by scaling (a transform), not by animating their height. */}
             <motion.div
               aria-hidden
-              className="absolute inset-x-0 top-0 z-[1] bg-black"
+              className="absolute inset-x-0 top-0 z-[1] h-[13vh] origin-top bg-black"
               initial={false}
-              animate={{ height: opening ? "0vh" : "13vh" }}
+              animate={{ scaleY: opening ? 0 : 1 }}
               transition={{ duration: 1.6, ease: ease.inOutQuart }}
             />
             <motion.div
               aria-hidden
-              className="absolute inset-x-0 bottom-0 z-[1] bg-black"
+              className="absolute inset-x-0 bottom-0 z-[1] h-[13vh] origin-bottom bg-black"
               initial={false}
-              animate={{ height: opening ? "0vh" : "13vh" }}
+              animate={{ scaleY: opening ? 0 : 1 }}
               transition={{ duration: 1.6, ease: ease.inOutQuart }}
             />
             {/* A warm flash as the pieces lock. */}
@@ -299,7 +322,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                 <motion.div
                   key="leader"
                   className="absolute inset-x-0 bottom-[calc(13vh+1.25rem)] z-[3] flex justify-center px-[var(--gutter)]"
-                  exit={{ opacity: 0, y: 10, filter: "blur(8px)" }}
+                  exit={{ opacity: 0, y: 10 }}
                   transition={{ duration: 0.5 }}
                 >
                   <div className="flex w-[min(82vw,720px)] items-end justify-between gap-6" role="img" aria-label={`GLAZY, ${Math.round(progress * 100)} percent loaded`}>
@@ -317,7 +340,7 @@ export function IntroProvider({ children }: { children: ReactNode }) {
                   key="title"
                   className="absolute inset-x-0 bottom-[16vh] z-[3] flex justify-center text-center"
                   initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: opening ? 0 : 1, y: opening ? -12 : 0, filter: opening ? "blur(8px)" : "blur(0px)" }}
+                  animate={{ opacity: opening ? 0 : 1, y: opening ? -12 : 0 }}
                   transition={{ duration: opening ? 0.6 : 0.8, ease: ease.outQuart, delay: opening ? 0 : 0.9 }}
                 >
                   <p className="font-display text-2xl italic text-cream/90 md:text-3xl">A freelance web &amp; SaaS agency by Krutik Mhatre</p>

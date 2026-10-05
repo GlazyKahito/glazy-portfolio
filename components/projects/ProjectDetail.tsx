@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { BrowserFrame, PhoneFrame } from "@/components/projects/Frames";
 import { ArrowIcon, ArrowUpRight, MagneticButton } from "@/components/ui/MagneticButton";
 import { TransitionLink } from "@/components/ui/PageTransition";
@@ -11,6 +12,25 @@ import type { ImageAsset, Project } from "@/lib/types";
 import { ease, fadeUp, stagger, viewportOnce, wipeUp } from "@/lib/motion";
 import { cn, hsl, prettyUrl } from "@/lib/utils";
 import { SceneVideo } from "@/components/scenes/SceneVideo";
+import { onIdle } from "@/lib/hooks/use-device";
+
+/** True once the page has loaded and the browser is idle: heavy extras (the 4K header clip) wait for it. */
+function useAfterLoad() {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    let cancel = () => {};
+    const start = () => {
+      cancel = onIdle(() => setOk(true), 3000);
+    };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+    return () => {
+      window.removeEventListener("load", start);
+      cancel();
+    };
+  }, []);
+  return ok;
+}
 
 interface ProjectDetailProps {
   project: Project;
@@ -85,6 +105,8 @@ function NumberedList({ items }: { items: string[] }) {
 }
 
 export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailProps) {
+  // The header shows the footage's poster at once; the 4K clip (about 7 MB) loads after the page is interactive.
+  const clip = useAfterLoad();
   const number = projectNumber(project);
   const tint = hsl(project.hue, 70, 60, 0.28);
 
@@ -92,7 +114,7 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
     <article className="relative overflow-x-clip">
       {/* Real footage behind the header, tinted with the project's colour, fading into the page. */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[110svh] overflow-hidden">
-        <SceneVideo name="dusk" load play />
+        <SceneVideo name="dusk" poster load={clip} play />
         <div className="absolute inset-0 mix-blend-soft-light" style={{ background: `radial-gradient(70% 60% at 50% 20%, ${tint}, transparent 70%)` }} />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgb(0_0_0/0.45),rgb(5_5_6/0.55)_45%,var(--color-ink)_96%)]" />
       </div>
@@ -139,7 +161,7 @@ export function ProjectDetail({ project, gallery, prev, next }: ProjectDetailPro
                   <div>
                     <dt className="label-mono">Status</dt>
                     <dd className="mt-1 flex items-center gap-2 font-display text-lg font-medium md:justify-end">
-                      <span className={cn("h-1.5 w-1.5 rounded-full", project.status === "live" ? "bg-glaze [animation:pulse-dot_2.4s_ease-out_infinite]" : "bg-bone-3")} />
+                      <span className={cn("h-1.5 w-1.5 rounded-full", project.status === "live" ? "pulse-dot bg-glaze" : "bg-bone-3")} />
                       {STATUS_LABEL[project.status]}
                     </dd>
                   </div>

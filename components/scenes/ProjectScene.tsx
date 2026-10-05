@@ -52,7 +52,7 @@ function Stage({ project, play }: { project: Project; play: boolean }) {
       <motion.div
         style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d" }}
         initial={false}
-        animate={play ? { opacity: 1, y: 0, rotateZ: 0, filter: "blur(0px)" } : { opacity: 0, y: 60, rotateZ: -1.5, filter: "blur(14px)" }}
+        animate={play ? { opacity: 1, y: 0, rotateZ: 0, scale: 1 } : { opacity: 0, y: 60, rotateZ: -1.5, scale: 0.96 }}
         transition={{ duration: 1.3, ease: ease.outExpo, delay: play ? 0.15 : 0 }}
         className="relative"
       >
@@ -146,7 +146,7 @@ export function ProjectScene({ project, index, play }: { project: Project; index
             <div>
               <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-bone-3">Status</dt>
               <dd className="mt-1 flex items-center gap-2 text-sm text-bone">
-                <span className={cn("h-1.5 w-1.5 rounded-full", project.status === "live" && "[animation:pulse-dot_2.4s_ease-out_infinite]")} style={{ background: hsl(project.hue, 80, 60) }} />
+                <span className={cn("h-1.5 w-1.5 rounded-full", project.status === "live" && "pulse-dot")} style={{ background: hsl(project.hue, 80, 60) }} />
                 {STATUS[project.status]}
               </dd>
             </div>

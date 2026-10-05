@@ -453,9 +453,9 @@ export function Nimbus() {
             data-lenis-prevent
             className="fixed bottom-20 right-5 z-[92] flex h-[min(560px,calc(100svh-7rem))] w-[min(92vw,380px)] flex-col overflow-hidden rounded-3xl border border-white/15 bg-ink-2/95 text-bone shadow-[0_30px_80px_-20px_rgb(0_0_0/0.9)] backdrop-blur-md"
             style={{ transformOrigin: "100% 100%" }}
-            initial={{ opacity: 0, y: 30, scale: 0.6, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, y: 20, scale: 0.7, filter: "blur(6px)" }}
+            initial={{ opacity: 0, y: 30, scale: 0.6 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.7 }}
             transition={{ type: "spring", stiffness: 240, damping: 24 }}
           >
             <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
@@ -489,8 +489,8 @@ export function Nimbus() {
                 <motion.div
                   key={m.id}
                   className={cn("flex flex-col gap-2", m.from === "you" ? "items-end" : "items-start")}
-                  initial={{ opacity: 0, x: m.from === "you" ? 14 : -14, y: 8, filter: "blur(4px)" }}
-                  animate={{ opacity: 1, x: 0, y: 0, filter: "blur(0px)" }}
+                  initial={{ opacity: 0, x: m.from === "you" ? 14 : -14, y: 8 }}
+                  animate={{ opacity: 1, x: 0, y: 0 }}
                   transition={{ type: "spring", stiffness: 300, damping: 26 }}
                 >
                   {m.from === "nimbus" && (
