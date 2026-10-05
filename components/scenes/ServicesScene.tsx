@@ -6,7 +6,7 @@ import { Kicker, PillCTA, Rise } from "@/components/scenes/ChapterScenes";
 import { TransitionLink } from "@/components/ui/PageTransition";
 import { getProject } from "@/data/projects";
 import { services } from "@/data/services";
-import { gotoChapter } from "@/lib/deck";
+import { gotoChapter, useDeck } from "@/lib/deck";
 import { ease } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +45,9 @@ export function ServicesScene({ play }: { play: boolean }) {
   const [hold, setHold] = useState(false);
   const service = services[index];
   const proof = service.proof ? getProject(service.proof) : undefined;
-  const running = play && auto && !hold;
+  // The poster holds still while the deck moves (a scene keeps playing until it has faded out).
+  const { moving } = useDeck();
+  const running = play && auto && !hold && !moving;
 
   useEffect(() => {
     if (!running) return;
