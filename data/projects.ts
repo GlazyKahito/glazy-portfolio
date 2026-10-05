@@ -27,6 +27,7 @@ export const projects: Project[] = [
     category: "AI Product",
     technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "SQLite", "DuckDB", "NVIDIA NIM", "Google Gemini", "tesseract.js", "Zod"],
     year: "2026",
+    updated: "2026-10-03",
     status: "live",
     featured: true,
     image: {
@@ -106,6 +107,7 @@ export const projects: Project[] = [
       "Google Gemini API",
     ],
     year: "2026",
+    updated: "2026-09-27",
     status: "live",
     featured: true,
     image: {
@@ -166,6 +168,7 @@ export const projects: Project[] = [
     category: "Full-Stack",
     technologies: ["Next.js", "React 19", "TypeScript", "PostgreSQL", "Drizzle ORM", "MapLibre GL", "Three.js", "GSAP", "Recharts", "Google Gemini", "Claude API", "Playwright"],
     year: "2026",
+    updated: "2026-10-03",
     status: "live",
     featured: true,
     image: {
@@ -219,6 +222,7 @@ export const projects: Project[] = [
     category: "Full-Stack",
     technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Three.js", "React Three Fiber", "GSAP", "Lenis", "Motion", "Vitest", "C"],
     year: "2026",
+    updated: "2026-10-04",
     status: "live",
     featured: true,
     image: {
@@ -301,6 +305,7 @@ export const projects: Project[] = [
       "Motion",
     ],
     year: "2026",
+    updated: "2026-09-27",
     status: "live",
     featured: false,
     image: {
@@ -364,6 +369,7 @@ export const projects: Project[] = [
       "Vercel Serverless",
     ],
     year: "2026",
+    updated: "2026-10-03",
     status: "live",
     featured: true,
     image: {
@@ -415,6 +421,7 @@ export const projects: Project[] = [
     category: "Frontend",
     technologies: ["HTML5", "CSS3", "JavaScript"],
     year: "2026",
+    updated: "2026-09-27",
     status: "live",
     featured: false,
     image: {
@@ -450,6 +457,7 @@ export const projects: Project[] = [
     category: "Frontend",
     technologies: ["HTML5", "CSS3", "JavaScript", "three.js"],
     year: "2026",
+    updated: "2026-09-27",
     status: "live",
     featured: false,
     image: {
@@ -484,6 +492,7 @@ export const projects: Project[] = [
     category: "Concept",
     technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Three.js", "React Three Fiber", "drei", "Motion"],
     year: "2026",
+    updated: "2026-10-04",
     status: "live",
     featured: false,
     image: {
@@ -520,6 +529,7 @@ export const projects: Project[] = [
     category: "Concept",
     technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Three.js", "React Three Fiber", "drei", "Motion", "glTF"],
     year: "2026",
+    updated: "2026-10-04",
     status: "live",
     featured: false,
     image: {
@@ -556,6 +566,7 @@ export const projects: Project[] = [
     category: "Concept",
     technologies: ["Next.js", "React 19", "TypeScript", "Tailwind CSS", "Three.js", "React Three Fiber", "GLSL", "Zod", "Motion"],
     year: "2026",
+    updated: "2026-10-04",
     status: "live",
     featured: false,
     image: {

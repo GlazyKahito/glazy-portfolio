@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { ProjectDetail } from "@/components/projects/ProjectDetail";
 import { ContactFooter } from "@/components/scenes/Contact";
 import { getAdjacentProjects, getProject, projects } from "@/data/projects";
+import { profile } from "@/data/profile";
+import { site } from "@/data/site";
 import type { ImageAsset } from "@/lib/types";
 
 interface PageProps {
@@ -46,15 +48,40 @@ export default async function ProjectPage({ params }: PageProps) {
   const { prev, next } = getAdjacentProjects(slug);
   const gallery: ImageAsset[] = project.gallery ?? [];
 
+  const url = `${site.url}/projects/${project.slug}`;
+  const elsewhere = [project.live, project.github, project.demo].filter((u): u is string => !!u);
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "CreativeWork",
-    name: project.title,
-    description: project.description,
-    url: project.live ?? project.github,
-    dateCreated: project.year,
-    author: { "@type": "Person", name: "Krutik Mhatre" },
-    keywords: project.technologies.join(", "),
+    "@graph": [
+      {
+        "@type": "CreativeWork",
+        "@id": `${url}#work`,
+        name: project.title,
+        headline: project.tagline,
+        description: project.description,
+        // The case study is this work's page; the live site, the code and the demo are the work itself.
+        url,
+        mainEntityOfPage: url,
+        ...(elsewhere.length ? { sameAs: elsewhere } : {}),
+        image: `${site.url}${project.image.src}`,
+        dateCreated: project.year,
+        ...(project.updated ? { dateModified: project.updated } : {}),
+        genre: project.category,
+        keywords: project.technologies.join(", "),
+        author: { "@type": "Person", name: profile.name, url: site.url },
+        creator: { "@type": "Organization", "@id": `${site.url}/#organization`, name: site.name, url: site.url },
+        publisher: { "@type": "Organization", "@id": `${site.url}/#organization`, name: site.name, url: site.url },
+        isPartOf: { "@type": "WebSite", "@id": `${site.url}/#website`, name: site.name, url: site.url },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: site.name, item: site.url },
+          { "@type": "ListItem", position: 2, name: "The work", item: `${site.url}/#projects` },
+          { "@type": "ListItem", position: 3, name: project.title, item: url },
+        ],
+      },
+    ],
   };
 
   return (

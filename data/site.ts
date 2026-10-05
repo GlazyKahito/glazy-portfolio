@@ -22,6 +22,8 @@ export const site = {
   },
   tagline: "websites that feel like places.",
   founded: "2026",
+  /** When the home page last changed (ISO date): the sitemap's lastModified. Bump it with the content. */
+  updated: "2026-10-05",
   nav: [
     { label: "What we make", href: "/#services" },
     { label: "Work", href: "/#projects" },
