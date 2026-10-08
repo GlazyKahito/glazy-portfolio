@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ProjectDetail } from "@/components/projects/ProjectDetail";
 import { ContactFooter } from "@/components/scenes/Contact";
 import { getAdjacentProjects, getProject, projects } from "@/data/projects";
+import { site } from "@/data/site";
 import type { ImageAsset } from "@/lib/types";
 
 interface PageProps {
@@ -27,6 +28,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${project.title} — GLAZY`,
       description: project.description,
       type: "article",
+      url: `/projects/${project.slug}`,
+      siteName: site.name,
+      locale: "en_IN",
       images: [{ url: project.image.src, width: project.image.width, height: project.image.height, alt: project.image.alt }],
     },
     twitter: {
