@@ -66,7 +66,7 @@ export const profile: Profile = {
   ],
   about: [
     "I'm Krutik, the founder of GLAZY, a freelance web and SaaS agency that designs and builds websites, web apps and SaaS products. I'm also a B.Tech student at KJ Somaiya College of Engineering, and I recently completed a web development internship at Ediglobe.",
-    "My work sits where the web meets AI and security: NIYAM, a legal research workspace (built with my team) that checks every authority against the amendments that came after it; ScamShield, an AI security analyst that explains why a message looks like a scam; CLIMATIQ, a heatwave decision-support platform for India; and a networking virtual lab with packet simulation and fault diagnosis.",
+    "My work sits where the web meets AI and security: NIYAM, a legal research workspace (built with my team) that checks every authority against the amendments that came after it; ScamShield, an AI security analyst that explains why a message looks like a scam; CLIMATIQ, a heatwave decision-support platform for India; VITRA, a computer-vision research prototype that reads urine test strips by colour; and a networking virtual lab with packet simulation and fault diagnosis.",
     "I build with Next.js and the MERN stack, integrate Google Gemini into production features, and ship to Vercel. I care about products that show their working instead of returning a bare verdict.",
   ],
 };

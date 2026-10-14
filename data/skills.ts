@@ -23,7 +23,8 @@ export const skills: Skill[] = [
   {
     name: "Python",
     category: "Languages",
-    usage: "Coursework and scripting alongside the B.Tech curriculum.",
+    usage: "Coursework and scripting alongside the B.Tech curriculum; the computer-vision and calibration service in VITRA.",
+    projects: ["vitra"],
   },
   {
     name: "Java",
@@ -115,8 +116,8 @@ export const skills: Skill[] = [
   {
     name: "PostgreSQL",
     category: "Backend",
-    usage: "Climate data, incidents, roles and the audit log in CLIMATIQ, through Drizzle ORM.",
-    projects: ["climatiq"],
+    usage: "Climate data, incidents, roles and the audit log in CLIMATIQ, and runs, reviews and the audit trail in VITRA, both through Drizzle ORM.",
+    projects: ["climatiq", "vitra"],
   },
   {
     name: "SQLite",
@@ -167,6 +168,18 @@ export const skills: Skill[] = [
     category: "AI",
     usage: "An advisory provider in CLIMATIQ alongside Gemini, behind the same validated schema.",
     projects: ["climatiq"],
+  },
+  {
+    name: "OpenCV",
+    category: "AI",
+    usage: "Image quality checks, strip localisation and rectification, and pad segmentation in VITRA's computer-vision service.",
+    projects: ["vitra"],
+  },
+  {
+    name: "scikit-learn",
+    category: "AI",
+    usage: "VITRA's calibration models: linear, polynomial ridge, kNN and random forest, with a group-aware split and 5-fold cross-validation.",
+    projects: ["vitra"],
   },
 
   // 3D & Graphics (READMEs)
