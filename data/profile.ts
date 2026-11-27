@@ -3,6 +3,7 @@ import type { Profile } from "@/lib/types";
 /**
  * Source of truth: Krutik_Mhatre_Resume (September 2026), plus Krutik's own
  * word that he founded GLAZY as a freelance web and SaaS agency (October 2026).
+ * Business email krutik@kahito.in (GoDaddy Professional Email) since 27 Nov 2026.
  * Every fact here appears on the resume, in a linked repository README, or
  * in a project's own demo.
  */
@@ -11,7 +12,7 @@ export const profile: Profile = {
   alias: "GLAZY",
   roles: ["Founder, GLAZY", "Full-stack developer", "AI integration"],
   location: "Mumbai, Maharashtra",
-  email: "kahitokrutik@gmail.com",
+  email: "krutik@kahito.in",
   phone: "+91 90822 02088",
   resume: "/resume/Krutik_Mhatre_Resume.pdf",
   socials: [
@@ -27,8 +28,8 @@ export const profile: Profile = {
     },
     {
       label: "Email",
-      href: "mailto:kahitokrutik@gmail.com",
-      handle: "kahitokrutik@gmail.com",
+      href: "mailto:krutik@kahito.in",
+      handle: "krutik@kahito.in",
     },
   ],
   experience: [
